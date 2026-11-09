@@ -16,8 +16,8 @@ const SCENARIOS = {
     rightSignal: false,
     carTiltDeg: 0,
     color: '#10B981',
-    bannerImg: 'assets/nerv_commander_banner.jpg',
-    cgCaption: '🏠 基地封印・道路和平',
+    bannerImg: 'assets/fantasy_harbor_bg.jpg',
+    cgCaption: '🏠 封印休止符・道路和平',
     cutInTitle: '🏠 封印在家',
     cutInSub: '正在沙發追番吃洋芋片！',
     lat: 24.1632,
@@ -36,8 +36,8 @@ const SCENARIOS = {
     rightSignal: false,
     carTiltDeg: 14,
     color: '#F59E0B',
-    bannerImg: 'assets/nerv_commander_banner.jpg',
-    cgCaption: '🛵 雙腳滑行・聞香鬼切',
+    bannerImg: 'assets/fantasy_harbor_bg.jpg',
+    cgCaption: '🛵 雙腳滑行・宵夜狂想曲',
     cutInTitle: '🛵 買鹹酥雞鬼切',
     cutInSub: '左燈連閃 3.8km・聞香瞬間右切！',
     lat: 24.1788,
@@ -362,15 +362,15 @@ function refreshMainMarkers() {
   const sanbaoIcon = L.divIcon({
     className: 'custom-sanbao-marker',
     html: `
-      <div class="relative flex items-center justify-center" style="width:54px;height:54px;">
-        <div class="absolute inset-0 rounded-full bg-red-500/50 marker-pulse"></div>
-        <img src="assets/sanbao_avatar.jpg" class="w-11 h-11 rounded-full object-cover border-2 border-amber-400 shadow-[0_0_15px_#EF4444] relative z-10" />
-        <div class="absolute -bottom-5 whitespace-nowrap px-2 py-0.5 rounded bg-slate-950/95 border border-red-500 text-[10px] font-mono font-black text-white shadow z-20">
-          🎯 ${appState.profile.name}
+      <div class="relative flex items-center justify-center" style="width:56px;height:56px;">
+        <div class="absolute inset-0 rounded-full bg-amber-400/50 marker-pulse"></div>
+        <img src="assets/royal_conductor.jpg" class="w-12 h-12 rounded-full object-cover border-2 border-amber-300 shadow-[0_0_18px_#D4AF37] relative z-10" />
+        <div class="absolute -bottom-5 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-amber-300 text-[10px] font-mono font-black text-amber-200 shadow z-20">
+          ✦ ${appState.profile.name}
         </div>
       </div>`,
-    iconSize: [54, 54],
-    iconAnchor: [27, 27]
+    iconSize: [56, 56],
+    iconAnchor: [28, 28]
   });
 
   const userIcon = L.divIcon({
@@ -793,8 +793,8 @@ window.switchTab = function (tabId) {
     if (btn) {
       btn.className =
         id === tabId
-          ? 'px-3.5 py-1.5 rounded-lg font-black text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-red-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all'
-          : 'px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 text-slate-400 hover:text-white transition-all';
+          ? 'px-4 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,0.5)] transition-all'
+          : 'px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/70 hover:text-white transition-all';
     }
   });
 
