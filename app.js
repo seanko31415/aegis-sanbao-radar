@@ -575,17 +575,140 @@ window.submitModalLogin = function () {
     showToast('⚠️ 請輸入你的名字', '輸入名字後好友才能看到是誰登入喔！', 'red');
     return;
   }
-  document.getElementById('my-driver-name').value = name;
-  document.getElementById('my-driver-plate').value = plate;
-  document.getElementById('my-room-code').value = room;
+
+  const roomChanged = room !== appState.myUser.roomCode;
+  appState.myUser.name = name;
+  appState.myUser.plate = plate;
+  appState.myUser.roomCode = room;
+  appState.myUser.loggedIn = true;
+  saveMyUserToStorage();
+
+  const nameIn = document.getElementById('my-driver-name');
+  const plateIn = document.getElementById('my-driver-plate');
+  const roomIn = document.getElementById('my-room-code');
+  if (nameIn) nameIn.value = name;
+  if (plateIn) plateIn.value = plate;
+  if (roomIn) roomIn.value = room;
+
   closeLoginModal();
-  window.loginAndStartRealGpsBroadcast();
+
+  if (roomChanged) {
+    initRealtimeCloudSync();
+  }
+
+  const headerBtn = document.getElementById('header-login-btn');
+  if (headerBtn) {
+    headerBtn.textContent = `🟢 ${name} (#${room})`;
+  }
+  const pill = document.getElementById('my-login-status-pill');
+  if (pill) {
+    pill.textContent = `🟢 已登入 #${room}`;
+    pill.className = 'px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-mono text-[10px] font-black';
+  }
+
+  syncUI();
+  refreshMainMarkers();
+  publishMyPresence();
+  window.soundEngine.playWinFanfare();
+  showToast(`✅ 登入成功！`, `歡迎【${name} (${plate})】，房號 #${room} 已連線！`, 'emerald');
+
+  window.useRealBrowserGPS({ silent: false });
+};
+
+window.openEditMyNameDialog = function () {
+  window.soundEngine.playClick(720);
+  const m = document.getElementById('modal-edit-name');
+  if (!m) return;
+  const inName = document.getElementById('edit-dialog-name');
+  const inPlate = document.getElementById('edit-dialog-plate');
+  if (inName) inName.value = appState.myUser.name || '';
+  if (inPlate) inPlate.value = appState.myUser.plate || '';
+  m.classList.remove('hidden');
+  setTimeout(() => inName?.focus(), 80);
+};
+
+window.closeEditMyNameDialog = function () {
+  document.getElementById('modal-edit-name')?.classList.add('hidden');
+};
+
+window.saveEditedDriverName = function () {
+  const inName = document.getElementById('edit-dialog-name')?.value.trim();
+  const inPlate = document.getElementById('edit-dialog-plate')?.value.trim().toUpperCase() || '我的座駕';
+  if (!inName) {
+    showToast('⚠️ 名字不能為空', '請輸入您的駕駛暱稱！', 'red');
+    return;
+  }
+  appState.myUser.name = inName;
+  appState.myUser.plate = inPlate;
+  appState.myUser.loggedIn = true;
+  saveMyUserToStorage();
+  closeEditMyNameDialog();
+
+  const nameIn = document.getElementById('my-driver-name');
+  const plateIn = document.getElementById('my-driver-plate');
+  if (nameIn) nameIn.value = inName;
+  if (plateIn) plateIn.value = inPlate;
+
+  const headerBtn = document.getElementById('header-login-btn');
+  if (headerBtn) {
+    headerBtn.textContent = `🟢 ${inName} (#${appState.myUser.roomCode || '8888'})`;
+  }
+
+  syncUI();
+  refreshMainMarkers();
+  publishMyPresence();
+  window.soundEngine.playWinFanfare();
+  showToast('✅ 名字修改成功！', `您的暱稱已更新為【${inName} (${inPlate})】！`, 'emerald');
+};
+
+window.switchTrackingToSelf = function () {
+  appState.selectedFriendId = null;
+  saveFriendsToStorage();
+  syncUI();
+  refreshMainMarkers();
+  updateRealMapOverlays();
+  if (leafletMap) {
+    leafletMap.flyTo([appState.myUser.lat, appState.myUser.lng], 17, { duration: 0.8 });
+  }
+  window.soundEngine.playPing();
+  showToast('🛡️ 已切換為查看自己', `目前視野鎖定：${appState.myUser.name}`, 'teal');
+};
+
+window.syncDriverProfileFromTab2 = function () {
+  const name = document.getElementById('my-driver-name')?.value.trim();
+  const plate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase();
+  const room = document.getElementById('my-room-code')?.value.trim();
+  if (name) appState.myUser.name = name;
+  if (plate) appState.myUser.plate = plate;
+  if (room && room !== appState.myUser.roomCode) {
+    appState.myUser.roomCode = room;
+    initRealtimeCloudSync();
+  }
+  saveMyUserToStorage();
+  syncUI();
+  refreshMainMarkers();
+  publishMyPresence();
+};
+
+window.quickJumpToCity = function (lat, lng, name) {
+  appState.myUser.lat = lat;
+  appState.myUser.lng = lng;
+  appState.myUser.hasRealGps = true;
+  saveMyUserToStorage();
+  if (appState.myUser.loggedIn) publishMyPresence();
+  if (leafletMap) leafletMap.flyTo([lat, lng], 17, { duration: 0.8 });
+  refreshMainMarkers();
+  updateRealMapOverlays();
+  syncUI();
+  fetchAndDisplayReverseAddress(lat, lng);
+  window.soundEngine.playPing();
+  showToast(`📍 已精準定位至【${name}】！`, `座標: ${lat.toFixed(5)}, ${lng.toFixed(5)}`, 'emerald');
 };
 
 window.loginAndStartRealGpsBroadcast = function () {
-  const name = document.getElementById('my-driver-name')?.value.trim();
-  const plate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || '我的座駕';
-  const room = document.getElementById('my-room-code')?.value.trim() || '8888';
+  const name = document.getElementById('my-driver-name')?.value.trim() || appState.myUser.name;
+  const plate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.myUser.plate || '我的座駕';
+  const room = document.getElementById('my-room-code')?.value.trim() || appState.myUser.roomCode || '8888';
 
   if (!name) {
     window.openLoginModal();
@@ -617,6 +740,9 @@ window.loginAndStartRealGpsBroadcast = function () {
     beaconBtn.textContent = `🟢 已登入【${name}】並持續向房號 #${room} 廣播真實定位`;
   }
 
+  syncUI();
+  refreshMainMarkers();
+  publishMyPresence();
   window.soundEngine.playWinFanfare();
   showToast('🛰️ 正在開啟真實 GPS 定位...', `已登入為【${name}】，連線房號 #${room}`, 'emerald');
 
@@ -1161,8 +1287,6 @@ window.useRealBrowserGPS = function (options = {}) {
     showToast('🛰️ 正在抓取最高精確度 GPS 定位...', '請在瀏覽器彈窗中點選「允許」位置權限', 'cyan');
   }
 
-  let hasInitialCentered = false;
-
   const handlePosition = (pos, source = 'GPS') => {
     const { latitude, longitude, accuracy } = pos.coords;
     if (accuracy && accuracy > 5000) return; // filter obvious junk
@@ -1174,9 +1298,9 @@ window.useRealBrowserGPS = function (options = {}) {
     saveMyUserToStorage();
     if (appState.myUser.loggedIn) publishMyPresence();
 
-    if (leafletMap && (!hasInitialCentered || !appState.selectedFriendId)) {
+    // ALWAYS move map when GPS fix arrives or user explicitly requests GPS
+    if (leafletMap && (!appState.selectedFriendId || !silent)) {
       leafletMap.setView([latitude, longitude], 17, { animate: true });
-      hasInitialCentered = true;
     }
     if (appState.streetViewOpen) {
       updateStreetViewIframe(latitude, longitude, '我的真實位置');
@@ -1203,9 +1327,9 @@ window.useRealBrowserGPS = function (options = {}) {
           console.warn('All geolocation failed:', err2);
           if (!silent) {
             if (err2.code === 1) {
-              showToast('🔒 位置權限未開啟', '請點擊網址列旁的鎖頭 🔒，開啟「位置」權限並重整，或點擊「📍 地圖釘選」手動校正！', 'red');
+              showToast('🔒 位置權限未開啟', '請點擊網址列旁的鎖頭 🔒，開啟「位置」權限並重整，或點選下方城市按鈕進行定位！', 'red');
             } else {
-              showToast('⚠️ 室內 GPS 信號較弱', '可直接在地圖上拖曳標記或點擊「📍 地圖釘選」以達 100% 精準！', 'amber');
+              showToast('⚠️ 室內 GPS 信號較弱', '可直接在地圖上拖曳標記或點選下方城市快速定位！', 'amber');
             }
           }
         },
@@ -1235,12 +1359,12 @@ window.searchMapLocation = async function (e) {
   if (!query) return;
 
   window.soundEngine.playPing();
-  showToast('🔍 正在搜尋路名與座標...', `查詢：「${query}」`, 'cyan');
+  showToast('🔍 正在搜尋台灣精確地址與路名...', `查詢：「${query}」`, 'cyan');
 
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&accept-language=zh-TW`
-    );
+    // Strictly restrict search to Taiwan (countrycodes=tw, viewbox bounds)
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=tw&limit=1&accept-language=zh-TW`;
+    const res = await fetch(url);
     const data = await res.json();
     if (data && data.length > 0) {
       const lat = parseFloat(data[0].lat);
@@ -1259,12 +1383,12 @@ window.searchMapLocation = async function (e) {
       updateRealMapOverlays();
       syncUI();
       fetchAndDisplayReverseAddress(lat, lng);
-      showToast('🛰️ 已精確定位至該地址！', `${data[0].display_name.slice(0, 38)}...`, 'emerald');
+      showToast('🎯 搜尋定位成功！', `${data[0].display_name.slice(0, 42)}...`, 'emerald');
       return;
     }
   } catch (err) {}
 
-  showToast('⚠️ 找不到該路名', '請嘗試輸入更完整的地標（例如：台北101、台中好市多、新北耶誕城）', 'red');
+  showToast('⚠️ 找不到該地標', '請嘗試輸入更確切的路名或縣市（例如：台北101、新北板橋車站）', 'red');
 };
 
 // ============================================================================
@@ -2108,8 +2232,25 @@ function syncUI() {
   const metrics = computeTacticalMetrics();
   const target = getTrackedProfile();
 
-  document.getElementById('vip-name').textContent = target.name;
-  document.getElementById('vip-plate').textContent = target.plate;
+  const isTrackingFriend = !!appState.selectedFriendId;
+  const switchSelfBtn = document.getElementById('vip-switch-self-btn');
+  if (switchSelfBtn) {
+    switchSelfBtn.classList.toggle('hidden', !isTrackingFriend);
+  }
+
+  const nameEl = document.getElementById('vip-name');
+  const plateEl = document.getElementById('vip-plate');
+  if (nameEl && plateEl) {
+    if (isTrackingFriend) {
+      nameEl.textContent = target.name;
+      nameEl.title = `正在追蹤好友 ${target.name}，點此可改自己的名字`;
+      plateEl.textContent = `🚨 追蹤好友: ${target.plate}`;
+    } else {
+      nameEl.textContent = appState.myUser.name;
+      nameEl.title = `點擊直接修改我的駕駛暱稱`;
+      plateEl.textContent = `🛡️ 我的座駕: ${appState.myUser.plate || '未填寫'}`;
+    }
+  }
   document.getElementById('vip-os-bubble').textContent = target.sosMsg || sc.osList[appState.osIndex % sc.osList.length];
   const vipImg = document.getElementById('vip-avatar-img');
   if (vipImg && target.avatar) vipImg.src = target.avatar;
