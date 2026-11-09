@@ -96,6 +96,115 @@
       transform: translateY(0) scale(0.96);
     }
 
+    /* =========================================================================
+       DYNAMIC FROSTED GLASS WINDOWS (MODERATE LUMINANCE - LUXURY DARK ANIME)
+       ========================================================================= */
+    .glass-window {
+      position: relative;
+      background: linear-gradient(145deg, rgba(16, 26, 56, 0.74) 0%, rgba(7, 11, 26, 0.88) 100%);
+      backdrop-filter: blur(22px) saturate(145%);
+      -webkit-backdrop-filter: blur(22px) saturate(145%);
+      border: 1.2px solid rgba(212, 175, 55, 0.32);
+      border-radius: 16px;
+      box-shadow:
+        0 12px 30px -8px rgba(0, 0, 0, 0.75),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.10),
+        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+      transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease, box-shadow 0.22s ease;
+      touch-action: manipulation;
+      user-select: none;
+    }
+    /* Dynamic Specular Reflection following Mouse cursor */
+    .glass-window::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(254, 240, 138, 0.10),
+        transparent 70%
+      );
+      opacity: 0.85;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    /* Subtle, Moderate Animated Glass Sheen (Not too bright!) */
+    .glass-window::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        110deg,
+        transparent 38%,
+        rgba(254, 240, 138, 0.05) 48%,
+        rgba(45, 212, 191, 0.07) 52%,
+        transparent 64%
+      );
+      transform: translateX(-120%);
+      animation: glass-sheen-sweep 7.5s infinite ease-in-out;
+      pointer-events: none;
+    }
+    @keyframes glass-sheen-sweep {
+      0%, 45% { transform: translateX(-120%); }
+      75%, 100% { transform: translateX(120%); }
+    }
+    .glass-window:hover {
+      transform: translateY(-2px) scale(1.02);
+      border-color: rgba(254, 240, 138, 0.62);
+      box-shadow:
+        0 16px 36px -6px rgba(0, 0, 0, 0.82),
+        0 0 18px rgba(212, 175, 55, 0.25),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+    }
+    .glass-window.glass-active {
+      border-color: #FEF08A;
+      background: linear-gradient(145deg, rgba(24, 40, 85, 0.85) 0%, rgba(10, 16, 38, 0.94) 100%);
+      box-shadow:
+        0 0 22px rgba(212, 175, 55, 0.35),
+        inset 0 0 14px rgba(254, 240, 138, 0.14),
+        0 12px 30px rgba(0, 0, 0, 0.8);
+    }
+
+    /* MOUSE TRACKING TACTICAL RETICLE */
+    #mouse-reticle {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 28px;
+      height: 28px;
+      margin-top: -14px;
+      margin-left: -14px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(254, 240, 138, 0.45);
+      box-shadow: 0 0 14px rgba(45, 212, 191, 0.35);
+      pointer-events: none;
+      z-index: 9999;
+      transition: width 0.22s ease, height 0.22s ease, margin 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+      display: none;
+      transform: translate3d(-100px, -100px, 0);
+    }
+    @media (pointer: fine) {
+      #mouse-reticle { display: block; }
+    }
+    #mouse-reticle::before {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background: rgba(45, 212, 191, 0.7);
+      box-shadow: 0 0 6px #2DD4BF;
+    }
+    #mouse-reticle.reticle-expand {
+      width: 44px;
+      height: 44px;
+      margin-top: -22px;
+      margin-left: -22px;
+      border-color: rgba(254, 240, 138, 0.75);
+      background: rgba(45, 212, 191, 0.08);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.45);
+    }
+
     .ribbon-slash {
       background: linear-gradient(90deg, #1E40AF 0%, #2563EB 100%);
       transform: skewX(-16deg);
@@ -156,6 +265,9 @@
 
   <!-- STARLIGHT PARTICLE CANVAS OVERLAY -->
   <canvas id="stardust-canvas" class="fixed inset-0 pointer-events-none z-30"></canvas>
+
+  <!-- MOUSE TRACKING TACTICAL ANIME RETICLE -->
+  <div id="mouse-reticle"></div>
 
   <!-- =====================================================================
        1. HILARIOUS ORNATE SANBAO HEADER
@@ -324,15 +436,15 @@
       <!-- 3 Big Golden Metrics + Live GPS Accuracy (4 cols) -->
       <div class="lg:col-span-4 royal-card p-3 flex flex-col justify-between gap-2">
         <div class="grid grid-cols-3 gap-2 text-center items-center flex-1">
-          <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
+          <div class="glass-window p-2 text-center flex flex-col justify-center items-center">
             <div class="text-[10px] text-amber-200/70 font-bold">✦ 警戒半徑</div>
             <div id="metric-blast-radius" class="text-base sm:text-lg font-mono font-black text-rose-400">1.5 km</div>
           </div>
-          <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
+          <div class="glass-window p-2 text-center flex flex-col justify-center items-center">
             <div class="text-[10px] text-amber-200/70 font-bold">✦ 離你距離</div>
             <div id="metric-user-dist" class="text-base sm:text-lg font-mono font-black text-teal-300">0.0 km</div>
           </div>
-          <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
+          <div class="glass-window p-2 text-center flex flex-col justify-center items-center">
             <div class="text-[10px] text-amber-200/70 font-bold">✦ 路人生還率</div>
             <div id="metric-survival-rate" class="text-base sm:text-lg font-mono font-black text-amber-300">99%</div>
           </div>
@@ -343,26 +455,38 @@
         </div>
       </div>
 
-      <!-- 4 Tarot Status Broadcast Buttons (4 cols) -->
-      <div class="md:col-span-2 lg:col-span-4 grid grid-cols-4 gap-2">
-        <button data-scenario-btn="home" onclick="selectScenario('home')" class="tarot-btn p-2 flex flex-col items-center justify-center">
-          <span class="text-[9px] font-serif-title text-amber-300/70">I</span>
-          <span class="text-xl my-0.5">🏠</span>
+      <!-- 4 Tarot Status Broadcast Glass Windows (4 cols) -->
+      <div id="scenario-grid-windows" class="md:col-span-2 lg:col-span-4 grid grid-cols-4 gap-2">
+        <button data-scenario-btn="home" onclick="selectScenario('home')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：平安在家">
+          <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-teal-300/80 mb-0.5">
+            <span class="font-bold">#01</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-teal-400 group-hover:scale-125 transition-transform"></span>
+          </div>
+          <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🏠</span>
           <span class="text-[11px] font-black text-teal-300">平安在家</span>
         </button>
-        <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="tarot-btn p-2 flex flex-col items-center justify-center">
-          <span class="text-[9px] font-serif-title text-amber-300/70">II</span>
-          <span class="text-xl my-0.5">🛵</span>
+        <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：買鹹酥雞">
+          <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-amber-300/80 mb-0.5">
+            <span class="font-bold">#02</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 group-hover:scale-125 transition-transform"></span>
+          </div>
+          <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🛵</span>
           <span class="text-[11px] font-black text-amber-300">買鹹酥雞</span>
         </button>
-        <button data-scenario-btn="roundabout" onclick="selectScenario('roundabout')" class="tarot-btn p-2 flex flex-col items-center justify-center">
-          <span class="text-[9px] font-serif-title text-amber-300/70">III</span>
-          <span class="text-xl my-0.5">🔄</span>
+        <button data-scenario-btn="roundabout" onclick="selectScenario('roundabout')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：圓環迷航">
+          <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-orange-300/80 mb-0.5">
+            <span class="font-bold">#03</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-orange-400 group-hover:scale-125 transition-transform"></span>
+          </div>
+          <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🔄</span>
           <span class="text-[11px] font-black text-orange-300">圓環迷航</span>
         </button>
-        <button data-scenario-btn="parking" onclick="selectScenario('parking')" class="tarot-btn p-2 flex flex-col items-center justify-center">
-          <span class="text-[9px] font-serif-title text-amber-300/70">IV</span>
-          <span class="text-xl my-0.5">🅿️</span>
+        <button data-scenario-btn="parking" onclick="selectScenario('parking')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：正在倒車">
+          <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-rose-300/80 mb-0.5">
+            <span class="font-bold">#04</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-400 group-hover:scale-125 transition-transform"></span>
+          </div>
+          <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🅿️</span>
           <span class="text-[11px] font-black text-rose-400">正在倒車</span>
         </button>
       </div>
@@ -557,16 +681,16 @@
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-            <button onclick="triggerWiperParadox()" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-amber-200">
+            <button onclick="triggerWiperParadox()" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-amber-200">
               🪄 誤刷雨刷
             </button>
-            <button onclick="triggerCockpitAction('horn')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-rose-300">
+            <button onclick="triggerCockpitAction('horn')" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-rose-300">
               📯 驚慌喇叭
             </button>
-            <button onclick="triggerCockpitAction('rgear')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-teal-300">
+            <button onclick="triggerCockpitAction('rgear')" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-teal-300">
               🔊 雷達破音
             </button>
-            <button onclick="drawRandomTarotCard()" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-yellow-300">
+            <button onclick="drawRandomTarotCard()" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-yellow-300">
               🃏 抽三寶牌
             </button>
           </div>
@@ -921,7 +1045,7 @@
 
   <div id="toast-container" class="fixed bottom-16 lg:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=14.3"></script>
-  <script src="app.js?v=14.3"></script>
+  <script src="sound_and_fx.js?v=14.4"></script>
+  <script src="app.js?v=14.4"></script>
 </body>
 </html>

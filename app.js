@@ -2277,6 +2277,7 @@ function syncUI() {
     const active = btn.getAttribute('data-scenario-btn') === appState.scenario;
     btn.classList.toggle('ring-2', active);
     btn.classList.toggle('ring-amber-300', active);
+    btn.classList.toggle('glass-active', active);
   });
 
   document.getElementById('lamp-left-turn').classList.toggle('signal-blink-active', sc.leftSignal);

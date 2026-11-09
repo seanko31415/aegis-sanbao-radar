@@ -271,6 +271,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const reticle = document.getElementById('mouse-reticle');
+  let cursorX = -100;
+  let cursorY = -100;
+  let hasMouse = false;
+  let lastHoveredGw = null;
+
   function spawnSparkle(x, y) {
     if (particles.length < 60) {
       particles.push({
@@ -286,16 +292,60 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.addEventListener('mousemove', (e) => {
+    cursorX = e.clientX;
+    cursorY = e.clientY;
+    hasMouse = true;
+
+    // Tactical anime cursor follower
+    if (reticle) {
+      reticle.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0)`;
+      const isInteractive = !!e.target.closest('button, a, input, select, .glass-window, .tarot-btn, .cursor-pointer, [role="button"]');
+      reticle.classList.toggle('reticle-expand', isInteractive);
+    }
+
+    // Dynamic glass specular highlight tracking on grid windows
+    const hoveredGw = e.target.closest('.glass-window');
+    if (hoveredGw) {
+      const rect = hoveredGw.getBoundingClientRect();
+      hoveredGw.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+      hoveredGw.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+
+      if (hoveredGw !== lastHoveredGw) {
+        lastHoveredGw = hoveredGw;
+        if (window.soundEngine && !window.soundEngine.muted) {
+          window.soundEngine.playClick(920);
+        }
+      }
+    } else {
+      lastHoveredGw = null;
+    }
+
     if (Math.random() < 0.35) spawnSparkle(e.clientX, e.clientY);
   });
+
   window.addEventListener('touchmove', (e) => {
-    if (e.touches?.[0] && Math.random() < 0.4) {
-      spawnSparkle(e.touches[0].clientX, e.touches[0].clientY);
+    if (e.touches?.[0]) {
+      cursorX = e.touches[0].clientX;
+      cursorY = e.touches[0].clientY;
+      if (Math.random() < 0.4) {
+        spawnSparkle(cursorX, cursorY);
+      }
     }
   }, { passive: true });
 
   function animateParticles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Moderate, soft ambient radial spotlight around mouse (not blinding, gentle cyber glow)
+    if (hasMouse && cursorX >= 0 && cursorY >= 0) {
+      const radGrad = ctx.createRadialGradient(cursorX, cursorY, 0, cursorX, cursorY, 130);
+      radGrad.addColorStop(0, 'rgba(45, 212, 191, 0.04)');
+      radGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.02)');
+      radGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = radGrad;
+      ctx.fillRect(cursorX - 130, cursorY - 130, 260, 260);
+    }
+
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx;
