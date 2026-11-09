@@ -1,6 +1,6 @@
 /**
- * 2027 SANBAO // 皇家交響防空星盤 v10.0
- * Sound Engine + Stardust Particle Engine + Ornate Gold SVG Cut-In
+ * 損友三寶監測局 // 馬路神主牌防空星盤 v11.0
+ * Sound Engine + Mandarin Voice Synth + Stardust Particle Engine + Ornate Gold SVG Cut-In
  */
 
 class SoundEngine {
@@ -19,6 +19,9 @@ class SoundEngine {
 
   toggleMute() {
     this.muted = !this.muted;
+    if (this.muted && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
     if (!this.muted) this.playClick(880);
     return this.muted;
   }
@@ -87,22 +90,62 @@ class SoundEngine {
     } catch (e) {}
   }
 
-  playRadarBeep() {
+  playRadarBeep(pitch = 1480) {
     if (this.muted) return;
     try {
       this.init();
       const now = this.ctx.currentTime;
-      [0, 0.11, 0.22, 0.33].forEach((offset) => {
+      [0, 0.1, 0.2, 0.3].forEach((offset) => {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'square';
-        osc.frequency.setValueAtTime(1480, now + offset);
-        gain.gain.setValueAtTime(0.10, now + offset);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.08);
+        osc.frequency.setValueAtTime(pitch, now + offset);
+        gain.gain.setValueAtTime(0.09, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.075);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
         osc.start(now + offset);
-        osc.stop(now + offset + 0.09);
+        osc.stop(now + offset + 0.085);
+      });
+    } catch (e) {}
+  }
+
+  playStamp() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(190, now);
+      osc.frequency.exponentialRampToValueAtTime(55, now + 0.16);
+      gain.gain.setValueAtTime(0.28, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.19);
+    } catch (e) {}
+  }
+
+  playWinFanfare() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + i * 0.09);
+        gain.gain.setValueAtTime(0.16, now + i * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.09 + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + i * 0.09);
+        osc.stop(now + i * 0.09 + 0.26);
       });
     } catch (e) {}
   }
@@ -169,27 +212,41 @@ class SoundEngine {
       }
     } catch (e) {}
   }
+
+  speak(text) {
+    if (this.muted) return;
+    try {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'zh-TW';
+        utter.rate = 1.18;
+        utter.pitch = 1.25;
+        window.speechSynthesis.speak(utter);
+      }
+    } catch (e) {}
+  }
 }
 
 window.soundEngine = new SoundEngine();
 
-window.getAnimeCutInSVG = function (modeColor = '#D4AF37', label = 'SYMPHONY') {
+window.getAnimeCutInSVG = function (modeColor = '#D4AF37', label = 'SANBAO ALERT') {
   return `
   <svg viewBox="0 0 400 100" class="w-full h-full select-none pointer-events-none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#070B19" stop-opacity="0.9"/>
-        <stop offset="50%" stop-color="${modeColor}" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#070B19" stop-opacity="0.9"/>
+        <stop offset="0%" stop-color="#070B19" stop-opacity="0.92"/>
+        <stop offset="50%" stop-color="${modeColor}" stop-opacity="0.38"/>
+        <stop offset="100%" stop-color="#070B19" stop-opacity="0.92"/>
       </linearGradient>
     </defs>
     <rect width="400" height="100" fill="url(#goldGrad)" />
-    <circle cx="340" cy="50" r="38" fill="none" stroke="#FEF08A" stroke-opacity="0.25" stroke-dasharray="4 4" />
-    <text x="50%" y="82" text-anchor="middle" fill="#FEF08A" fill-opacity="0.12" font-family="Cinzel Decorative, serif" font-weight="900" font-size="34" letter-spacing="4">${label}</text>
+    <circle cx="340" cy="50" r="38" fill="none" stroke="#FEF08A" stroke-opacity="0.28" stroke-dasharray="4 4" />
+    <text x="50%" y="82" text-anchor="middle" fill="#FEF08A" fill-opacity="0.14" font-family="Cinzel Decorative, serif" font-weight="900" font-size="32" letter-spacing="3">${label}</text>
   </svg>`;
 };
 
-// Golden Stardust Particle Engine (Follows Mouse & Floats upward like the 2027 ACG Poster)
+// Golden Stardust Particle Engine (Supports both Mouse & Mobile Touch!)
 document.addEventListener('DOMContentLoaded', () => {
   const canvas = document.getElementById('stardust-canvas');
   if (!canvas) return;
@@ -203,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', resize);
   resize();
 
-  for (let i = 0; i < 28; i++) {
+  for (let i = 0; i < 26; i++) {
     particles.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
@@ -214,11 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  window.addEventListener('mousemove', (e) => {
-    if (Math.random() < 0.35 && particles.length < 55) {
+  function spawnSparkle(x, y) {
+    if (particles.length < 60) {
       particles.push({
-        x: e.clientX + (Math.random() - 0.5) * 16,
-        y: e.clientY + (Math.random() - 0.5) * 16,
+        x: x + (Math.random() - 0.5) * 16,
+        y: y + (Math.random() - 0.5) * 16,
         r: 1.2 + Math.random() * 1.8,
         vx: (Math.random() - 0.5) * 0.6,
         vy: -0.5 - Math.random() * 0.5,
@@ -226,7 +283,16 @@ document.addEventListener('DOMContentLoaded', () => {
         decay: true
       });
     }
+  }
+
+  window.addEventListener('mousemove', (e) => {
+    if (Math.random() < 0.35) spawnSparkle(e.clientX, e.clientY);
   });
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches?.[0] && Math.random() < 0.4) {
+      spawnSparkle(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
 
   function animateParticles() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);

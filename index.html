@@ -2,11 +2,11 @@
 <html lang="zh-TW" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>2027 SANBAO // 皇家交響防空星盤 v10.0</title>
+  <title>損友三寶監測局 // 雞腿駕照防空雷達 v11.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -28,12 +28,13 @@
       color: #FFFBEB;
       font-family: 'Noto Sans TC', sans-serif;
       background-image:
-        linear-gradient(to bottom, rgba(6, 10, 23, 0.76), rgba(6, 10, 23, 0.93)),
+        linear-gradient(to bottom, rgba(6, 10, 23, 0.78), rgba(6, 10, 23, 0.94)),
         url('assets/fantasy_harbor_bg.jpg');
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
       overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .font-serif-title { font-family: 'Cinzel Decorative', 'Noto Serif TC', serif; }
@@ -48,19 +49,19 @@
     /* Ultra-Luxury Royal Tarot Frame */
     .royal-card {
       position: relative;
-      background: linear-gradient(160deg, rgba(14, 23, 50, 0.86) 0%, rgba(7, 11, 26, 0.95) 100%);
+      background: linear-gradient(160deg, rgba(14, 23, 50, 0.88) 0%, rgba(7, 11, 26, 0.96) 100%);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border: 1.5px solid rgba(212, 175, 55, 0.48);
+      border: 1.5px solid rgba(212, 175, 55, 0.5);
       border-radius: 20px;
       box-shadow:
-        0 22px 55px -12px rgba(0, 0, 0, 0.9),
-        0 0 28px rgba(37, 99, 235, 0.22),
+        0 20px 50px -12px rgba(0, 0, 0, 0.9),
+        0 0 26px rgba(37, 99, 235, 0.22),
         inset 0 0 0 1px rgba(254, 240, 138, 0.16);
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
     }
     .royal-card:hover {
-      border-color: rgba(254, 240, 138, 0.72);
+      border-color: rgba(254, 240, 138, 0.75);
     }
 
     .royal-card::before,
@@ -72,25 +73,27 @@
       pointer-events: none;
       text-shadow: 0 0 10px #F59E0B;
     }
-    .royal-card::before { top: 7px; left: 10px; }
-    .royal-card::after { bottom: 7px; right: 10px; }
+    .royal-card::before { top: 6px; left: 10px; }
+    .royal-card::after { bottom: 6px; right: 10px; }
 
     /* Interactive 3D Tarot Button */
     .tarot-btn {
       position: relative;
       background: linear-gradient(170deg, rgba(22, 38, 82, 0.92), rgba(8, 13, 30, 0.96));
       border: 1.5px solid rgba(212, 175, 55, 0.52);
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65), inset 0 0 14px rgba(254, 240, 138, 0.08);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(254, 240, 138, 0.08);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      touch-action: manipulation;
+      user-select: none;
     }
     .tarot-btn:hover {
-      transform: translateY(-4px) scale(1.03);
+      transform: translateY(-2px);
       border-color: #FEF08A;
-      box-shadow: 0 14px 28px rgba(212, 175, 55, 0.35), 0 0 20px rgba(59, 130, 246, 0.45);
+      box-shadow: 0 12px 24px rgba(212, 175, 55, 0.32), 0 0 18px rgba(59, 130, 246, 0.42);
     }
     .tarot-btn:active {
-      transform: translateY(0) scale(0.97);
+      transform: translateY(0) scale(0.96);
     }
 
     /* 2027 ACG Poster Ribbon */
@@ -109,16 +112,16 @@
 
     @keyframes pulse-gold {
       0% { transform: scale(0.85); opacity: 0.95; }
-      100% { transform: scale(2.25); opacity: 0; }
+      100% { transform: scale(2.35); opacity: 0; }
     }
     .marker-pulse { animation: pulse-gold 1.4s infinite ease-out; }
 
     @keyframes wiper-swing {
-      0% { transform: rotate(-44deg); }
-      50% { transform: rotate(44deg); }
-      100% { transform: rotate(-44deg); }
+      0% { transform: rotate(-46deg); }
+      50% { transform: rotate(46deg); }
+      100% { transform: rotate(-46deg); }
     }
-    .wiper-rapid { transform-origin: bottom center; animation: wiper-swing 0.32s infinite ease-in-out; }
+    .wiper-rapid { transform-origin: bottom center; animation: wiper-swing 0.3s infinite ease-in-out; }
     .wiper-idle { transform-origin: bottom center; animation: wiper-swing 1.8s infinite ease-in-out; }
 
     @keyframes lamp-blink {
@@ -132,11 +135,14 @@
       color: #FEF08A !important;
     }
 
-    @keyframes float-slow {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-4px); }
+    @keyframes stamp-slam {
+      0% { transform: scale(2.4) rotate(-22deg); opacity: 0; }
+      70% { transform: scale(0.92) rotate(-8deg); opacity: 1; }
+      100% { transform: scale(1) rotate(-10deg); opacity: 1; }
     }
-    .animate-float { animation: float-slow 3.4s ease-in-out infinite; }
+    .stamp-badge {
+      animation: stamp-slam 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
 
     @keyframes cutin-pop {
       0% { opacity: 0; transform: translateX(40px) scale(0.9); }
@@ -144,72 +150,91 @@
       85% { opacity: 1; transform: translateX(0) scale(1); }
       100% { opacity: 0; transform: translateX(20px) scale(0.95); }
     }
-    .animate-cutin { animation: cutin-pop 2.1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-cutin { animation: cutin-pop 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col selection:bg-amber-300 selection:text-slate-950">
+<body class="min-h-screen flex flex-col pb-16 lg:pb-4 selection:bg-amber-300 selection:text-slate-950">
 
   <!-- STARLIGHT PARTICLE CANVAS OVERLAY -->
   <canvas id="stardust-canvas" class="fixed inset-0 pointer-events-none z-30"></canvas>
 
   <!-- =====================================================================
-       1. ORNATE ACG SYMPHONY HEADER
+       1. HILARIOUS ORNATE SANBAO HEADER (Preserves Luxury Serif Font!)
        ===================================================================== -->
-  <header class="sticky top-0 z-50 bg-[#060A17]/85 backdrop-blur-2xl border-b border-amber-300/35">
-    <div class="max-w-[1380px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+  <header class="sticky top-0 z-50 bg-[#060A17]/90 backdrop-blur-2xl border-b border-amber-300/35">
+    <div class="max-w-[1420px] mx-auto px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
 
-      <div class="flex items-center gap-3">
-        <div class="ribbon-slash px-2.5 py-0.5">
-          <span class="font-serif-title text-xs font-black text-amber-200 tracking-widest block transform skew-x-12">2027 SSR</span>
+      <div class="flex items-center gap-2.5">
+        <div class="ribbon-slash px-2.5 py-0.5 shrink-0">
+          <span class="font-serif-title text-[10px] sm:text-xs font-black text-amber-200 tracking-widest block transform skew-x-12">🍗 雞腿駕照</span>
         </div>
         <div class="flex items-center gap-2">
-          <h1 class="font-serif-title text-lg sm:text-xl font-black tracking-wider gold-text">
-            SANBAO 交響星盤
+          <h1 class="font-serif-title text-base sm:text-xl font-black tracking-wider gold-text">
+            損友三寶監測局 // 馬路神主牌雷達
           </h1>
-          <span id="header-defcon-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.6)]">
+          <span id="header-defcon-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.6)] shrink-0">
             LV.4
           </span>
         </div>
       </div>
 
-      <!-- 4 Main Mode Tabs -->
-      <nav class="flex items-center gap-1.5 bg-[#090E22]/90 p-1 rounded-2xl border border-amber-300/30">
+      <!-- Desktop 4 Mode Tabs -->
+      <nav class="hidden lg:flex items-center gap-1.5 bg-[#090E22]/90 p-1 rounded-2xl border border-amber-300/30">
         <button id="tab-btn-radar" onclick="switchTab('radar')" class="px-4 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,0.5)] transition-all">
-          ✨ 星盤地圖
+          📡 三寶雷達 & 3D好市多
         </button>
         <button id="tab-btn-squad" onclick="switchTab('squad')" class="px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/75 hover:text-white transition-all">
-          🚗 好友出車共享
+          🚗 損友出車共享
         </button>
         <button id="tab-btn-route" onclick="switchTab('route')" class="px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/75 hover:text-white transition-all">
-          🃏 塔羅占卜
+          🃏 塔羅占卜 & LINE警報
         </button>
         <button id="tab-btn-dossier" onclick="switchTab('dossier')" class="px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/75 hover:text-white transition-all">
-          🎼 六維戰績
+          🎼 戰績六維 & 黑歷史
         </button>
       </nav>
 
-      <!-- Quick Controls -->
+      <!-- Quick Controls + Direct LINE Share -->
       <div class="flex items-center gap-1.5">
-        <button id="sound-toggle-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-xs text-amber-200">
+        <button id="sound-toggle-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-xs text-amber-200" title="音效開關">
           🔊
         </button>
-        <button onclick="openCopilotModal()" class="px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-amber-300/40 text-amber-200 text-xs font-black">
+        <button onclick="openCopilotModal()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-amber-300/40 text-amber-200 text-xs font-black">
           📿 副駕木魚
         </button>
-        <button onclick="openPresidentialAlert()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600 text-white text-xs font-black shadow-[0_0_20px_rgba(244,63,94,0.55)] active:scale-95">
-          🚨 發布警報
+        <button onclick="shareDirectlyToLine()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#06C755] hover:brightness-110 text-white text-xs font-black shadow-[0_0_15px_rgba(6,199,85,0.5)] flex items-center gap-1">
+          💬 傳LINE警報
+        </button>
+        <button onclick="openPresidentialAlert()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600 text-white text-xs font-black shadow-[0_0_20px_rgba(244,63,94,0.55)] active:scale-95">
+          🚨 全城廣播
         </button>
       </div>
     </div>
   </header>
 
+  <!-- MOBILE & TABLET BOTTOM NAVIGATION BAR -->
+  <nav class="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#060A17]/95 backdrop-blur-2xl border-t border-amber-300/40 grid grid-cols-4 gap-1 p-1.5">
+    <button id="mob-tab-radar" onclick="switchTab('radar')" class="py-2 rounded-xl font-black text-[11px] flex flex-col items-center justify-center bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950">
+      <span>📡 雷達&3D倒車</span>
+    </button>
+    <button id="mob-tab-squad" onclick="switchTab('squad')" class="py-2 rounded-xl font-bold text-[11px] flex flex-col items-center justify-center text-amber-100/80">
+      <span>🚗 損友共享</span>
+    </button>
+    <button id="mob-tab-route" onclick="switchTab('route')" class="py-2 rounded-xl font-bold text-[11px] flex flex-col items-center justify-center text-amber-100/80">
+      <span>💬 LINE警報</span>
+    </button>
+    <button id="mob-tab-dossier" onclick="switchTab('dossier')" class="py-2 rounded-xl font-bold text-[11px] flex flex-col items-center justify-center text-amber-100/80">
+      <span>🎼 黑歷史牆</span>
+    </button>
+  </nav>
+
   <!-- ANIME CUT-IN POPUP -->
   <div id="anime-cutin-banner" class="hidden fixed top-16 right-4 z-50 pointer-events-none max-w-xs w-full">
     <div class="royal-card flex items-center px-3.5 py-2.5 gap-3 border-2 border-amber-300">
       <div id="anime-cutin-svg" class="absolute inset-0 opacity-50 rounded-2xl overflow-hidden"></div>
-      <img src="assets/royal_conductor.jpg" alt="Cut-In" class="relative z-10 w-14 h-14 rounded-xl object-cover border-2 border-amber-300 shrink-0" />
+      <img id="cutin-avatar-img" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'" alt="Cut-In" class="relative z-10 w-14 h-14 rounded-xl object-cover border-2 border-amber-300 shrink-0" />
       <div class="relative z-10 min-w-0">
-        <div class="text-[9px] font-serif-title tracking-widest text-amber-300">✦ TAROT SYMPHONY ✦</div>
+        <div class="text-[9px] font-serif-title tracking-widest text-amber-300">✦ SANBAO TAROT ALERT ✦</div>
         <div id="anime-cutin-title" class="text-sm font-black text-amber-200 truncate">🔄 圓環圓舞曲</div>
         <div id="anime-cutin-sub" class="text-xs text-white font-bold truncate">打左燈往右偏！</div>
       </div>
@@ -217,56 +242,77 @@
   </div>
 
   <!-- =====================================================================
-       2. MAIN WORKSPACE
+       2. MAIN WORKSPACE (FULL-WIDTH BALANCED GRID FOR DESKTOP / TABLET / PHONE)
        ===================================================================== -->
-  <main class="max-w-[1380px] w-full mx-auto px-4 py-3.5 space-y-3.5 flex-1 relative z-40">
+  <main class="max-w-[1420px] w-full mx-auto px-3 sm:px-4 py-3 space-y-3 flex-1 relative z-40">
 
-    <!-- TOP DASHBOARD: CONDUCTOR + 3 GOLDEN METRICS + 4 TAROT MODES -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+    <!-- TOP DASHBOARD: SANBAO DRIVER AVATAR + 3 METRICS + 4 TAROT SCENARIO CARDS -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-stretch">
 
-      <!-- SSR Conductor Card (4 cols) -->
-      <div class="lg:col-span-4 royal-card p-3 flex items-center gap-3">
-        <div class="relative shrink-0 animate-float cursor-pointer" onclick="drawRandomTarotCard()" title="點擊抽一張三寶命運塔羅">
-          <img src="assets/royal_conductor.jpg" alt="Conductor" class="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-300 shadow-[0_0_25px_rgba(212,175,55,0.5)]" />
-          <span class="absolute -top-1.5 -left-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-serif-title text-[9px] font-black shadow">
-            SSR 指揮家
+      <!-- Hilarious Chicken-Leg Sanbao Driver Card (4 cols) -->
+      <div class="lg:col-span-4 royal-card p-3 flex items-center gap-3 relative overflow-hidden">
+        <div class="relative shrink-0 cursor-pointer group" onclick="cycleDriverAvatar()" title="點擊切換三寶搞笑頭像">
+          <img id="vip-avatar-img" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'" alt="Sanbao Driver" class="w-20 h-20 rounded-2xl object-cover border-2 border-amber-300 shadow-[0_0_25px_rgba(212,175,55,0.5)] group-hover:scale-105 transition-transform" />
+          <span id="vip-avatar-badge" class="absolute -top-1.5 -left-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-mono text-[9px] font-black shadow">
+            🍗 雞腿車神
+          </span>
+          <span class="absolute -bottom-1 inset-x-1 text-center rounded bg-black/80 text-[9px] text-amber-200 font-bold py-0.5">
+            🔄 點擊換頭像
           </span>
         </div>
 
         <div class="min-w-0 flex-1 space-y-1">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-1">
             <span id="vip-plate" class="px-2 py-0.5 rounded-md bg-blue-950 border border-amber-300/40 text-amber-200 font-mono text-xs font-black">
               SBO-8888
             </span>
-            <span class="text-xs text-amber-300 tracking-widest">♡ ♡ ♡</span>
+            <span id="vip-bounty-badge" class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono text-[10px] font-black">
+              懸賞 $88,000
+            </span>
           </div>
-          <h2 id="vip-name" class="font-serif-title text-lg font-black gold-text truncate">
-            林小葵 (Aoi)
-          </h2>
+          <div class="flex items-center justify-between gap-1">
+            <h2 id="vip-name" class="font-serif-title text-lg font-black gold-text truncate">
+              林小葵 (Aoi)
+            </h2>
+            <button onclick="speakCurrentSanbaoOS()" class="px-2 py-0.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/40 text-[10px] text-amber-200 font-black shrink-0">
+              🎙️ 聽崩潰語音
+            </button>
+          </div>
           <div id="vip-os-bubble" class="px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/30 text-xs text-amber-100 font-bold truncate">
             💭「救命！圓環怎麼出不去！」
           </div>
+          <!-- Active Stamp Container -->
+          <div id="vip-stamps-row" class="flex flex-wrap gap-1 pt-0.5">
+            <span class="stamp-badge px-1.5 py-0.5 rounded bg-rose-600/90 border border-amber-200 text-[9px] font-black text-white">💮 雞腿換駕照認證</span>
+            <span class="stamp-badge px-1.5 py-0.5 rounded bg-amber-500/90 border border-white text-[9px] font-black text-slate-950">💮 晴天雨刷大師</span>
+          </div>
         </div>
       </div>
 
-      <!-- 3 Big Golden Metrics (4 cols) -->
-      <div class="lg:col-span-4 royal-card p-3 grid grid-cols-3 gap-2 text-center items-center">
-        <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
-          <div class="text-[10px] text-amber-200/70 font-bold">✦ 暴風圈</div>
-          <div id="metric-blast-radius" class="text-base sm:text-lg font-mono font-black text-rose-400">1.5 km</div>
+      <!-- 3 Big Golden Metrics + Live GPS Accuracy (4 cols) -->
+      <div class="lg:col-span-4 royal-card p-3 flex flex-col justify-between gap-2">
+        <div class="grid grid-cols-3 gap-2 text-center items-center flex-1">
+          <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
+            <div class="text-[10px] text-amber-200/70 font-bold">✦ 三寶暴風圈</div>
+            <div id="metric-blast-radius" class="text-base sm:text-lg font-mono font-black text-rose-400">1.5 km</div>
+          </div>
+          <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
+            <div class="text-[10px] text-amber-200/70 font-bold">✦ 離你距離</div>
+            <div id="metric-user-dist" class="text-base sm:text-lg font-mono font-black text-teal-300">1.4 km</div>
+          </div>
+          <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
+            <div class="text-[10px] text-amber-200/70 font-bold">✦ 路人生還率</div>
+            <div id="metric-survival-rate" class="text-base sm:text-lg font-mono font-black text-amber-300">54%</div>
+          </div>
         </div>
-        <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
-          <div class="text-[10px] text-amber-200/70 font-bold">✦ 離你距離</div>
-          <div id="metric-user-dist" class="text-base sm:text-lg font-mono font-black text-teal-300">1.4 km</div>
-        </div>
-        <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
-          <div class="text-[10px] text-amber-200/70 font-bold">✦ 生還率</div>
-          <div id="metric-survival-rate" class="text-base sm:text-lg font-mono font-black text-amber-300">54%</div>
+        <div class="flex items-center justify-between px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/20 text-[11px] font-mono">
+          <span id="gps-coord-readout" class="text-amber-200 truncate">🛰️ 座標: 24.16180°N, 120.64690°E</span>
+          <span id="gps-accuracy-badge" class="text-teal-300 font-black shrink-0">±8m 街角鎖定</span>
         </div>
       </div>
 
-      <!-- 4 Tarot Cards (4 cols) -->
-      <div class="lg:col-span-4 grid grid-cols-4 gap-2">
+      <!-- 4 Tarot Scenario Cards (4 cols) -->
+      <div class="md:col-span-2 lg:col-span-4 grid grid-cols-4 gap-2">
         <button data-scenario-btn="home" onclick="selectScenario('home')" class="tarot-btn p-2 flex flex-col items-center justify-center">
           <span class="text-[9px] font-serif-title text-amber-300/70">I</span>
           <span class="text-xl my-0.5">🏠</span>
@@ -291,135 +337,252 @@
     </section>
 
     <!-- ===================================================================
-         TAB 1: ✨ 星盤地圖 + 4顆爆笑音效鍵 + 精準版倒車練習曲
+         TAB 1: 📡 精準三寶雷達 + 違規蓋章機 + 3D 好市多倒車模擬器
+         (Left 7 Cols + Right 5 Cols — 100% Balanced Full Layout!)
          =================================================================== -->
-    <section id="tab-panel-radar" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    <section id="tab-panel-radar" class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
 
-      <!-- Left 8 Cols: Real Google Map -->
-      <div class="lg:col-span-8 royal-card p-3.5 space-y-2.5">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-1.5">
-            <button onclick="setMapStyle('tactical')" id="mapstyle-tactical" class="px-3 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950">
-              ✨ 皇家星盤
-            </button>
-            <button onclick="setMapStyle('streets')" id="mapstyle-streets" class="px-3 py-1 rounded-xl text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30">
-              🛣️ 真實街道
-            </button>
-            <button onclick="setMapStyle('satellite')" id="mapstyle-satellite" class="px-3 py-1 rounded-xl text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30">
-              🛰️ 衛星空拍
-            </button>
-          </div>
+      <!-- Left 7 Cols: High-Precision Real Google Map + Interactive Stamp Gun & Chicken Roulette -->
+      <div class="lg:col-span-7 flex flex-col justify-between gap-3.5">
 
-          <div class="flex items-center gap-1.5">
-            <button id="mode-btn-sanbao" onclick="setRadarClickMode('sanbao')" class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-600 text-white">
-              🎯 點圖移三寶
-            </button>
-            <button id="mode-btn-user" onclick="setRadarClickMode('user')" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-amber-100 border border-amber-300/30">
-              🛡️ 點圖移我
-            </button>
-            <button onclick="useRealBrowserGPS()" class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-teal-400 text-slate-950">
-              📍 我的定位
-            </button>
-            <button onclick="switchTab('squad')" class="px-3 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950">
-              🚗 好友共享
-            </button>
-          </div>
-        </div>
-
-        <!-- REAL GOOGLE MAP -->
-        <div class="relative w-full h-[465px] rounded-2xl overflow-hidden border-2 border-amber-300/45 z-10 shadow-2xl">
-          <div id="real-google-map" class="w-full h-full"></div>
-        </div>
-
-        <div class="flex flex-wrap items-center justify-between gap-2 bg-[#060916]/90 px-3.5 py-2 rounded-xl border border-amber-300/25 text-xs">
-          <div class="flex items-center gap-1.5">
-            <span class="text-amber-200/70 font-bold">✦ 瞬移：</span>
-            <button onclick="flyToHotspot('costco')" class="px-2.5 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-400/30 font-bold">好市多B2</button>
-            <button onclick="flyToHotspot('roundabout')" class="px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-300/30 font-bold">大圓環</button>
-            <button onclick="flyToHotspot('fengjia')" class="px-2.5 py-0.5 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-400/30 font-bold">逢甲夜市</button>
-          </div>
-          <div class="flex items-center gap-2 flex-1 max-w-xs">
-            <span class="font-black text-amber-300 shrink-0">🎼 暴走度</span>
-            <input id="chaos-slider" type="range" min="0" max="100" value="76" class="w-full accent-amber-400 cursor-pointer" />
-            <span id="chaos-slider-val" class="font-mono font-black text-rose-400 w-9 text-right">76%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right 4 Cols: Cockpit Soundboard + Wiper Baton + Upgraded Costco Mini-Game -->
-      <div class="lg:col-span-4 space-y-3.5">
-
-        <!-- 1. Golden Baton Wiper & 4-Button Interactive Soundboard -->
-        <div class="royal-card p-3.5 space-y-2.5">
-          <div class="grid grid-cols-2 gap-2">
-            <div id="lamp-left-turn" class="py-1.5 rounded-xl border border-amber-300/30 bg-slate-900 font-mono text-xs font-black text-center signal-blink-active">
-              ⬅️ 左燈常駐
+        <!-- Map Card -->
+        <div class="royal-card p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
+          <!-- Map Top Bar: Styles + Precision GPS + Landmark Search -->
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-1">
+              <button onclick="setMapStyle('tactical')" id="mapstyle-tactical" class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950">
+                ✨ 星盤雷達
+              </button>
+              <button onclick="setMapStyle('streets')" id="mapstyle-streets" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30">
+                🛣️ 真實街景
+              </button>
+              <button onclick="setMapStyle('satellite')" id="mapstyle-satellite" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30">
+                🛰️ 衛星空拍
+              </button>
             </div>
-            <div id="lamp-right-turn" class="py-1.5 rounded-xl border border-white/10 bg-slate-900 text-slate-500 font-mono text-xs font-black text-center">
-              右燈封印 ➡️
-            </div>
-          </div>
 
-          <div class="relative h-20 rounded-xl bg-gradient-to-b from-blue-950/80 to-[#060916] border border-amber-300/30 overflow-hidden flex flex-col items-center justify-end p-1.5">
-            <div class="absolute top-1.5 inset-x-3 flex justify-between text-[10px] font-mono font-bold">
-              <span class="text-amber-300" id="wiper-status-badge">☀️ 晴天雨刷 MAX</span>
-              <span class="text-teal-300" id="car-heading-paradox">左燈 ➔ 右偏 28°</span>
-            </div>
-            <div class="flex items-end justify-around w-3/4 h-12">
-              <div id="wiper-arm-left" class="w-1 h-12 bg-gradient-to-t from-amber-500 to-yellow-200 rounded-full shadow-[0_0_12px_#FDE68A] wiper-rapid"></div>
-              <div id="wiper-arm-right" class="w-1 h-12 bg-gradient-to-t from-amber-500 to-yellow-200 rounded-full shadow-[0_0_12px_#FDE68A] wiper-rapid"></div>
-            </div>
-            <div class="w-full h-1 bg-amber-300/30 rounded-full"></div>
-          </div>
-
-          <!-- 4 Interactive Cockpit Prank Buttons -->
-          <div class="grid grid-cols-2 gap-1.5">
-            <button onclick="triggerWiperParadox()" class="tarot-btn py-2 px-2 text-[11px] font-black text-amber-200 flex items-center justify-center gap-1">
-              🪄 轉彎誤刷雨刷
-            </button>
-            <button onclick="triggerCockpitAction('horn')" class="tarot-btn py-2 px-2 text-[11px] font-black text-rose-300 flex items-center justify-center gap-1">
-              📯 驚慌亂按喇叭
-            </button>
-            <button onclick="triggerCockpitAction('rgear')" class="tarot-btn py-2 px-2 text-[11px] font-black text-teal-300 flex items-center justify-center gap-1">
-              🔊 倒車雷達破音
-            </button>
-            <button onclick="drawRandomTarotCard()" class="tarot-btn py-2 px-2 text-[11px] font-black text-yellow-300 flex items-center justify-center gap-1">
-              🃏 抽三寶命運牌
-            </button>
-          </div>
-        </div>
-
-        <!-- 2. RE-ENGINEERED COSTCO B2 PARKING GAME (Crystal Clear Hitbox & Distance Sensor!) -->
-        <div class="royal-card p-3.5 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-              <h3 class="text-xs font-black gold-text">🎮 好市多「左右相反」倒車考驗</h3>
-            </div>
-            <div class="flex items-center gap-2">
-              <span id="parking-progress-badge" class="px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 font-mono text-[10px] font-black text-amber-300">
-                入庫率 0%
-              </span>
-              <button onclick="startParkingMiniGame()" class="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 text-white">
-                重置
+            <div class="flex flex-wrap items-center gap-1">
+              <button id="mode-btn-sanbao" onclick="setRadarClickMode('sanbao')" class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-600 text-white">
+                🎯 點圖移三寶
+              </button>
+              <button id="mode-btn-user" onclick="setRadarClickMode('user')" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-amber-100 border border-amber-300/30">
+                🛡️ 點圖移我
+              </button>
+              <button onclick="useRealBrowserGPS()" class="px-3 py-1 rounded-xl text-[11px] font-black bg-teal-400 hover:bg-teal-300 text-slate-950 shadow-[0_0_14px_rgba(45,212,191,0.5)]">
+                📍 精準定位我
               </button>
             </div>
           </div>
 
-          <!-- Upgraded High-Detail Top-Down Parking Canvas -->
-          <canvas id="parking-game-canvas" width="340" height="165" class="w-full h-36 rounded-xl border border-amber-300/35 bg-[#060916] shadow-inner"></canvas>
+          <!-- Precision Address / Landmark Search Bar -->
+          <form onsubmit="searchMapLocation(event)" class="flex gap-1.5">
+            <input id="map-search-input" type="text" placeholder="🔍 輸入台灣路名、地標或城市精準定位 (例：台北101、台中好市多、逢甲大學)..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/35 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300" />
+            <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0">
+              🛰️ 街角鎖定
+            </button>
+          </form>
 
-          <div class="grid grid-cols-4 gap-1.5">
-            <button onclick="steerParkingCar('LEFT')" class="tarot-btn py-2 text-[11px] font-black text-amber-100">
-              ↰ 左打(變右)
+          <!-- REAL GOOGLE MAP CONTAINER -->
+          <div class="relative w-full h-[320px] sm:h-[390px] rounded-2xl overflow-hidden border-2 border-amber-300/45 z-10 shadow-2xl">
+            <div id="real-google-map" class="w-full h-full"></div>
+          </div>
+
+          <!-- Hotspots + Chaos Slider -->
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-[#060916]/90 px-3 py-2 rounded-xl border border-amber-300/25 text-xs">
+            <div class="flex flex-wrap items-center gap-1">
+              <span class="text-amber-200/70 font-bold">✦ 瞬移熱點：</span>
+              <button onclick="flyToHotspot('costco')" class="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-400/30 font-bold">好市多B2</button>
+              <button onclick="flyToHotspot('roundabout')" class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-300/30 font-bold">台灣大道圓環</button>
+              <button onclick="flyToHotspot('fengjia')" class="px-2 py-0.5 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-400/30 font-bold">逢甲夜市</button>
+              <button onclick="flyToHotspot('taipei101')" class="px-2 py-0.5 rounded-lg bg-teal-500/20 text-teal-300 border border-teal-400/30 font-bold">信義區101</button>
+            </div>
+            <div class="flex items-center gap-2 flex-1 min-w-[180px] max-w-xs">
+              <span class="font-black text-amber-300 shrink-0">🎼 三寶暴走度</span>
+              <input id="chaos-slider" type="range" min="0" max="100" value="76" class="w-full accent-amber-400 cursor-pointer" />
+              <span id="chaos-slider-val" class="font-mono font-black text-rose-400 w-9 text-right">76%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW INTERACTIVE WIDGET BELOW MAP: 💮 三寶違規蓋章機 & 🎰 駕照雞腿鑑定轉盤 -->
+        <div class="royal-card p-3.5 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+          <div class="sm:col-span-7 space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-black gold-text">💮 損友違規認證蓋章機（點擊幫他蓋章加懸賞）</h3>
+              <span class="text-[10px] text-amber-200/70 font-mono">STAMP GUN</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              <button onclick="slapSanbaoStamp('🍗 雞腿換駕照')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-amber-200">
+                💮 雞腿換駕照
+              </button>
+              <button onclick="slapSanbaoStamp('🌧️ 晴天刷雨刷')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-teal-300">
+                💮 晴天刷雨刷
+              </button>
+              <button onclick="slapSanbaoStamp('🅿️ 雙格停車王')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-rose-300">
+                💮 雙格停車王
+              </button>
+              <button onclick="slapSanbaoStamp('🔄 圓環釘子戶')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-orange-300">
+                💮 圓環釘子戶
+              </button>
+            </div>
+          </div>
+
+          <div class="sm:col-span-5 bg-[#060916]/90 p-2.5 rounded-xl border border-amber-300/30 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-[10px] text-amber-300 font-bold">🎰 駕照含雞腿量鑑定</div>
+              <div id="roulette-result-text" class="text-xs font-black text-white truncate mt-0.5">🍗 黃金脆皮雞腿 x 88 支</div>
+            </div>
+            <button onclick="spinChickenLicenseRoulette()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0 shadow active:scale-95">
+              🎲 鑑定損友
             </button>
-            <button onclick="steerParkingCar('RIGHT')" class="tarot-btn py-2 text-[11px] font-black text-amber-100">
-              ↱ 右打(變左)
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right 5 Cols: Interactive Cockpit Soundboard + 3D Costco Reverse Parking Game -->
+      <div class="lg:col-span-5 flex flex-col justify-between gap-3.5">
+
+        <!-- 1. Cockpit Wiper Baton & 4 Prank Soundboard -->
+        <div class="royal-card p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black gold-text">🎛️ 三寶座艙實況模擬器</span>
+            <span class="text-[10px] font-mono text-amber-200/75" id="car-heading-paradox">左燈 ➔ 右偏 28°</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div id="lamp-left-turn" class="py-1.5 rounded-xl border border-amber-300/30 bg-slate-900 font-mono text-xs font-black text-center signal-blink-active">
+              ⬅️ 左轉燈常駐
+            </div>
+            <div id="lamp-right-turn" class="py-1.5 rounded-xl border border-white/10 bg-slate-900 text-slate-500 font-mono text-xs font-black text-center">
+              右轉燈封印 ➡️
+            </div>
+          </div>
+
+          <div class="relative h-16 rounded-xl bg-gradient-to-b from-blue-950/80 to-[#060916] border border-amber-300/30 overflow-hidden flex flex-col items-center justify-end p-1.5">
+            <div class="absolute top-1.5 inset-x-3 flex justify-between text-[10px] font-mono font-bold">
+              <span class="text-amber-300" id="wiper-status-badge">☀️ 大晴天雨刷 MAX</span>
+              <span class="text-rose-300">🔊 支援真人語音吐槽</span>
+            </div>
+            <div class="flex items-end justify-around w-3/4 h-11">
+              <div id="wiper-arm-left" class="w-1 h-11 bg-gradient-to-t from-amber-500 to-yellow-200 rounded-full shadow-[0_0_12px_#FDE68A] wiper-rapid"></div>
+              <div id="wiper-arm-right" class="w-1 h-11 bg-gradient-to-t from-amber-500 to-yellow-200 rounded-full shadow-[0_0_12px_#FDE68A] wiper-rapid"></div>
+            </div>
+            <div class="w-full h-1 bg-amber-300/30 rounded-full"></div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <button onclick="triggerWiperParadox()" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-amber-200">
+              🪄 誤刷雨刷
             </button>
-            <button onclick="steerParkingCar('REV')" class="py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-500 text-[11px] font-black text-white shadow-md active:scale-95">
-              ⏪ 倒車 R檔
+            <button onclick="triggerCockpitAction('horn')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-rose-300">
+              📯 驚慌喇叭
             </button>
-            <button onclick="steerParkingCar('FWD')" class="py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-[11px] font-black text-slate-950 shadow-md active:scale-95">
-              ⏩ 暴衝 D檔
+            <button onclick="triggerCockpitAction('rgear')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-teal-300">
+              🔊 雷達破音
+            </button>
+            <button onclick="drawRandomTarotCard()" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-yellow-300">
+              🃏 抽三寶牌
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. UPGRADED 3D COSTCO B2 REVERSE PARKING SIMULATOR -->
+        <div class="royal-card p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
+          <!-- Top Header & Level / View Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <div class="flex items-center gap-1.5">
+              <h3 class="text-xs sm:text-sm font-black gold-text">🎮 3D 好市多「左右相反」倒車考驗</h3>
+              <span id="parking-progress-badge" class="px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 font-mono text-[10px] font-black text-amber-300">
+                入庫率 0%
+              </span>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <button id="btn-parking-cam" onclick="toggleParkingCameraMode()" class="px-2 py-0.5 rounded-lg bg-blue-950 border border-amber-300/40 text-[10px] font-black text-amber-200">
+                🎥 3D透視+雷達
+              </button>
+              <button id="btn-parking-invert" onclick="toggleParkingInvertMode()" class="px-2 py-0.5 rounded-lg bg-rose-600/30 border border-rose-400/50 text-[10px] font-black text-rose-200">
+                🔀 左右相反: ON
+              </button>
+            </div>
+          </div>
+
+          <!-- Level Selector Row -->
+          <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+            <button id="park-lvl-1" onclick="selectParkingLevel(1)" class="py-1 rounded-lg bg-amber-400 text-slate-950 font-black">
+              Lv.1 新手雙柱
+            </button>
+            <button id="park-lvl-2" onclick="selectParkingLevel(2)" class="py-1 rounded-lg bg-slate-900 text-amber-200 border border-amber-300/30 font-bold">
+              Lv.2 推車大媽亂入
+            </button>
+            <button id="park-lvl-3" onclick="selectParkingLevel(3)" class="py-1 rounded-lg bg-slate-900 text-amber-200 border border-amber-300/30 font-bold">
+              Lv.3 地獄夾縫求生
+            </button>
+          </div>
+
+          <!-- 3D / 2.5D Simulator Canvas + "開始挑戰" Start Overlay -->
+          <div class="relative w-full rounded-2xl overflow-hidden border-2 border-amber-300/45 bg-[#060916] shadow-2xl">
+            <canvas id="parking-game-canvas" width="460" height="250" class="w-full h-[215px] sm:h-[235px] block touch-none"></canvas>
+
+            <!-- Start / Result Overlay so user can click "開始挑戰" to lock keyboard arrows! -->
+            <div id="parking-start-overlay" class="absolute inset-0 bg-[#060A17]/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center space-y-2.5 z-20">
+              <div id="parking-overlay-badge" class="px-3 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/50 text-amber-300 font-mono text-[10px] font-black">
+                COSTCO B2 // 3D 倒車模擬器
+              </div>
+              <div id="parking-overlay-title" class="font-serif-title text-base sm:text-lg font-black gold-text">
+                準備好挑戰好市多 B2 魔王車位了嗎？
+              </div>
+              <p id="parking-overlay-desc" class="text-xs text-amber-100/90 max-w-xs">
+                支援電腦鍵盤 <span class="text-amber-300 font-mono font-black">↑ ↓ ← →</span> 連續操控，或手機/平板直接按下方方向盤與踏板！
+              </p>
+              <button onclick="activateParkingChallenge()" class="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-[0_0_25px_rgba(251,191,36,0.6)] hover:scale-105 active:scale-95 transition-all">
+                ▶️ 點擊開始挑戰 (啟用鍵盤 & 觸控)
+              </button>
+            </div>
+          </div>
+
+          <!-- Touch & Mouse Holdable Controls (Works great on Phone, Tablet, and Desktop!) -->
+          <div class="grid grid-cols-4 gap-1.5 select-none">
+            <button
+              onpointerdown="setParkingKey('left', true)"
+              onpointerup="setParkingKey('left', false)"
+              onpointerleave="setParkingKey('left', false)"
+              onpointercancel="setParkingKey('left', false)"
+              onclick="stepParkingCar('LEFT')"
+              class="tarot-btn py-2.5 text-xs font-black text-amber-100 flex flex-col items-center justify-center">
+              <span>⬅️ 左打方向盤</span>
+              <span class="text-[9px] text-amber-300/70 font-mono">鍵盤 ←</span>
+            </button>
+            <button
+              onpointerdown="setParkingKey('right', true)"
+              onpointerup="setParkingKey('right', false)"
+              onpointerleave="setParkingKey('right', false)"
+              onpointercancel="setParkingKey('right', false)"
+              onclick="stepParkingCar('RIGHT')"
+              class="tarot-btn py-2.5 text-xs font-black text-amber-100 flex flex-col items-center justify-center">
+              <span>➡️ 右打方向盤</span>
+              <span class="text-[9px] text-amber-300/70 font-mono">鍵盤 →</span>
+            </button>
+            <button
+              onpointerdown="setParkingKey('down', true)"
+              onpointerup="setParkingKey('down', false)"
+              onpointerleave="setParkingKey('down', false)"
+              onpointercancel="setParkingKey('down', false)"
+              onclick="stepParkingCar('REV')"
+              class="py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-500 text-xs font-black text-white shadow-md active:scale-95 flex flex-col items-center justify-center">
+              <span>⏪ 倒車 R檔</span>
+              <span class="text-[9px] text-rose-100 font-mono">鍵盤 ↓</span>
+            </button>
+            <button
+              onpointerdown="setParkingKey('up', true)"
+              onpointerup="setParkingKey('up', false)"
+              onpointerleave="setParkingKey('up', false)"
+              onpointercancel="setParkingKey('up', false)"
+              onclick="stepParkingCar('FWD')"
+              class="py-2.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-xs font-black text-slate-950 shadow-md active:scale-95 flex flex-col items-center justify-center">
+              <span>⏩ 前進 D檔</span>
+              <span class="text-[9px] text-slate-800 font-mono">鍵盤 ↑</span>
             </button>
           </div>
         </div>
@@ -428,7 +591,7 @@
     </section>
 
     <!-- ===================================================================
-         TAB 2: 🚗 好友出車共享 (FRIENDS SQUAD & ONE-TAP SOS)
+         TAB 2: 🚗 損友出車共享 (FRIENDS SQUAD & WORKING LINE SHARE)
          =================================================================== -->
     <section id="tab-panel-squad" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
 
@@ -467,17 +630,22 @@
           </button>
         </div>
 
-        <button onclick="shareMyDrivingLink()" class="w-full py-2.5 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-xs">
-          📲 複製「我的即時定位連結」傳到 LINE
-        </button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button onclick="shareMyDrivingLink(true)" class="w-full py-3 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow-lg flex items-center justify-center gap-1.5">
+            💬 直接傳送到 LINE 群組
+          </button>
+          <button onclick="shareMyDrivingLink(false)" class="w-full py-3 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-xs">
+            📋 複製我的即時定位連結
+          </button>
+        </div>
       </div>
 
       <!-- Right 7 Cols -->
       <div class="lg:col-span-7 royal-card p-5 flex flex-col justify-between space-y-3.5">
-        <h3 class="font-serif-title text-base font-black gold-text">👥 好友車隊星盤牆（點卡片直接看他在哪）</h3>
+        <h3 class="font-serif-title text-base font-black gold-text">👥 損友三寶車隊牆（點卡片直接在地圖鎖定他）</h3>
 
         <form onsubmit="addFriendToSquad(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-[#060916] p-2.5 rounded-xl border border-amber-300/30">
-          <input id="add-friend-name" type="text" placeholder="好友名字" class="sm:col-span-4 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-xs text-white" />
+          <input id="add-friend-name" type="text" placeholder="損友名字" class="sm:col-span-4 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-xs text-white" />
           <input id="add-friend-plate" type="text" placeholder="車牌" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-xs font-mono text-amber-300" />
           <select id="add-friend-status" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-2 py-1.5 text-xs text-amber-200 font-bold">
             <option value="parking">🅿️ 正在倒車</option>
@@ -486,16 +654,16 @@
             <option value="home">🏠 在家休息</option>
           </select>
           <button type="submit" class="sm:col-span-2 py-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">
-            ➕ 加好友
+            ➕ 加損友
           </button>
         </form>
 
-        <div id="squad-friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
+        <div id="squad-friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto pr-1"></div>
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 3: 🃏 塔羅占卜與 LINE 警報
+         TAB 3: 🃏 塔羅占卜與 LINE 群組一鍵警報 (WORKING LINE SHARE!)
          =================================================================== -->
     <section id="tab-panel-route" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
       <div class="lg:col-span-5 royal-card p-5 space-y-3.5">
@@ -513,35 +681,41 @@
       </div>
 
       <div class="lg:col-span-7 royal-card p-5 space-y-3">
-        <div class="flex items-center justify-between">
-          <h3 class="font-serif-title text-sm font-black gold-text">📢 LINE 群組警報樂章</h3>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="font-serif-title text-sm font-black gold-text">📢 LINE 群組三寶警報產生器</h3>
           <div class="flex gap-1.5">
             <button data-share-style-btn="defense" onclick="selectShareStyle('defense')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950">🚨 國防風</button>
             <button data-share-style-btn="elder" onclick="selectShareStyle('elder')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">🌺 長輩圖</button>
             <button data-share-style-btn="news" onclick="selectShareStyle('news')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">📺 快訊風</button>
           </div>
         </div>
-        <textarea id="share-copy-textarea" rows="3" readonly class="w-full rounded-xl bg-[#060916] border border-amber-300/30 p-3 text-xs text-amber-100 font-mono focus:outline-none"></textarea>
-        <button onclick="copyShareText()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs">
-          📋 一鍵複製貼到 LINE 群組
-        </button>
+        <textarea id="share-copy-textarea" rows="3" class="w-full rounded-xl bg-[#060916] border border-amber-300/30 p-3 text-xs text-amber-100 font-mono focus:outline-none"></textarea>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button onclick="shareDirectlyToLine()" class="w-full py-3 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow-[0_0_20px_rgba(6,199,85,0.45)] flex items-center justify-center gap-1.5">
+            💬 直接開啟 LINE 傳送給好友/群組
+          </button>
+          <button onclick="copyShareText()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs">
+            📋 複製文字貼到 LINE
+          </button>
+        </div>
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 4: 🎼 六維戰績與目擊回報
+         TAB 4: 🎼 六維戰績與損友黑歷史目擊牆
          =================================================================== -->
     <section id="tab-panel-dossier" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
       <div class="lg:col-span-5 royal-card p-4 flex flex-col items-center justify-center">
-        <h3 class="font-serif-title text-sm font-black gold-text mb-2">🎼 三寶六維星盤</h3>
+        <h3 class="font-serif-title text-sm font-black gold-text mb-2">🎼 損友三寶六維戰力</h3>
         <canvas id="hexagon-chart-canvas" width="280" height="280"></canvas>
       </div>
 
       <div class="lg:col-span-7 royal-card p-4 space-y-3">
-        <form onsubmit="submitNewSighting(event)" class="flex gap-2">
-          <input id="new-sighting-location" type="text" placeholder="地點 (例：好市多B2)" class="w-1/3 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
-          <input id="new-sighting-content" type="text" placeholder="爆笑目擊事蹟..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
-          <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0">🚀 發送</button>
+        <h3 class="font-serif-title text-sm font-black gold-text">📸 損友三寶黑歷史目擊爆料牆</h3>
+        <form onsubmit="submitNewSighting(event)" class="flex flex-col sm:flex-row gap-2">
+          <input id="new-sighting-location" type="text" placeholder="地點 (例：好市多B2)" class="sm:w-1/3 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
+          <input id="new-sighting-content" type="text" placeholder="輸入損友的爆笑三寶事蹟..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
+          <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0">🚀 爆料</button>
         </form>
         <div id="sightings-wall-list" class="space-y-2 max-h-[280px] overflow-y-auto pr-1"></div>
       </div>
@@ -554,12 +728,13 @@
        ===================================================================== -->
   <div id="modal-presidential-alert" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="max-w-sm w-full royal-card p-5 space-y-4 text-center border-2 border-amber-300">
-      <span class="px-3 py-1 rounded-full bg-rose-600 text-white font-mono text-xs font-black animate-pulse">🚨 皇家三寶交響警報</span>
-      <img src="assets/royal_conductor.jpg" alt="Alert" class="w-24 h-24 rounded-2xl mx-auto object-cover border-2 border-amber-300 shadow-[0_0_25px_#D4AF37]" />
-      <div class="font-serif-title text-base font-black gold-text" id="presidential-alert-title">目標已舉起指揮棒握住方向盤！</div>
+      <span class="px-3 py-1 rounded-full bg-rose-600 text-white font-mono text-xs font-black animate-pulse">🚨 國家級三寶出車警報</span>
+      <img id="alert-modal-avatar" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'" alt="Alert" class="w-24 h-24 rounded-2xl mx-auto object-cover border-2 border-amber-300 shadow-[0_0_25px_#D4AF37]" />
+      <div class="font-serif-title text-base font-black gold-text" id="presidential-alert-title">目標已拿著雞腿駕照握住方向盤！</div>
       <p class="text-xs text-amber-100" id="presidential-alert-desc">晴天雨刷全開 + 左轉燈常駐，方圓 3km 人車請立即避難！</p>
-      <div class="flex gap-2">
-        <button onclick="copyShareText(); closePresidentialAlert();" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">📋 複製警報發群組</button>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button onclick="shareDirectlyToLine(); closePresidentialAlert();" class="flex-1 py-2.5 rounded-xl bg-[#06C755] text-white font-black text-xs shadow">💬 直接傳到 LINE</button>
+        <button onclick="copyShareText(); closePresidentialAlert();" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">📋 複製警報</button>
         <button onclick="closePresidentialAlert()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 font-bold text-xs">關閉</button>
       </div>
     </div>
@@ -568,7 +743,7 @@
   <div id="modal-copilot-sos" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="max-w-xs w-full royal-card p-5 text-center space-y-3 border-2 border-amber-300">
       <div class="flex items-center justify-between">
-        <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-[10px] font-black">SOS // 副駕祈禱</span>
+        <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-[10px] font-black">SOS // 副駕保命</span>
         <button onclick="closeCopilotModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <h3 class="font-serif-title text-base font-black gold-text">📿 副駕星光祈禱木魚</h3>
@@ -584,14 +759,14 @@
       </div>
       <div id="woodfish-float-zone" class="h-5 flex items-center justify-center"></div>
       <button onclick="knockCopilotWoodfish()" class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-[0_0_25px_rgba(251,191,36,0.5)] active:scale-95 transition-all">
-        ✨ 點擊祈禱 // 抓緊把手 (+1)
+        ✨ 狂敲木魚 // 抓緊車門把手 (+1)
       </button>
     </div>
   </div>
 
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
+  <div id="toast-container" class="fixed bottom-16 lg:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=10.0"></script>
-  <script src="app.js?v=10.0"></script>
+  <script src="sound_and_fx.js?v=11.0"></script>
+  <script src="app.js?v=11.0"></script>
 </body>
 </html>
