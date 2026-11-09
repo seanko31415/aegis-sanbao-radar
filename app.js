@@ -1149,16 +1149,16 @@ function refreshMainMarkers() {
   if (!leafletMap) return;
   if (userMarker) leafletMap.removeLayer(userMarker);
 
-  // My Own Real Location Marker (with Draggable Support!)
+  // My Own Real Location Marker (Pure GPS Locked, not draggable!)
   const myLabel = appState.myUser.name ? `🛡️ ${appState.myUser.name} (我)` : '🛡️ 我的位置';
   const userIcon = L.divIcon({
     className: 'custom-user-marker',
     html: `
-      <div class="relative flex flex-col items-center cursor-move" style="width:70px;">
+      <div class="relative flex flex-col items-center cursor-pointer group" style="width:70px;">
         <div class="relative flex items-center justify-center">
           <div class="absolute inset-0 rounded-full bg-teal-400/40 marker-pulse"></div>
           <div class="w-11 h-11 rounded-full bg-teal-400 border-2 border-white flex items-center justify-center text-lg shadow-[0_0_20px_#2DD4BF] relative z-10">🛡️</div>
-          <span class="absolute -top-1 -right-1 px-1 rounded bg-black/85 text-[8px] font-mono text-teal-300 font-bold z-20 border border-teal-300/40">可拖曳</span>
+          <span class="absolute -top-1 -right-1 px-1 rounded bg-black/85 text-[8px] font-mono text-emerald-300 font-bold z-20 border border-emerald-400/50">🔒 定位鎖定</span>
         </div>
         <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow mt-1 z-20">
           ${myLabel}
@@ -1171,20 +1171,13 @@ function refreshMainMarkers() {
   userMarker = L.marker([appState.myUser.lat, appState.myUser.lng], {
     icon: userIcon,
     zIndexOffset: 1200,
-    draggable: true
+    draggable: false
   }).addTo(leafletMap);
 
-  userMarker.on('dragend', (e) => {
-    const pos = e.target.getLatLng();
-    appState.myUser.lat = pos.lat;
-    appState.myUser.lng = pos.lng;
-    appState.myUser.hasRealGps = true;
-    saveMyUserToStorage();
-    publishMyPresence();
-    updateRealMapOverlays();
-    syncUI();
-    fetchAndDisplayReverseAddress(pos.lat, pos.lng);
-    showToast('📍 精確定位已更新！', `已拖曳至新座標：${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`, 'emerald');
+  userMarker.bindTooltip(`<b>${appState.myUser.name || '我的位置'}</b><br/>🛰️ 衛星 GPS 即時定位鎖定中<br/><i>座標隨真實定位自動更新</i>`, { direction: 'top' });
+  userMarker.on('click', () => {
+    if (leafletMap) leafletMap.flyTo([appState.myUser.lat, appState.myUser.lng], 17, { duration: 0.6 });
+    if (window.soundEngine) window.soundEngine.playPing();
   });
 
   renderFriendMapMarkers();
@@ -1329,7 +1322,7 @@ window.useRealBrowserGPS = function (options = {}) {
             if (err2.code === 1) {
               showToast('🔒 位置權限未開啟', '請點擊網址列旁的鎖頭 🔒，開啟「位置」權限並重整，或點選下方城市按鈕進行定位！', 'red');
             } else {
-              showToast('⚠️ 室內 GPS 信號較弱', '可直接在地圖上拖曳標記或點選下方城市快速定位！', 'amber');
+              showToast('⚠️ 室內 GPS 信號較弱', '可點擊「GPS 即時重新校準」或點選下方城市按鈕定位！', 'amber');
             }
           }
         },
