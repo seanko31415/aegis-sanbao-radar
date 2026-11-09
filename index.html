@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AEGIS SANBAO // 損友出車即時雷達 v7.0</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>三寶防空雷達 // 好友出車即時定位 v8.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Leaflet Real Google Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;900&family=JetBrains+Mono:wght@700;800&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
@@ -37,10 +38,9 @@
 
     .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-    /* High-End Anime Tactical Box */
     .anime-box {
       position: relative;
-      background: linear-gradient(155deg, rgba(16, 23, 38, 0.90), rgba(8, 11, 19, 0.95));
+      background: linear-gradient(155deg, rgba(16, 23, 38, 0.90), rgba(8, 11, 19, 0.96));
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.10);
       box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.85), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
@@ -66,7 +66,6 @@
       border-bottom-right-radius: 14px;
     }
 
-    /* Dark Tactical Filter for Google Maps */
     .tactical-gmap-tiles {
       filter: invert(92%) hue-rotate(185deg) brightness(92%) contrast(108%) saturate(135%);
     }
@@ -116,34 +115,31 @@
 <body class="min-h-screen flex flex-col selection:bg-amber-400 selection:text-slate-950">
 
   <!-- =====================================================================
-       1. MINIMALIST ANIME HEADER
+       1. MINIMALIST HEADER
        ===================================================================== -->
   <header class="sticky top-0 z-50 bg-[#05070C]/90 backdrop-blur-2xl border-b border-white/10">
     <div class="hazard-strip w-full"></div>
 
     <div class="max-w-[1380px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
-      <!-- Logo & Live Status -->
       <div class="flex items-center gap-2.5">
         <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/30 to-red-600/30 border border-amber-400/60 flex items-center justify-center">
           <span class="text-lg">🛰️</span>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-base font-black tracking-wider text-white">三寶防空雷達</span>
-            <span id="header-defcon-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-red-500 text-slate-950">
-              LV.4 警戒
-            </span>
-          </div>
+        <div class="flex items-center gap-2">
+          <span class="text-base font-black tracking-wider text-white">三寶防空雷達</span>
+          <span id="header-defcon-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-red-500 text-slate-950">
+            LV.4 危險
+          </span>
         </div>
       </div>
 
-      <!-- 4 Main Mode Tabs -->
+      <!-- 4 Main Tabs (NO HARDWARE TAB!Replaced with 🚗 好友出車共享) -->
       <nav class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-white/10">
         <button id="tab-btn-radar" onclick="switchTab('radar')" class="px-3.5 py-1.5 rounded-lg font-black text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-red-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all">
           🗺️ 即時地圖
         </button>
         <button id="tab-btn-squad" onclick="switchTab('squad')" class="px-3.5 py-1.5 rounded-lg font-black text-xs flex items-center gap-1.5 text-cyan-300 hover:text-white transition-all">
-          🚗 好友出車定位
+          🚗 好友出車共享
         </button>
         <button id="tab-btn-route" onclick="switchTab('route')" class="px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 text-slate-400 hover:text-white transition-all">
           🧭 出門吉凶
@@ -153,7 +149,6 @@
         </button>
       </nav>
 
-      <!-- Action Buttons -->
       <div class="flex items-center gap-1.5">
         <button id="sound-toggle-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-white/10 text-xs font-mono text-amber-300">
           🔊
@@ -168,7 +163,7 @@
     </div>
   </header>
 
-  <!-- ANIME CUT-IN POPUP (TOP-RIGHT) -->
+  <!-- ANIME CUT-IN POPUP -->
   <div id="anime-cutin-banner" class="hidden fixed top-16 right-4 z-50 pointer-events-none max-w-xs w-full">
     <div class="relative rounded-2xl overflow-hidden border-2 border-amber-400 shadow-[0_10px_35px_rgba(239,68,68,0.65)] bg-slate-950/95 h-20 flex items-center px-3.5 gap-3">
       <div id="anime-cutin-svg" class="absolute inset-0 opacity-75"></div>
@@ -185,7 +180,7 @@
        ===================================================================== -->
   <main class="max-w-[1380px] w-full mx-auto px-4 py-3.5 space-y-3.5 flex-1">
 
-    <!-- COMPACT TOP DASHBOARD: TARGET + 3 BIG METRICS + 4 ONE-TAP MODES -->
+    <!-- TOP DASHBOARD: TARGET + 3 BIG METRICS + 4 ONE-TAP MODES -->
     <section class="grid grid-cols-1 lg:grid-cols-12 gap-3">
 
       <!-- Target Card (4 cols) -->
@@ -243,14 +238,13 @@
     </section>
 
     <!-- ===================================================================
-         TAB 1: 🗺️ 真實 GOOGLE MAP 雷達 (ULTRA-CLEAN)
+         TAB 1: 🗺️ 真實 GOOGLE MAP 雷達
          =================================================================== -->
     <section id="tab-panel-radar" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
       <!-- Left 8 Cols: Real Google Map -->
       <div class="lg:col-span-8 anime-box rounded-2xl p-3 space-y-2.5">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <!-- Map Layer Switch -->
           <div class="flex items-center gap-1">
             <button onclick="setMapStyle('tactical')" id="mapstyle-tactical" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-amber-500 text-slate-950">
               🕶️ 動漫暗黑
@@ -263,7 +257,6 @@
             </button>
           </div>
 
-          <!-- Map Actions -->
           <div class="flex items-center gap-1.5">
             <button id="mode-btn-sanbao" onclick="setRadarClickMode('sanbao')" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-red-500 text-white">
               🎯 點圖移三寶
@@ -274,8 +267,8 @@
             <button onclick="useRealBrowserGPS()" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-emerald-500 text-slate-950">
               📍 我的定位
             </button>
-            <button onclick="switchTab('squad')" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-cyan-400 text-slate-950">
-              🚗 我要開車分享
+            <button onclick="switchTab('squad')" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-cyan-400 text-slate-950 animate-pulse">
+              🚗 好友出車共享
             </button>
           </div>
         </div>
@@ -285,7 +278,6 @@
           <div id="real-google-map" class="w-full h-full"></div>
         </div>
 
-        <!-- Bottom Quick Jump & Chaos Slider -->
         <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950 px-3 py-2 rounded-xl border border-white/10 text-xs">
           <div class="flex items-center gap-1.5">
             <span class="text-slate-400 font-bold">瞬移：</span>
@@ -301,22 +293,19 @@
         </div>
       </div>
 
-      <!-- Right 4 Cols: Anime CG + Wiper Paradox + Mini Parking Game -->
+      <!-- Right 4 Cols: Anime CG + Wiper + Mini Game -->
       <div class="lg:col-span-4 space-y-3">
-
-        <!-- Anime CG Visual Card -->
         <div class="anime-box rounded-2xl overflow-hidden relative h-32 flex flex-col justify-end p-3">
           <img id="command-banner-img" src="assets/scenario_roundabout.jpg" alt="CG" class="absolute inset-0 w-full h-full object-cover opacity-85" />
           <div class="absolute inset-0 bg-gradient-to-t from-[#05070C] via-transparent to-transparent"></div>
           <div class="relative z-10 flex items-center justify-between">
             <h3 id="cg-card-caption" class="text-sm font-black text-white">🔄 圓環莫比烏斯迷航</h3>
             <button onclick="switchTab('squad')" class="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[11px]">
-              ➕ 揪好友上路
+              ➕ 好友定位牆
             </button>
           </div>
         </div>
 
-        <!-- Sunny Wiper Paradox -->
         <div class="anime-box rounded-2xl p-3.5 space-y-2.5">
           <div class="grid grid-cols-2 gap-2">
             <div id="lamp-left-turn" class="py-1.5 rounded-lg border border-white/10 bg-slate-900 font-mono text-xs font-black text-center signal-blink-active">
@@ -344,7 +333,6 @@
           </button>
         </div>
 
-        <!-- Mini Game: Costco Reverse -->
         <div class="anime-box rounded-2xl p-3.5 space-y-2">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-black text-amber-300">🎮 好市多「左右相反」倒車挑戰</h3>
@@ -358,113 +346,90 @@
             <button onclick="steerParkingCar('FWD')" class="py-1 rounded-lg bg-amber-500 text-[11px] font-black text-slate-950">⏩ 暴衝</button>
           </div>
         </div>
-
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 2: 🚗 好友出車定位 & 爆笑警訊推播中心 (THE NEW SOCIAL HUB!)
+         TAB 2: 🚗 好友出車共享 (ULTRA-CONCISE, FUNNY & INTERACTIVE)
          =================================================================== -->
     <section id="tab-panel-squad" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
 
-      <!-- Left 5 Cols: "I'M DRIVING NOW!" ONE-TAP GPS SHARE & QUICK SOS BROADCAST -->
+      <!-- Left 5 Cols: 我要開車 + 一鍵發送警訊 -->
       <div class="lg:col-span-5 anime-box rounded-2xl p-5 flex flex-col justify-between space-y-4">
-        <div class="space-y-2">
-          <span class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40 font-mono text-[10px] font-black">
-            LIVE DRIVER BEACON // 出車即時定位
-          </span>
-          <h2 class="text-xl font-black text-white">🚗 我要開車了！分享即時定位</h2>
-          <p class="text-xs text-slate-400">
-            上車前點一下，直接開啟手機 GPS 分享位置給好友，還能一鍵發送爆笑路況警訊！
-          </p>
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-black text-white">🚗 我要開車！即時位置分享</h2>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-black">GPS LIVE</span>
         </div>
 
-        <!-- Quick Identity Input -->
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">你的暱稱</label>
-            <input id="my-driver-name" type="text" value="林小葵 (Aoi)" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs font-bold text-white" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-400 mb-1">你的車牌 / 坐騎</label>
-            <input id="my-driver-plate" type="text" value="SBO-8888" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs font-mono font-bold text-cyan-300" />
-          </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="my-driver-name" type="text" value="林小葵 (Aoi)" placeholder="你的名字" class="rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs font-bold text-white" />
+          <input id="my-driver-plate" type="text" value="SBO-8888" placeholder="車牌" class="rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs font-mono font-bold text-cyan-300" />
         </div>
 
-        <!-- Giant Start Driving GPS Button -->
-        <button id="btn-live-beacon" onclick="toggleRealGpsBeacon()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 hover:brightness-110 text-slate-950 font-black text-base shadow-[0_0_30px_rgba(239,68,68,0.5)] active:scale-95 transition-all">
-          🚨 我已握住方向盤！開始分享真實位置
+        <button id="btn-live-beacon" onclick="toggleRealGpsBeacon()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 hover:brightness-110 text-slate-950 font-black text-sm shadow-[0_0_25px_rgba(239,68,68,0.5)] active:scale-95 transition-all">
+          🚨 點擊開始分享我的即時開車位置
         </button>
 
-        <!-- 4 One-Tap Hilarious SOS Signals to Squad -->
         <div class="space-y-2">
-          <div class="text-xs font-black text-amber-300">⚡ 一鍵向好友發送「三寶緊急求救警訊」：</div>
+          <div class="text-xs font-black text-amber-300">⚡ 一鍵向好友發送三寶警訊：</div>
           <div class="grid grid-cols-2 gap-2">
-            <button onclick="broadcastDriverSOS('parking')" class="p-3 rounded-xl bg-red-500/20 hover:bg-red-500/35 border border-red-500/40 text-left transition-all">
-              <div class="text-base">🅿️ 我要倒車入庫了</div>
-              <div class="text-[11px] text-red-200 font-bold mt-0.5">方圓 3km 快把車移走！</div>
+            <button onclick="broadcastDriverSOS('parking')" class="p-3 rounded-xl bg-red-500/20 hover:bg-red-500/35 border border-red-500/40 text-left">
+              <div class="text-sm font-black text-white">🅿️ 我要倒車了</div>
+              <div class="text-[10px] text-red-200 mt-0.5">方圓3km快移車！</div>
             </button>
-            <button onclick="broadcastDriverSOS('lost')" class="p-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/40 text-left transition-all">
-              <div class="text-base">🔄 我卡在圓環出不去</div>
-              <div class="text-[11px] text-amber-200 font-bold mt-0.5">已經繞第 7 圈了救命！</div>
+            <button onclick="broadcastDriverSOS('lost')" class="p-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/40 text-left">
+              <div class="text-sm font-black text-white">🔄 卡在圓環</div>
+              <div class="text-[10px] text-amber-200 mt-0.5">繞第7圈出不去！</div>
             </button>
-            <button onclick="broadcastDriverSOS('wiper')" class="p-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-500/40 text-left transition-all">
-              <div class="text-base">🌧️ 想轉彎卻刷雨刷</div>
-              <div class="text-[11px] text-cyan-200 font-bold mt-0.5">別看我方向燈，快閃開！</div>
+            <button onclick="broadcastDriverSOS('wiper')" class="p-3 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/35 border border-cyan-500/40 text-left">
+              <div class="text-sm font-black text-white">🌧️ 晴天刷雨刷</div>
+              <div class="text-[10px] text-cyan-200 mt-0.5">別信我方向燈！</div>
             </button>
-            <button onclick="broadcastDriverSOS('safe')" class="p-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-500/40 text-left transition-all">
-              <div class="text-base">🏠 我平安停好車了</div>
-              <div class="text-[11px] text-emerald-200 font-bold mt-0.5">全城警報解除！</div>
+            <button onclick="broadcastDriverSOS('safe')" class="p-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-500/40 text-left">
+              <div class="text-sm font-black text-white">🏠 平安停好車</div>
+              <div class="text-[10px] text-emerald-200 mt-0.5">解除全城警報！</div>
             </button>
           </div>
         </div>
 
-        <!-- One-Tap Share Invite Link to LINE -->
-        <button onclick="shareMyDrivingLink()" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg">
-          📲 複製「我的出車即時定位連結」丟到 LINE 群組
+        <button onclick="shareMyDrivingLink()" class="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs">
+          📲 複製「我的即時定位連結」傳到 LINE
         </button>
       </div>
 
-      <!-- Right 7 Cols: ACTIVE FRIENDS RADAR SQUAD + ADD NEW FRIEND -->
-      <div class="lg:col-span-7 anime-box rounded-2xl p-5 flex flex-col justify-between space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <span class="text-[10px] font-mono text-cyan-300 font-black">● SQUAD LIVE RADAR</span>
-            <h3 class="text-lg font-black text-white">👥 損友車隊即時動態牆（點一下直接在地圖鎖定他）</h3>
-          </div>
-        </div>
+      <!-- Right 7 Cols: 好友車隊名單 (點擊直接看他在哪) -->
+      <div class="lg:col-span-7 anime-box rounded-2xl p-5 flex flex-col justify-between space-y-3.5">
+        <h3 class="text-base font-black text-white">👥 好友車隊即時雷達（點卡片直接看他在哪）</h3>
 
-        <!-- Quick Add Friend Form -->
-        <form onsubmit="addFriendToSquad(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-950 p-2.5 rounded-xl border border-white/10">
-          <input id="add-friend-name" type="text" placeholder="輸入好友名字 (例：阿豪)" class="sm:col-span-4 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs text-white" />
-          <input id="add-friend-plate" type="text" placeholder="車牌 (例：KKK-6666)" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs font-mono text-cyan-300" />
-          <select id="add-friend-status" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-2.5 py-2 text-xs text-amber-300 font-bold">
-            <option value="parking">🅿️ 正在倒車入庫</option>
-            <option value="roundabout">🔄 圓環迷航中</option>
-            <option value="snack">🛵 出門買宵夜</option>
-            <option value="home">🏠 封印在家</option>
+        <form onsubmit="addFriendToSquad(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-slate-950 p-2 rounded-xl border border-white/10">
+          <input id="add-friend-name" type="text" placeholder="好友名字" class="sm:col-span-4 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-xs text-white" />
+          <input id="add-friend-plate" type="text" placeholder="車牌" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-xs font-mono text-cyan-300" />
+          <select id="add-friend-status" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-2 py-1.5 text-xs text-amber-300 font-bold">
+            <option value="parking">🅿️ 正在倒車</option>
+            <option value="roundabout">🔄 圓環迷航</option>
+            <option value="snack">🛵 買宵夜</option>
+            <option value="home">🏠 在家休息</option>
           </select>
-          <button type="submit" class="sm:col-span-2 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs">
-            ➕ 加入好友
+          <button type="submit" class="sm:col-span-2 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs">
+            ➕ 加好友
           </button>
         </form>
 
-        <!-- Squad Friends Cards Grid -->
-        <div id="squad-friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[340px] overflow-y-auto pr-1"></div>
+        <div id="squad-friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 3: 🧭 出門吉凶與 LINE 警報 (SUPER COMPACT)
+         TAB 3: 🧭 出門吉凶與 LINE 警報
          =================================================================== -->
     <section id="tab-panel-route" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
       <div class="lg:col-span-5 anime-box rounded-2xl p-5 space-y-3.5">
-        <h3 class="text-base font-black text-white">🧭 出門生還吉凶測算</h3>
+        <h3 class="text-base font-black text-white">🧭 出門生還吉凶</h3>
         <div class="grid grid-cols-2 gap-2">
-          <button data-transport-btn="walk" onclick="selectTransportMode('walk')" class="p-3 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚶 步行走騎樓</button>
-          <button data-transport-btn="scooter" onclick="selectTransportMode('scooter')" class="p-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 text-white text-xs font-black">🛵 機車肉包鐵</button>
-          <button data-transport-btn="car" onclick="selectTransportMode('car')" class="p-3 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚗 開車保桿扛</button>
-          <button data-transport-btn="mrt" onclick="selectTransportMode('mrt')" class="p-3 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚝 搭高架捷運</button>
+          <button data-transport-btn="walk" onclick="selectTransportMode('walk')" class="p-3 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚶 走騎樓</button>
+          <button data-transport-btn="scooter" onclick="selectTransportMode('scooter')" class="p-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 text-white text-xs font-black">🛵 騎機車</button>
+          <button data-transport-btn="car" onclick="selectTransportMode('car')" class="p-3 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚗 開汽車</button>
+          <button data-transport-btn="mrt" onclick="selectTransportMode('mrt')" class="p-3 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚝 搭捷運</button>
         </div>
         <div class="p-4 rounded-xl bg-slate-950 border border-red-500/40 text-center space-y-1">
           <div id="route-result-omen" class="text-xl font-black text-red-400">【大凶 // 建議就地掩護】</div>
@@ -474,7 +439,7 @@
 
       <div class="lg:col-span-7 anime-box rounded-2xl p-5 space-y-3">
         <div class="flex items-center justify-between">
-          <h3 class="text-sm font-black text-white">📢 一鍵複製 LINE 群組逃難警報</h3>
+          <h3 class="text-sm font-black text-white">📢 LINE 群組警報文案</h3>
           <div class="flex gap-1.5">
             <button data-share-style-btn="defense" onclick="selectShareStyle('defense')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">🚨 國防風</button>
             <button data-share-style-btn="elder" onclick="selectShareStyle('elder')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">🌺 長輩圖</button>
@@ -483,7 +448,7 @@
         </div>
         <textarea id="share-copy-textarea" rows="3" readonly class="w-full rounded-xl bg-slate-950 border border-white/15 p-3 text-xs text-amber-100 font-mono focus:outline-none"></textarea>
         <button onclick="copyShareText()" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs">
-          📋 一鍵複製警報貼到 LINE 群組
+          📋 一鍵複製貼到 LINE 群組
         </button>
       </div>
     </section>
@@ -512,12 +477,11 @@
   <!-- =====================================================================
        3. MODALS
        ===================================================================== -->
-  <!-- 🚨 Presidential Alert -->
   <div id="modal-presidential-alert" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="max-w-sm w-full rounded-2xl overflow-hidden border-2 border-red-500 bg-[#12070B] shadow-[0_0_60px_rgba(239,68,68,0.7)]">
       <div class="hazard-strip"></div>
       <div class="p-5 space-y-4 text-center">
-        <span class="px-3 py-1 rounded bg-red-600 text-white font-mono text-xs font-black animate-pulse">🚨 國家級三寶防空警報</span>
+        <span class="px-3 py-1 rounded bg-red-600 text-white font-mono text-xs font-black animate-pulse">🚨 好友出車緊急警報</span>
         <img src="assets/sanbao_avatar.jpg" alt="Alert" class="w-20 h-20 rounded-2xl mx-auto object-cover border-2 border-red-400" />
         <div class="text-base font-black text-white" id="presidential-alert-title">目標已握住方向盤！</div>
         <p class="text-xs text-red-200" id="presidential-alert-desc">晴天雨刷全開 + 左轉燈常駐，方圓 3km 人車請立即避難！</p>
@@ -529,7 +493,6 @@
     </div>
   </div>
 
-  <!-- 📿 Co-Pilot Woodfish Modal -->
   <div id="modal-copilot-sos" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-red-950/85 backdrop-blur-md">
     <div class="max-w-xs w-full rounded-2xl p-5 bg-[#14070B] border-2 border-amber-400 text-center space-y-3">
       <div class="flex items-center justify-between">
@@ -554,10 +517,9 @@
     </div>
   </div>
 
-  <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js"></script>
-  <script src="app.js"></script>
+  <script src="sound_and_fx.js?v=8.0"></script>
+  <script src="app.js?v=8.0"></script>
 </body>
 </html>
