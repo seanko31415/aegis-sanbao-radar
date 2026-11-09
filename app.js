@@ -193,9 +193,59 @@ function getTrackedProfile() {
   };
 }
 
+// Universal Storage Helper (Robust fallback to SessionStorage + Cookie + In-Memory if localStorage quota/security blocks)
+const SafeStorage = {
+  memory: {},
+  getItem(key) {
+    try {
+      const val = localStorage.getItem(key);
+      if (val !== null && val !== undefined) return val;
+    } catch (e) {}
+    try {
+      const sVal = sessionStorage.getItem(key);
+      if (sVal !== null && sVal !== undefined) return sVal;
+    } catch (e) {}
+    try {
+      const match = document.cookie.match(new RegExp('(^|;\\s*)' + encodeURIComponent(key) + '=([^;]*)'));
+      if (match) return decodeURIComponent(match[2]);
+    } catch (e) {}
+    return this.memory[key] || null;
+  },
+  setItem(key, value) {
+    this.memory[key] = value;
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {}
+    try {
+      sessionStorage.setItem(key, value);
+    } catch (e) {}
+    try {
+      if (value && value.length < 3500) {
+        const expires = new Date(Date.now() + 365 * 864e5).toUTCString();
+        document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+      }
+    } catch (e) {}
+  },
+  removeItem(key) {
+    delete this.memory[key];
+    try { localStorage.removeItem(key); } catch (e) {}
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    try { document.cookie = `${encodeURIComponent(key)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`; } catch (e) {}
+  }
+};
+
+// Auto-request browser persistent storage permission
+try {
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+} catch (e) {}
+
 function loadPersistedData() {
   try {
-    const savedMe = localStorage.getItem('aegis_sanbao_my_user_v12');
+    const savedMe = SafeStorage.getItem('aegis_sanbao_my_user_v14') ||
+                    SafeStorage.getItem('aegis_sanbao_my_user_v13') ||
+                    SafeStorage.getItem('aegis_sanbao_my_user');
     if (savedMe) {
       const parsed = JSON.parse(savedMe);
       appState.myUser = { ...appState.myUser, ...parsed };
@@ -203,18 +253,29 @@ function loadPersistedData() {
   } catch (e) {}
 
   try {
-    const savedFriends = localStorage.getItem('aegis_sanbao_real_friends_v12');
+    const savedFriends = SafeStorage.getItem('aegis_sanbao_real_friends_v14') ||
+                         SafeStorage.getItem('aegis_sanbao_real_friends_v13') ||
+                         SafeStorage.getItem('aegis_sanbao_friends');
     appState.friends = savedFriends ? JSON.parse(savedFriends) : [];
   } catch (e) {
     appState.friends = [];
   }
 
   try {
-    const savedSightings = localStorage.getItem('aegis_sanbao_sightings_v12');
+    const savedSightings = SafeStorage.getItem('aegis_sanbao_sightings_v14') ||
+                           SafeStorage.getItem('aegis_sanbao_sightings');
     appState.sightings = savedSightings ? JSON.parse(savedSightings) : [...DEFAULT_SIGHTINGS];
   } catch (e) {
     appState.sightings = [...DEFAULT_SIGHTINGS];
   }
+
+  try {
+    const savedStamps = SafeStorage.getItem('aegis_sanbao_stamps_v14') ||
+                        SafeStorage.getItem('aegis_sanbao_stamps');
+    if (savedStamps) {
+      appState.stamps = JSON.parse(savedStamps);
+    }
+  } catch (e) {}
 
   // Check URL parameters for friend invite / shared location link
   try {
@@ -253,13 +314,16 @@ function loadPersistedData() {
 }
 
 function saveMyUserToStorage() {
-  try { localStorage.setItem('aegis_sanbao_my_user_v12', JSON.stringify(appState.myUser)); } catch (e) {}
+  SafeStorage.setItem('aegis_sanbao_my_user_v14', JSON.stringify(appState.myUser));
 }
 function saveFriendsToStorage() {
-  try { localStorage.setItem('aegis_sanbao_real_friends_v12', JSON.stringify(appState.friends)); } catch (e) {}
+  SafeStorage.setItem('aegis_sanbao_real_friends_v14', JSON.stringify(appState.friends));
 }
 function saveSightingsToStorage() {
-  try { localStorage.setItem('aegis_sanbao_sightings_v12', JSON.stringify(appState.sightings)); } catch (e) {}
+  SafeStorage.setItem('aegis_sanbao_sightings_v14', JSON.stringify(appState.sightings));
+}
+function saveStampsToStorage() {
+  SafeStorage.setItem('aegis_sanbao_stamps_v14', JSON.stringify(appState.stamps));
 }
 
 // ============================================================================
@@ -534,49 +598,8 @@ window.loginAndStartRealGpsBroadcast = function () {
   window.soundEngine.playWinFanfare();
   showToast('🛰️ 正在開啟真實 GPS 定位...', `已登入為【${name}】，連線房號 #${room}`, 'emerald');
 
-  // Start High-Accuracy Real GPS Watch
-  if (navigator.geolocation) {
-    const applyUserGps = (pos) => {
-      appState.myUser.lat = pos.coords.latitude;
-      appState.myUser.lng = pos.coords.longitude;
-      appState.myUser.accuracy = Math.round(pos.coords.accuracy || 5);
-      appState.myUser.hasRealGps = true;
-      saveMyUserToStorage();
-      publishMyPresence();
-      refreshMainMarkers();
-      updateRealMapOverlays();
-      syncUI();
-    };
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        applyUserGps(pos);
-        if (!appState.selectedFriendId && leafletMap) {
-          leafletMap.setView([pos.coords.latitude, pos.coords.longitude], 18, { animate: true });
-        }
-        showToast('🎯 真實定位已廣播！', `座標: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)} (精度 ±${appState.myUser.accuracy}m)`, 'emerald');
-      },
-      () => {
-        publishMyPresence();
-        refreshMainMarkers();
-        updateRealMapOverlays();
-        syncUI();
-        showToast('🟢 帳號已上線！', '若未授權瀏覽器定位，系統將使用目前地圖中心作為您的初始位置', 'amber');
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-
-    if (appState.beaconWatchId) navigator.geolocation.clearWatch(appState.beaconWatchId);
-    appState.beaconWatchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        applyUserGps(pos);
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 0 }
-    );
-  } else {
-    publishMyPresence();
-  }
+  // Start High-Accuracy Real GPS Watch with auto-failover
+  window.useRealBrowserGPS({ silent: false });
 };
 
 // ============================================================================
@@ -718,30 +741,68 @@ window.speakCurrentSanbaoOS = function () {
 };
 
 window.slapSanbaoStamp = function (stampText) {
+  if (!stampText) return;
   window.soundEngine.playStamp();
   appState.bountyAmount += 15000;
   if (!appState.stamps.includes(stampText)) {
     appState.stamps.unshift(stampText);
-    if (appState.stamps.length > 4) appState.stamps.pop();
+    if (appState.stamps.length > 8) appState.stamps.pop();
   }
+  saveStampsToStorage();
   renderVipStamps();
   syncUI();
+  if (appState.myUser.loggedIn) {
+    publishMyPresence();
+  }
   const target = getTrackedProfile();
-  triggerAnimeCutIn(`💮 蓋章認證：${stampText}`, `${target.name} 懸賞金暴增至 $${appState.bountyAmount.toLocaleString()}！`, '#F43F5E');
-  showToast(`💮 已蓋上【${stampText}】違規章！`, `三寶懸賞金 +$15,000！`, 'red');
+  triggerAnimeCutIn(`💮 蓋章認證：${stampText}`, `${target.name} 標籤已儲存！懸賞金暴增至 $${appState.bountyAmount.toLocaleString()}！`, '#F43F5E');
+  showToast(`💮 已蓋上【${stampText}】違規章！`, `標籤已永久儲存！懸賞金 +$15,000`, 'red');
+};
+
+window.removeSanbaoStamp = function (idx) {
+  if (idx >= 0 && idx < appState.stamps.length) {
+    const removed = appState.stamps.splice(idx, 1)[0];
+    saveStampsToStorage();
+    renderVipStamps();
+    syncUI();
+    if (appState.myUser.loggedIn) {
+      publishMyPresence();
+    }
+    showToast('🗑️ 已刪除標籤', `已移除「${removed}」違規標籤！`, 'amber');
+  }
+};
+
+window.addCustomSanbaoStamp = function (e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById('custom-stamp-input');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    showToast('⚠️ 標籤不能為空', '請輸入搞笑三寶標籤名稱！', 'amber');
+    return;
+  }
+  input.value = '';
+  window.slapSanbaoStamp(val);
 };
 
 function renderVipStamps() {
   const row = document.getElementById('vip-stamps-row');
   if (!row) return;
+  if (!appState.stamps || appState.stamps.length === 0) {
+    row.innerHTML = `<span class="text-[10px] text-amber-200/60 italic">尚未貼上任何標籤（可在下方新增自訂標籤）</span>`;
+    return;
+  }
   row.innerHTML = appState.stamps
     .map(
-      (s, idx) =>
-        `<span class="stamp-badge px-1.5 py-0.5 rounded ${
+      (s, idx) => `
+        <span class="stamp-badge inline-flex items-center gap-1 px-2 py-0.5 rounded ${
           idx % 2 === 0
             ? 'bg-rose-600/90 border border-amber-200 text-white'
             : 'bg-amber-400/90 border border-white text-slate-950'
-        } text-[9px] font-black">💮 ${s}</span>`
+        } text-[10px] font-black shadow-sm group">
+          <span>💮 ${s}</span>
+          <button type="button" onclick="event.stopPropagation(); window.removeSanbaoStamp(${idx})" class="w-3.5 h-3.5 rounded-full bg-black/40 hover:bg-black/80 text-white flex items-center justify-center text-[9px] leading-none transition-colors ml-0.5 cursor-pointer" title="刪除此標籤">✕</button>
+        </span>`
     )
     .join('');
 }
@@ -967,18 +1028,21 @@ window.setMapStyle = function (style) {
   }).addTo(leafletMap);
 };
 
-window.useRealBrowserGPS = function () {
+window.useRealBrowserGPS = function (options = {}) {
+  const silent = typeof options === 'boolean' ? options : !!(options && options.silent);
   if (!navigator.geolocation) {
-    showToast('⚠️ 瀏覽器不支援定位', '請使用搜尋欄輸入地標定位！', 'red');
+    if (!silent) showToast('⚠️ 瀏覽器不支援定位', '請使用搜尋欄輸入地標定位！', 'red');
     return;
   }
-  window.soundEngine.playPing();
-  showToast('🛰️ 正在抓取最高精確度 GPS 定位...', '請在瀏覽器彈窗中點選「允許」位置權限', 'cyan');
+  if (!silent) {
+    window.soundEngine.playPing();
+    showToast('🛰️ 正在抓取最高精確度 GPS 定位...', '請在瀏覽器彈窗中點選「允許」位置權限', 'cyan');
+  }
 
   let bestAccuracy = 999999;
   let hasLocked = false;
 
-  const handlePosition = (pos) => {
+  const handlePosition = (pos, source = 'GPS') => {
     const { latitude, longitude, accuracy } = pos.coords;
     if (accuracy < bestAccuracy || !hasLocked) {
       bestAccuracy = accuracy;
@@ -991,7 +1055,7 @@ window.useRealBrowserGPS = function () {
       if (appState.myUser.loggedIn) publishMyPresence();
 
       if (leafletMap) {
-        leafletMap.setView([latitude, longitude], 18, { animate: true });
+        leafletMap.setView([latitude, longitude], 17, { animate: true });
       }
       if (appState.streetViewOpen) {
         updateStreetViewIframe(latitude, longitude, '我的真實位置');
@@ -999,31 +1063,47 @@ window.useRealBrowserGPS = function () {
       refreshMainMarkers();
       updateRealMapOverlays();
       syncUI();
-      showToast('🎯 精確 GPS 定位成功！', `座標: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (精度 ±${appState.myUser.accuracy}m)`, 'emerald');
+      if (!silent) {
+        showToast('🎯 精確 GPS 定位成功！', `座標: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (精度 ±${appState.myUser.accuracy}m)`, 'emerald');
+      }
     }
   };
 
+  // 1. Try high accuracy satellite GPS first
   navigator.geolocation.getCurrentPosition(
-    handlePosition,
+    (pos) => handlePosition(pos, 'High-GPS'),
     (err) => {
-      console.warn('Geolocation error:', err);
-      showToast('⚠️ 定位逾時或未授權', '請確認瀏覽器允許定位權限，或使用搜尋欄直接輸入確切地址！', 'red');
+      console.warn('High-accuracy GPS timeout/err, falling back to network triangulation:', err);
+      // 2. Fallback to network/wifi/cell triangulation (fast & works indoors!)
+      navigator.geolocation.getCurrentPosition(
+        (pos) => handlePosition(pos, 'Network'),
+        (err2) => {
+          console.warn('All geolocation failed:', err2);
+          if (!silent) {
+            if (err2.code === 1) {
+              showToast('🔒 位置權限未開啟', '請點擊瀏覽器網址列旁的鎖頭 🔒，開啟「位置」權限並重整，或用搜尋欄輸入地址！', 'red');
+            } else {
+              showToast('⚠️ 室內 GPS 信號較弱', '已暫時使用備用定位，你也可以在地圖上搜尋確切地址！', 'amber');
+            }
+          }
+        },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+      );
     },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
   );
 
-  // Continuous watch to keep accuracy at maximum
-  const tempWatch = navigator.geolocation.watchPosition(
+  // 3. Continuous watch to keep accuracy at maximum
+  if (appState.beaconWatchId) {
+    navigator.geolocation.clearWatch(appState.beaconWatchId);
+  }
+  appState.beaconWatchId = navigator.geolocation.watchPosition(
     (pos) => {
-      handlePosition(pos);
-      if (pos.coords.accuracy <= 15) {
-        navigator.geolocation.clearWatch(tempWatch);
-      }
+      handlePosition(pos, 'Watch');
     },
     () => {},
-    { enableHighAccuracy: true, maximumAge: 0 }
+    { enableHighAccuracy: true, maximumAge: 5000 }
   );
-  setTimeout(() => navigator.geolocation.clearWatch(tempWatch), 10000);
 };
 
 window.searchMapLocation = async function (e) {
@@ -1070,7 +1150,7 @@ window.inviteFriendViaLine = function () {
   window.soundEngine.playClick(880);
   const room = appState.myUser.roomCode || '8888';
   const myName = appState.myUser.name || '你的好友';
-  const inviteUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&uid=${encodeURIComponent(appState.myUser.id)}&name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(appState.myUser.plate || '汽車')}&mode=${appState.scenario}&lat=${appState.myUser.lat.toFixed(5)}&lng=${appState.myUser.lng.toFixed(5)}`;
+  const inviteUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&uid=${encodeURIComponent(appState.myUser.id)}&name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(appState.myUser.plate || '汽車')}&mode=${appState.scenario}&lat=${appState.myUser.lat.toFixed(5)}&lng=${appState.myUser.lng.toFixed(5)}&openExternalBrowser=1`;
   const msg = `🚨【損友三寶即時監測邀請】${myName} 邀請你加入即時防空雷達（連線房號 #${room}）！\n點開網址並按下「登入我的定位」，我們就能在雷達地圖上互相看到彼此的真實位置：\n${inviteUrl}`;
 
   try { navigator.clipboard?.writeText(msg); } catch (e) {}
@@ -1085,7 +1165,7 @@ function buildCurrentAlertShareText() {
   const metrics = computeTacticalMetrics();
   const target = getTrackedProfile();
   const room = appState.myUser.roomCode || '8888';
-  const shareUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&name=${encodeURIComponent(target.name)}&plate=${encodeURIComponent(target.plate)}&mode=${appState.scenario}&lat=${target.lat.toFixed(5)}&lng=${target.lng.toFixed(5)}`;
+  const shareUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&name=${encodeURIComponent(target.name)}&plate=${encodeURIComponent(target.plate)}&mode=${appState.scenario}&lat=${target.lat.toFixed(5)}&lng=${target.lng.toFixed(5)}&openExternalBrowser=1`;
   return `🚨【損友三寶出車警報】「${target.name}」(${target.plate}) 目前狀態：【${sc.level}】警戒半徑 ${metrics.effectiveRadius}km！\n📡 點開查看即時定位與連線：\n${shareUrl}`;
 }
 
@@ -1103,7 +1183,7 @@ window.shareMyDrivingLink = function (openLine = false) {
   const myName = document.getElementById('my-driver-name')?.value.trim() || appState.myUser.name || '我';
   const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.myUser.plate || '汽車';
   const room = document.getElementById('my-room-code')?.value.trim() || appState.myUser.roomCode || '8888';
-  const url = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&uid=${encodeURIComponent(appState.myUser.id)}&name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(myPlate)}&mode=${appState.scenario}&lat=${appState.myUser.lat.toFixed(5)}&lng=${appState.myUser.lng.toFixed(5)}`;
+  const url = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&uid=${encodeURIComponent(appState.myUser.id)}&name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(myPlate)}&mode=${appState.scenario}&lat=${appState.myUser.lat.toFixed(5)}&lng=${appState.myUser.lng.toFixed(5)}&openExternalBrowser=1`;
   const msg = `🚨【損友三寶出車通知】${myName} (${myPlate}) 正在線上分享即時位置（房號 #${room}）！\n點開按「確定」即可查看我的即時位置：\n${url}`;
 
   try { navigator.clipboard?.writeText(msg); } catch (e) {}
@@ -2254,6 +2334,11 @@ document.addEventListener('DOMContentLoaded', () => {
   requestAnimationFrame(updateParkingGameLoop);
   calculateRouteSafety(false);
   syncUI();
+
+  // Auto-fetch user's high-accuracy real GPS immediately on startup
+  if (navigator.geolocation) {
+    window.useRealBrowserGPS({ silent: true });
+  }
 
   // If user was already logged in previously, resume their session automatically
   if (appState.myUser.loggedIn && appState.myUser.name) {
