@@ -703,12 +703,13 @@
           </button>
         </div>
 
-        <!-- Manual Add Real Friend Form -->
+        <!-- Manual Add Real Friend Form with Precise Address / Location -->
         <form onsubmit="addFriendToSquad(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-[#060916] p-2.5 rounded-xl border border-amber-300/30">
-          <input id="add-friend-name" type="text" placeholder="輸入真實好友名字 (例: 阿豪)" class="sm:col-span-5 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs text-white" />
-          <input id="add-friend-plate" type="text" placeholder="車牌 (選填)" class="sm:col-span-4 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs font-mono text-amber-300" />
-          <button type="submit" class="sm:col-span-3 py-2 rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">
-            ➕ 新增好友關注
+          <input id="add-friend-name" type="text" placeholder="好友名字 (例: 阿豪) *" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs text-white" />
+          <input id="add-friend-plate" type="text" placeholder="車牌 (選填)" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs font-mono text-amber-300" />
+          <input id="add-friend-location" type="text" placeholder="好友所在路名/地標 (例: 逢甲夜市、台北101、高雄車站)" class="sm:col-span-4 rounded-lg bg-slate-900 border border-teal-300/40 px-3 py-2 text-xs text-white" />
+          <button type="submit" class="sm:col-span-2 py-2 rounded-lg bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 text-slate-950 font-black text-xs shadow active:scale-95">
+            ➕ 精準定位
           </button>
         </form>
 
@@ -843,7 +844,7 @@
 
   <div id="toast-container" class="fixed bottom-16 lg:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=12.0"></script>
-  <script src="app.js?v=12.0"></script>
+  <script src="sound_and_fx.js?v=13.0"></script>
+  <script src="app.js?v=13.0"></script>
 </body>
 </html>

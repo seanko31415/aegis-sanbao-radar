@@ -536,21 +536,25 @@ window.loginAndStartRealGpsBroadcast = function () {
 
   // Start High-Accuracy Real GPS Watch
   if (navigator.geolocation) {
+    const applyUserGps = (pos) => {
+      appState.myUser.lat = pos.coords.latitude;
+      appState.myUser.lng = pos.coords.longitude;
+      appState.myUser.accuracy = Math.round(pos.coords.accuracy || 5);
+      appState.myUser.hasRealGps = true;
+      saveMyUserToStorage();
+      publishMyPresence();
+      refreshMainMarkers();
+      updateRealMapOverlays();
+      syncUI();
+    };
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        appState.myUser.lat = pos.coords.latitude;
-        appState.myUser.lng = pos.coords.longitude;
-        appState.myUser.accuracy = Math.round(pos.coords.accuracy || 8);
-        appState.myUser.hasRealGps = true;
-        saveMyUserToStorage();
-        publishMyPresence();
-        refreshMainMarkers();
-        updateRealMapOverlays();
-        syncUI();
+        applyUserGps(pos);
         if (!appState.selectedFriendId && leafletMap) {
-          leafletMap.flyTo([pos.coords.latitude, pos.coords.longitude], 17, { duration: 0.9 });
+          leafletMap.setView([pos.coords.latitude, pos.coords.longitude], 18, { animate: true });
         }
-        showToast('✅ 真實定位已連線並廣播！', `同房號 (#${room}) 的好友現在打開網站就能看到你了！`, 'emerald');
+        showToast('🎯 真實定位已廣播！', `座標: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)} (精度 ±${appState.myUser.accuracy}m)`, 'emerald');
       },
       () => {
         publishMyPresence();
@@ -559,20 +563,13 @@ window.loginAndStartRealGpsBroadcast = function () {
         syncUI();
         showToast('🟢 帳號已上線！', '若未授權瀏覽器定位，系統將使用目前地圖中心作為您的初始位置', 'amber');
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
 
     if (appState.beaconWatchId) navigator.geolocation.clearWatch(appState.beaconWatchId);
     appState.beaconWatchId = navigator.geolocation.watchPosition(
       (pos) => {
-        appState.myUser.lat = pos.coords.latitude;
-        appState.myUser.lng = pos.coords.longitude;
-        appState.myUser.accuracy = Math.round(pos.coords.accuracy || 8);
-        appState.myUser.hasRealGps = true;
-        publishMyPresence();
-        refreshMainMarkers();
-        updateRealMapOverlays();
-        syncUI();
+        applyUserGps(pos);
       },
       () => {},
       { enableHighAccuracy: true, maximumAge: 0 }
@@ -976,32 +973,57 @@ window.useRealBrowserGPS = function () {
     return;
   }
   window.soundEngine.playPing();
-  showToast('🛰️ 正在取得您的精準衛星定位...', '請允許瀏覽器位置權限', 'cyan');
+  showToast('🛰️ 正在抓取最高精確度 GPS 定位...', '請在瀏覽器彈窗中點選「允許」位置權限', 'cyan');
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords;
+  let bestAccuracy = 999999;
+  let hasLocked = false;
+
+  const handlePosition = (pos) => {
+    const { latitude, longitude, accuracy } = pos.coords;
+    if (accuracy < bestAccuracy || !hasLocked) {
+      bestAccuracy = accuracy;
+      hasLocked = true;
       appState.myUser.lat = latitude;
       appState.myUser.lng = longitude;
-      appState.myUser.accuracy = Math.round(accuracy || 8);
+      appState.myUser.accuracy = Math.round(accuracy || 5);
       appState.myUser.hasRealGps = true;
       saveMyUserToStorage();
       if (appState.myUser.loggedIn) publishMyPresence();
 
-      if (leafletMap) leafletMap.flyTo([latitude, longitude], 17, { duration: 0.9 });
+      if (leafletMap) {
+        leafletMap.setView([latitude, longitude], 18, { animate: true });
+      }
       if (appState.streetViewOpen) {
-        updateStreetViewIframe(latitude, longitude, '我的即時位置');
+        updateStreetViewIframe(latitude, longitude, '我的真實位置');
       }
       refreshMainMarkers();
       updateRealMapOverlays();
       syncUI();
-      showToast('✅ 精準定位成功！', `座標: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (誤差 ±${appState.myUser.accuracy}m)`, 'emerald');
+      showToast('🎯 精確 GPS 定位成功！', `座標: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (精度 ±${appState.myUser.accuracy}m)`, 'emerald');
+    }
+  };
+
+  navigator.geolocation.getCurrentPosition(
+    handlePosition,
+    (err) => {
+      console.warn('Geolocation error:', err);
+      showToast('⚠️ 定位逾時或未授權', '請確認瀏覽器允許定位權限，或使用搜尋欄直接輸入確切地址！', 'red');
     },
-    () => {
-      showToast('⚠️ 無法取得定位權限', '請檢查瀏覽器網址列左側的位置權限設定，或使用搜尋框定位！', 'red');
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
+
+  // Continuous watch to keep accuracy at maximum
+  const tempWatch = navigator.geolocation.watchPosition(
+    (pos) => {
+      handlePosition(pos);
+      if (pos.coords.accuracy <= 15) {
+        navigator.geolocation.clearWatch(tempWatch);
+      }
+    },
+    () => {},
+    { enableHighAccuracy: true, maximumAge: 0 }
+  );
+  setTimeout(() => navigator.geolocation.clearWatch(tempWatch), 10000);
 };
 
 window.searchMapLocation = async function (e) {
@@ -1735,44 +1757,75 @@ function renderSquadFriendsList() {
     .join('');
 }
 
-window.addFriendToSquad = function (e) {
+window.addFriendToSquad = async function (e) {
   e.preventDefault();
   const nameEl = document.getElementById('add-friend-name');
   const plateEl = document.getElementById('add-friend-plate');
+  const locEl = document.getElementById('add-friend-location');
 
   const name = nameEl?.value.trim();
   const plate = plateEl?.value.trim().toUpperCase() || '好友座駕';
+  const customLocation = locEl?.value.trim();
 
   if (!name) {
-    showToast('⚠️ 請輸入真實好友名字', '輸入後即可加入好友監測清單！', 'red');
+    showToast('⚠️ 請輸入好友名字', '請輸入好友的名字以新增至關注清單！', 'red');
     return;
   }
 
   window.soundEngine.playPing();
   const randomAvatar = DRIVER_AVATARS[Math.floor(Math.random() * DRIVER_AVATARS.length)].src;
+  
+  let targetLat = appState.myUser.lat;
+  let targetLng = appState.myUser.lng;
+  let statusNote = '📡 已加入關注（等待好友連線登入自動同步 GPS）';
+
+  // If user provided a specific address or landmark, geocode it precisely
+  if (customLocation) {
+    showToast('🔍 解析好友所在位置...', `正在精確定位「${customLocation}」`, 'cyan');
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(customLocation)}&limit=1&accept-language=zh-TW`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        targetLat = parseFloat(data[0].lat);
+        targetLng = parseFloat(data[0].lon);
+        statusNote = `📍 鎖定地標: ${customLocation}`;
+      }
+    } catch (err) {}
+  }
+
   const newFriend = {
     id: 'f_' + Date.now(),
     name,
     plate,
     mode: 'roundabout',
     avatar: randomAvatar,
-    lat: appState.myUser.lat + (Math.random() - 0.5) * 0.004,
-    lng: appState.myUser.lng + (Math.random() - 0.5) * 0.004,
-    sosMsg: '📡 已加入關注（當同名好友登入網站時將自動同步真實 GPS）',
+    lat: targetLat,
+    lng: targetLng,
+    sosMsg: statusNote,
     online: false,
-    confirmed: false,
+    confirmed: true,
     updatedAt: Date.now()
   };
 
   appState.friends.unshift(newFriend);
+  appState.selectedFriendId = newFriend.id;
   saveFriendsToStorage();
   renderSquadFriendsList();
   renderOnlineFriendPills();
+  refreshMainMarkers();
   renderFriendMapMarkers();
+  updateRealMapOverlays();
+  syncUI();
 
-  nameEl.value = '';
-  plateEl.value = '';
-  promptIncomingFriendConfirmation(newFriend);
+  if (nameEl) nameEl.value = '';
+  if (plateEl) plateEl.value = '';
+  if (locEl) locEl.value = '';
+
+  window.switchTab('radar');
+  if (leafletMap) {
+    leafletMap.flyTo([targetLat, targetLng], 17, { duration: 0.9 });
+  }
+  showToast(`✅ 好友【${name}】已精準鎖定！`, statusNote, 'emerald');
 };
 
 window.removeFriend = function (friendId) {
