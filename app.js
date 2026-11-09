@@ -304,6 +304,15 @@ function loadPersistedData() {
     }
   } catch (e) {}
 
+  // Ensure my driver identity is initialized so live broadcast/subscription works immediately
+  if (!appState.myUser.name) {
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    appState.myUser.name = `三寶車神_${randomSuffix}`;
+    appState.myUser.plate = `SAN-${randomSuffix}`;
+    appState.myUser.loggedIn = true;
+    saveMyUserToStorage();
+  }
+
   // Populate inputs if saved
   const nameIn = document.getElementById('my-driver-name');
   const plateIn = document.getElementById('my-driver-plate');
@@ -391,6 +400,14 @@ function initRealtimeCloudSync() {
       mqttClients.push(client);
     } catch (e) {}
   });
+
+  // Continuous Heartbeat Broadcast every 3 seconds for continuous real-time subscription!
+  if (window._presenceHeartbeat) clearInterval(window._presenceHeartbeat);
+  window._presenceHeartbeat = setInterval(() => {
+    if (appState.myUser.loggedIn) {
+      publishMyPresence();
+    }
+  }, 3000);
 }
 
 function publishMyPresence() {
@@ -425,13 +442,14 @@ function publishMyPresence() {
 }
 
 function handleIncomingFriendPacket(packet) {
-  if (!packet || !packet.name) return;
-  // Ignore stale retained packets older than 12 hours
-  if (packet.updatedAt && Date.now() - packet.updatedAt > 12 * 3600 * 1000) return;
+  if (!packet || !packet.name || !packet.id) return;
+  if (packet.id === appState.myUser.id) return;
+  // Ignore stale retained packets older than 6 hours
+  if (packet.updatedAt && Date.now() - packet.updatedAt > 6 * 3600 * 1000) return;
 
   // Check if friend already exists by id or by name
-  let friend = appState.friends.find((f) => f.id === packet.id || f.name === packet.name);
-  const isNewOnline = !friend || !friend.online;
+  let friend = appState.friends.find((f) => f.id === packet.id || (f.name === packet.name && f.plate === packet.plate));
+  const isBrandNew = !friend;
 
   if (friend) {
     friend.id = packet.id;
@@ -440,8 +458,9 @@ function handleIncomingFriendPacket(packet) {
     friend.avatar = packet.avatar || friend.avatar;
     friend.lat = packet.lat;
     friend.lng = packet.lng;
-    friend.mode = packet.mode || 'roundabout';
-    friend.sosMsg = packet.sosMsg || '🚗 即時分享位置中';
+    friend.accuracy = packet.accuracy || 10;
+    friend.mode = packet.mode || friend.mode;
+    friend.sosMsg = packet.sosMsg || friend.sosMsg;
     friend.online = true;
     friend.updatedAt = packet.updatedAt || Date.now();
   } else {
@@ -452,27 +471,30 @@ function handleIncomingFriendPacket(packet) {
       avatar: packet.avatar || 'assets/sanbao_chicken_avatar.jpg',
       lat: packet.lat,
       lng: packet.lng,
+      accuracy: packet.accuracy || 10,
       mode: packet.mode || 'roundabout',
-      sosMsg: packet.sosMsg || '🚗 剛登入網站並開啟定位！',
+      sosMsg: packet.sosMsg || '🚗 剛上線並分享即時位置！',
       online: true,
-      confirmed: false,
+      confirmed: true, // auto-confirm so they appear on Google Map immediately!
       updatedAt: packet.updatedAt || Date.now()
     };
     appState.friends.unshift(friend);
+    showToast(`🔔 好友【${friend.name}】上線！`, `已在 Google Map 上即時顯示其位置！`, 'emerald');
+    if (!appState.selectedFriendId) {
+      appState.selectedFriendId = friend.id;
+    }
   }
 
   saveFriendsToStorage();
   renderSquadFriendsList();
   renderOnlineFriendPills();
   renderFriendMapMarkers();
+  updateRealMapOverlays();
+  syncUI();
 
-  // If this friend is not yet confirmed by the user (or just logged in), show the confirmation banner!
-  if (!friend.confirmed || isNewOnline) {
-    promptIncomingFriendConfirmation(friend);
-  } else if (appState.selectedFriendId === friend.id) {
-    // Update live map marker position if we are already tracking them!
-    updateRealMapOverlays();
-    syncUI();
+  // If tracking this friend, pan smoothly with their movement
+  if (appState.selectedFriendId === friend.id && leafletMap) {
+    leafletMap.panTo([friend.lat, friend.lng], { animate: true, duration: 0.5 });
   }
 }
 
@@ -865,6 +887,74 @@ function computeTacticalMetrics() {
   return { distKm: +distKm.toFixed(2), effectiveRadius, survival };
 }
 
+let lastGeocodeTime = 0;
+async function fetchAndDisplayReverseAddress(lat, lng) {
+  const coordDisplay = document.getElementById('live-coord-display');
+  if (coordDisplay) {
+    coordDisplay.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)} (±${appState.myUser.accuracy || 5}m)`;
+  }
+  const addrEl = document.getElementById('live-location-address');
+  if (!addrEl) return;
+
+  const now = Date.now();
+  if (now - lastGeocodeTime < 3000) return;
+  lastGeocodeTime = now;
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=zh-TW`
+    );
+    const data = await res.json();
+    if (data && data.display_name) {
+      const parts = data.display_name.split(',').map((s) => s.trim());
+      addrEl.textContent = `📍 目前精確地址：${parts.slice(0, 3).join(' ')}`;
+    }
+  } catch (e) {
+    addrEl.textContent = `📍 目前座標：${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  }
+}
+
+appState.pinpointMode = false;
+window.togglePinpointMode = function () {
+  appState.pinpointMode = !appState.pinpointMode;
+  updatePinpointBtnUI();
+  if (appState.pinpointMode) {
+    showToast('📍 釘選模式已開啟', '請在 Google 地圖上直接點擊您的精確位置！', 'cyan');
+  } else {
+    showToast('📍 已退出釘選模式', '', 'slate');
+  }
+};
+
+function updatePinpointBtnUI() {
+  const btn = document.getElementById('btn-pinpoint-mode');
+  if (!btn) return;
+  if (appState.pinpointMode) {
+    btn.className = 'px-3 py-1 rounded-xl text-[11px] font-black bg-rose-500 text-white shadow-[0_0_15px_#F43F5E] animate-pulse';
+    btn.innerHTML = '🎯 點地圖釘選中 (點擊取消)';
+  } else {
+    btn.className = 'px-3 py-1 rounded-xl text-[11px] font-black bg-slate-900 border border-amber-300/40 text-amber-200 hover:bg-slate-800';
+    btn.innerHTML = '📍 地圖釘選校正';
+  }
+}
+
+window.fitMapToAllPeople = function () {
+  if (!leafletMap) return;
+  const pts = [[appState.myUser.lat, appState.myUser.lng]];
+  appState.friends.forEach((f) => {
+    if (!isNaN(f.lat) && !isNaN(f.lng)) {
+      pts.push([f.lat, f.lng]);
+    }
+  });
+  if (pts.length === 1) {
+    leafletMap.setView(pts[0], 17, { animate: true });
+    showToast('📍 已置中您的位置', `${pts[0][0].toFixed(5)}, ${pts[0][1].toFixed(5)}`, 'cyan');
+  } else {
+    const bounds = L.latLngBounds(pts);
+    leafletMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 18, animate: true });
+    showToast('🎯 已縮放至全體人員', `地圖已包含您與 ${pts.length - 1} 位在線好友！`, 'emerald');
+  }
+};
+
 function initRealGoogleMap() {
   const mapEl = document.getElementById('real-google-map');
   if (!mapEl || typeof L === 'undefined') return;
@@ -904,50 +994,74 @@ function initRealGoogleMap() {
 
   tetherPolyline = L.polyline([], { color: '#2DD4BF', weight: 2.5, dashArray: '5, 6' }).addTo(leafletMap);
 
+  leafletMap.on('click', (e) => {
+    if (appState.pinpointMode) {
+      const { lat, lng } = e.latlng;
+      appState.myUser.lat = lat;
+      appState.myUser.lng = lng;
+      appState.myUser.hasRealGps = true;
+      saveMyUserToStorage();
+      publishMyPresence();
+      refreshMainMarkers();
+      updateRealMapOverlays();
+      syncUI();
+      fetchAndDisplayReverseAddress(lat, lng);
+      window.soundEngine.playPing();
+      showToast('📍 精確釘選完成！', `已將您的位置定位於點選處：${lat.toFixed(6)}, ${lng.toFixed(6)}`, 'emerald');
+      appState.pinpointMode = false;
+      updatePinpointBtnUI();
+    }
+  });
+
   refreshMainMarkers();
   renderFriendMapMarkers();
   updateRealMapOverlays();
+  fetchAndDisplayReverseAddress(appState.myUser.lat, appState.myUser.lng);
 }
 
 function refreshMainMarkers() {
   if (!leafletMap) return;
-  if (targetMarker) leafletMap.removeLayer(targetMarker);
   if (userMarker) leafletMap.removeLayer(userMarker);
 
-  // My Own Real Location Marker
+  // My Own Real Location Marker (with Draggable Support!)
   const myLabel = appState.myUser.name ? `🛡️ ${appState.myUser.name} (我)` : '🛡️ 我的位置';
   const userIcon = L.divIcon({
     className: 'custom-user-marker',
     html: `
-      <div class="relative flex items-center justify-center" style="width:46px;height:46px;">
-        <div class="w-9 h-9 rounded-full bg-teal-400 border-2 border-white flex items-center justify-center text-sm shadow-[0_0_15px_#2DD4BF]">🛡️</div>
-        <div class="absolute -bottom-5 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow">${myLabel}</div>
+      <div class="relative flex flex-col items-center cursor-move" style="width:70px;">
+        <div class="relative flex items-center justify-center">
+          <div class="absolute inset-0 rounded-full bg-teal-400/40 marker-pulse"></div>
+          <div class="w-11 h-11 rounded-full bg-teal-400 border-2 border-white flex items-center justify-center text-lg shadow-[0_0_20px_#2DD4BF] relative z-10">🛡️</div>
+          <span class="absolute -top-1 -right-1 px-1 rounded bg-black/85 text-[8px] font-mono text-teal-300 font-bold z-20 border border-teal-300/40">可拖曳</span>
+        </div>
+        <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow mt-1 z-20">
+          ${myLabel}
+        </div>
       </div>`,
-    iconSize: [46, 46],
-    iconAnchor: [23, 23]
+    iconSize: [70, 75],
+    iconAnchor: [35, 38]
   });
-  userMarker = L.marker([appState.myUser.lat, appState.myUser.lng], { icon: userIcon, zIndexOffset: 900 }).addTo(leafletMap);
 
-  // Selected Friend Marker (Only shown when a real friend is selected!)
-  if (appState.selectedFriendId) {
-    const f = appState.friends.find((x) => x.id === appState.selectedFriendId);
-    if (f) {
-      const friendIcon = L.divIcon({
-        className: 'custom-sanbao-marker',
-        html: `
-          <div class="relative flex items-center justify-center" style="width:60px;height:60px;">
-            <div class="absolute inset-0 rounded-full bg-rose-500/55 marker-pulse"></div>
-            <img src="${f.avatar || 'assets/sanbao_chicken_avatar.jpg'}" onerror="this.src='assets/sanbao_avatar.jpg'" class="rounded-full object-cover border-2 border-amber-300 shadow-[0_0_18px_#D4AF37] relative z-10" style="width:50px;height:50px;" />
-            <div class="absolute -bottom-5 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-amber-300 text-[10px] font-mono font-black text-amber-200 shadow z-20">
-              🚨 ${f.name} (${f.plate})
-            </div>
-          </div>`,
-        iconSize: [60, 60],
-        iconAnchor: [30, 30]
-      });
-      targetMarker = L.marker([f.lat, f.lng], { icon: friendIcon, zIndexOffset: 1000 }).addTo(leafletMap);
-    }
-  }
+  userMarker = L.marker([appState.myUser.lat, appState.myUser.lng], {
+    icon: userIcon,
+    zIndexOffset: 1200,
+    draggable: true
+  }).addTo(leafletMap);
+
+  userMarker.on('dragend', (e) => {
+    const pos = e.target.getLatLng();
+    appState.myUser.lat = pos.lat;
+    appState.myUser.lng = pos.lng;
+    appState.myUser.hasRealGps = true;
+    saveMyUserToStorage();
+    publishMyPresence();
+    updateRealMapOverlays();
+    syncUI();
+    fetchAndDisplayReverseAddress(pos.lat, pos.lng);
+    showToast('📍 精確定位已更新！', `已拖曳至新座標：${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`, 'emerald');
+  });
+
+  renderFriendMapMarkers();
 }
 
 function renderFriendMapMarkers() {
@@ -956,19 +1070,27 @@ function renderFriendMapMarkers() {
   friendMarkers = [];
 
   appState.friends.forEach((f) => {
-    if (f.id === appState.selectedFriendId) return;
     if (isNaN(f.lat) || isNaN(f.lng)) return;
-    const sc = SCENARIOS[f.mode] || SCENARIOS.roundabout;
-    const m = L.circleMarker([f.lat, f.lng], {
-      radius: 9,
-      color: '#FEF08A',
-      fillColor: sc.color,
-      fillOpacity: 0.95,
-      weight: 2.5
-    })
-      .addTo(leafletMap)
-      .bindTooltip(`<b>${f.name} (${f.plate})</b><br/>${f.sosMsg}<br/><i>點擊鎖定位置</i>`, { direction: 'top' });
+    const isSelected = appState.selectedFriendId === f.id;
+    const friendIcon = L.divIcon({
+      className: 'custom-friend-map-marker',
+      html: `
+        <div class="relative flex flex-col items-center cursor-pointer group" style="width:70px;">
+          <div class="relative flex items-center justify-center">
+            ${isSelected ? '<div class="absolute inset-0 rounded-full bg-rose-500/60 marker-pulse"></div>' : ''}
+            <img src="${f.avatar || 'assets/sanbao_chicken_avatar.jpg'}" onerror="this.src='assets/sanbao_avatar.jpg'" class="w-12 h-12 rounded-full object-cover border-2 ${isSelected ? 'border-amber-300 shadow-[0_0_22px_#F59E0B]' : 'border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)]'} bg-slate-900 relative z-10 transition-transform group-hover:scale-110" />
+            <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border border-white text-[8px] flex items-center justify-center font-bold text-white z-20">🟢</span>
+          </div>
+          <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border ${isSelected ? 'border-amber-300 text-amber-200' : 'border-rose-400/80 text-rose-200'} text-[10px] font-bold shadow-lg mt-1 z-20">
+            ${f.name} (${f.plate || '好友'})
+          </div>
+        </div>`,
+      iconSize: [70, 75],
+      iconAnchor: [35, 38]
+    });
 
+    const m = L.marker([f.lat, f.lng], { icon: friendIcon, zIndexOffset: isSelected ? 1000 : 800 }).addTo(leafletMap);
+    m.bindTooltip(`<b>${f.name} (${f.plate})</b><br/>${f.sosMsg}<br/><i>點擊鎖定追蹤此好友</i>`, { direction: 'top' });
     m.on('click', () => window.confirmAndLocateFriend(f.id));
     friendMarkers.push(m);
   });
@@ -1039,33 +1161,33 @@ window.useRealBrowserGPS = function (options = {}) {
     showToast('🛰️ 正在抓取最高精確度 GPS 定位...', '請在瀏覽器彈窗中點選「允許」位置權限', 'cyan');
   }
 
-  let bestAccuracy = 999999;
-  let hasLocked = false;
+  let hasInitialCentered = false;
 
   const handlePosition = (pos, source = 'GPS') => {
     const { latitude, longitude, accuracy } = pos.coords;
-    if (accuracy < bestAccuracy || !hasLocked) {
-      bestAccuracy = accuracy;
-      hasLocked = true;
-      appState.myUser.lat = latitude;
-      appState.myUser.lng = longitude;
-      appState.myUser.accuracy = Math.round(accuracy || 5);
-      appState.myUser.hasRealGps = true;
-      saveMyUserToStorage();
-      if (appState.myUser.loggedIn) publishMyPresence();
+    if (accuracy && accuracy > 5000) return; // filter obvious junk
 
-      if (leafletMap) {
-        leafletMap.setView([latitude, longitude], 17, { animate: true });
-      }
-      if (appState.streetViewOpen) {
-        updateStreetViewIframe(latitude, longitude, '我的真實位置');
-      }
-      refreshMainMarkers();
-      updateRealMapOverlays();
-      syncUI();
-      if (!silent) {
-        showToast('🎯 精確 GPS 定位成功！', `座標: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (精度 ±${appState.myUser.accuracy}m)`, 'emerald');
-      }
+    appState.myUser.lat = latitude;
+    appState.myUser.lng = longitude;
+    appState.myUser.accuracy = Math.round(accuracy || 5);
+    appState.myUser.hasRealGps = true;
+    saveMyUserToStorage();
+    if (appState.myUser.loggedIn) publishMyPresence();
+
+    if (leafletMap && (!hasInitialCentered || !appState.selectedFriendId)) {
+      leafletMap.setView([latitude, longitude], 17, { animate: true });
+      hasInitialCentered = true;
+    }
+    if (appState.streetViewOpen) {
+      updateStreetViewIframe(latitude, longitude, '我的真實位置');
+    }
+    refreshMainMarkers();
+    updateRealMapOverlays();
+    syncUI();
+    fetchAndDisplayReverseAddress(latitude, longitude);
+
+    if (!silent && source === 'High-GPS') {
+      showToast('🎯 GPS 衛星精準定位成功！', `座標: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (精度 ±${appState.myUser.accuracy}m)`, 'emerald');
     }
   };
 
@@ -1081,9 +1203,9 @@ window.useRealBrowserGPS = function (options = {}) {
           console.warn('All geolocation failed:', err2);
           if (!silent) {
             if (err2.code === 1) {
-              showToast('🔒 位置權限未開啟', '請點擊瀏覽器網址列旁的鎖頭 🔒，開啟「位置」權限並重整，或用搜尋欄輸入地址！', 'red');
+              showToast('🔒 位置權限未開啟', '請點擊網址列旁的鎖頭 🔒，開啟「位置」權限並重整，或點擊「📍 地圖釘選」手動校正！', 'red');
             } else {
-              showToast('⚠️ 室內 GPS 信號較弱', '已暫時使用備用定位，你也可以在地圖上搜尋確切地址！', 'amber');
+              showToast('⚠️ 室內 GPS 信號較弱', '可直接在地圖上拖曳標記或點擊「📍 地圖釘選」以達 100% 精準！', 'amber');
             }
           }
         },
@@ -1093,7 +1215,7 @@ window.useRealBrowserGPS = function (options = {}) {
     { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
   );
 
-  // 3. Continuous watch to keep accuracy at maximum
+  // 3. Continuous high-frequency watch to keep live subscription streaming
   if (appState.beaconWatchId) {
     navigator.geolocation.clearWatch(appState.beaconWatchId);
   }
@@ -1102,7 +1224,7 @@ window.useRealBrowserGPS = function (options = {}) {
       handlePosition(pos, 'Watch');
     },
     () => {},
-    { enableHighAccuracy: true, maximumAge: 5000 }
+    { enableHighAccuracy: true, maximumAge: 3000 }
   );
 };
 
@@ -1123,11 +1245,12 @@ window.searchMapLocation = async function (e) {
     if (data && data.length > 0) {
       const lat = parseFloat(data[0].lat);
       const lng = parseFloat(data[0].lon);
-      if (!appState.selectedFriendId) {
-        appState.myUser.lat = lat;
-        appState.myUser.lng = lng;
-        if (appState.myUser.loggedIn) publishMyPresence();
-      }
+      appState.myUser.lat = lat;
+      appState.myUser.lng = lng;
+      appState.myUser.hasRealGps = true;
+      saveMyUserToStorage();
+      if (appState.myUser.loggedIn) publishMyPresence();
+
       if (leafletMap) leafletMap.flyTo([lat, lng], 17, { duration: 0.9 });
       if (appState.streetViewOpen) {
         updateStreetViewIframe(lat, lng, query);
@@ -1135,12 +1258,13 @@ window.searchMapLocation = async function (e) {
       refreshMainMarkers();
       updateRealMapOverlays();
       syncUI();
-      showToast('🛰️ 已飛往該路段！', `${data[0].display_name.slice(0, 38)}...`, 'emerald');
+      fetchAndDisplayReverseAddress(lat, lng);
+      showToast('🛰️ 已精確定位至該地址！', `${data[0].display_name.slice(0, 38)}...`, 'emerald');
       return;
     }
   } catch (err) {}
 
-  showToast('⚠️ 找不到該路名', '請嘗試輸入更完整的地標（例如：台中北屯好市多、台北101）', 'red');
+  showToast('⚠️ 找不到該路名', '請嘗試輸入更完整的地標（例如：台北101、台中好市多、新北耶誕城）', 'red');
 };
 
 // ============================================================================

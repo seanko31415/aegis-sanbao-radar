@@ -387,8 +387,14 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-1.5">
-              <button onclick="useRealBrowserGPS()" class="px-3 py-1 rounded-xl text-[11px] font-black bg-teal-400 hover:bg-teal-300 text-slate-950 shadow-[0_0_14px_rgba(45,212,191,0.5)] active:scale-95 transition-all">
-                📍 高精確 GPS 定位校準
+              <button onclick="useRealBrowserGPS()" class="px-3 py-1 rounded-xl text-[11px] font-black bg-teal-400 hover:bg-teal-300 text-slate-950 shadow-[0_0_14px_rgba(45,212,191,0.5)] active:scale-95 transition-all" title="重新抓取最高精度衛星 GPS 定位">
+                🛰️ GPS 即時重新校準
+              </button>
+              <button id="btn-pinpoint-mode" onclick="togglePinpointMode()" class="px-3 py-1 rounded-xl text-[11px] font-black bg-slate-900 border border-amber-300/40 text-amber-200 hover:bg-slate-800 active:scale-95 transition-all" title="點擊後可直接在 Google 地圖上點選確切位置">
+                📍 地圖釘選校正
+              </button>
+              <button onclick="fitMapToAllPeople()" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-blue-950 border border-blue-400/40 text-cyan-200 hover:bg-blue-900 active:scale-95 transition-all" title="自動縮放以同時顯示我和所有在線好友">
+                🎯 縮放至所有人
               </button>
               <button onclick="switchTab('squad')" class="px-3 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 active:scale-95 transition-all">
                 ➕ 加好友 / 看好友
@@ -425,6 +431,19 @@
                 </div>
               </div>
               <iframe id="streetview-iframe" class="w-full flex-1 border-0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+          </div>
+
+          <!-- Live Precision Geocoding Address & Coordinate Bar -->
+          <div id="map-live-status-bar" class="px-3 py-2 rounded-xl bg-[#060916]/95 border border-amber-300/35 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse shrink-0"></span>
+              <span id="live-location-address" class="font-mono text-amber-200 truncate font-bold">📍 正在獲取精確門牌地址...</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 font-mono text-[11px]">
+              <span id="live-coord-display" class="text-teal-300 font-bold">24.1618, 120.6469 (±5m)</span>
+              <span class="text-slate-500">|</span>
+              <span class="text-amber-300">💡 提示：可直接拖曳您的標記</span>
             </div>
           </div>
 
@@ -853,7 +872,7 @@
 
   <div id="toast-container" class="fixed bottom-16 lg:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=14.1"></script>
-  <script src="app.js?v=14.1"></script>
+  <script src="sound_and_fx.js?v=14.2"></script>
+  <script src="app.js?v=14.2"></script>
 </body>
 </html>
