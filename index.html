@@ -3,15 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AEGIS SANBAO // 特務級三寶防空雷達 v5.0</title>
+  <title>AEGIS SANBAO // 三寶防空雷達 v6.0 (真實地圖 × 寄生追蹤器版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet Interactive Real Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono:wght@500;700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800;900&family=JetBrains+Mono:wght@600;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg-core: #06080F;
+      --bg-core: #05070C;
       --amber: #F59E0B;
       --crimson: #EF4444;
       --cyan: #06B6D4;
@@ -23,660 +27,704 @@
       color: #F8FAFC;
       font-family: 'Inter', 'Noto Sans TC', sans-serif;
       background-image:
-        radial-gradient(circle at 12% 15%, rgba(245, 158, 11, 0.09), transparent 35%),
-        radial-gradient(circle at 88% 20%, rgba(239, 68, 68, 0.10), transparent 38%),
-        radial-gradient(circle at 50% 90%, rgba(6, 182, 212, 0.07), transparent 40%),
-        linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        radial-gradient(circle at 15% 10%, rgba(245, 158, 11, 0.12), transparent 32%),
+        radial-gradient(circle at 85% 18%, rgba(239, 68, 68, 0.14), transparent 36%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
       overflow-x: hidden;
     }
 
-    .font-mono {
-      font-family: 'JetBrains Mono', monospace;
-    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-    /* High-End Anime Tactical Glass Card */
-    .anime-panel {
+    /* Luxury Anime Mecha Glass Frame */
+    .anime-box {
       position: relative;
-      background: linear-gradient(155deg, rgba(16, 22, 36, 0.86), rgba(9, 13, 22, 0.92));
+      background: linear-gradient(150deg, rgba(16, 22, 36, 0.88), rgba(8, 11, 19, 0.94));
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.09);
-      box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-shadow: 0 18px 45px -10px rgba(0, 0, 0, 0.85), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
     }
-
-    /* Corner Tech Brackets */
-    .anime-panel::before,
-    .anime-panel::after {
+    .anime-box::before,
+    .anime-box::after {
       content: '';
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       pointer-events: none;
-      opacity: 0.55;
     }
-    .anime-panel::before {
-      top: -1px;
-      left: -1px;
-      border-top: 2px solid var(--amber);
-      border-left: 2px solid var(--amber);
-      border-top-left-radius: 12px;
+    .anime-box::before {
+      top: -1px; left: -1px;
+      border-top: 2.5px solid var(--amber);
+      border-left: 2.5px solid var(--amber);
+      border-top-left-radius: 14px;
     }
-    .anime-panel::after {
-      bottom: -1px;
-      right: -1px;
-      border-bottom: 2px solid var(--cyan);
-      border-right: 2px solid var(--cyan);
-      border-bottom-right-radius: 12px;
+    .anime-box::after {
+      bottom: -1px; right: -1px;
+      border-bottom: 2.5px solid var(--cyan);
+      border-right: 2.5px solid var(--cyan);
+      border-bottom-right-radius: 14px;
     }
 
-    .anime-panel-danger {
-      border-color: rgba(239, 68, 68, 0.4);
-      box-shadow: 0 0 40px -10px rgba(239, 68, 68, 0.3), inset 0 1px 0 0 rgba(239, 68, 68, 0.25);
+    .anime-box-danger {
+      border-color: rgba(239, 68, 68, 0.45);
+      box-shadow: 0 0 38px -8px rgba(239, 68, 68, 0.35);
     }
 
-    .anime-panel-safe {
-      border-color: rgba(16, 185, 129, 0.4);
-      box-shadow: 0 0 35px -10px rgba(16, 185, 129, 0.25), inset 0 1px 0 0 rgba(16, 185, 129, 0.2);
+    /* Dark Tactical Filter for Google Maps Tiles */
+    .tactical-gmap-tiles {
+      filter: invert(92%) hue-rotate(185deg) brightness(92%) contrast(108%) saturate(130%);
     }
 
-    /* Subtle Manga Screentone Pattern */
-    .screentone-bg {
-      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 0);
-      background-size: 8px 8px;
+    /* Leaflet Custom Anime Marker Styling */
+    .leaflet-container {
+      background: #05070C !important;
+      font-family: 'Noto Sans TC', sans-serif !important;
+    }
+    .leaflet-control-attribution {
+      background: rgba(5, 7, 12, 0.7) !important;
+      color: #64748B !important;
+      font-size: 9px !important;
+    }
+    .leaflet-control-attribution a { color: #94A3B8 !important; }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 0.9; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    .marker-pulse {
+      animation: pulse-ring 1.4s infinite ease-out;
     }
 
     /* Turn Signal Blink */
-    @keyframes lamp-flash {
-      0%, 100% { opacity: 0.25; transform: scale(0.98); }
-      50% { opacity: 1; transform: scale(1.03); box-shadow: 0 0 18px rgba(245, 158, 11, 0.75); }
+    @keyframes lamp-blink {
+      0%, 100% { opacity: 0.2; transform: scale(0.96); }
+      50% { opacity: 1; transform: scale(1.05); box-shadow: 0 0 22px rgba(245, 158, 11, 0.9); }
     }
     .signal-blink-active {
-      animation: lamp-flash 0.5s infinite ease-in-out;
-      background: rgba(245, 158, 11, 0.25) !important;
+      animation: lamp-blink 0.48s infinite ease-in-out;
+      background: rgba(245, 158, 11, 0.3) !important;
       border-color: #F59E0B !important;
       color: #FEF08A !important;
     }
 
-    /* Wiper Sweep Animation */
+    /* Wiper Sweep */
     @keyframes wiper-swing {
-      0% { transform: rotate(-42deg); }
-      50% { transform: rotate(42deg); }
-      100% { transform: rotate(-42deg); }
+      0% { transform: rotate(-44deg); }
+      50% { transform: rotate(44deg); }
+      100% { transform: rotate(-44deg); }
     }
     .wiper-rapid {
       transform-origin: bottom center;
-      animation: wiper-swing 0.38s infinite ease-in-out;
+      animation: wiper-swing 0.35s infinite ease-in-out;
     }
     .wiper-idle {
       transform-origin: bottom center;
-      animation: wiper-swing 2.0s infinite ease-in-out;
+      animation: wiper-swing 1.8s infinite ease-in-out;
     }
 
-    /* Non-blocking Anime Cut-In Slide */
+    /* Cut-In Pop */
     @keyframes cutin-pop {
-      0% { opacity: 0; transform: translateX(30px) scale(0.92); }
-      12% { opacity: 1; transform: translateX(0) scale(1); }
-      86% { opacity: 1; transform: translateX(0) scale(1); }
-      100% { opacity: 0; transform: translateX(20px) scale(0.96); }
+      0% { opacity: 0; transform: translateX(40px) scale(0.9); }
+      14% { opacity: 1; transform: translateX(0) scale(1); }
+      85% { opacity: 1; transform: translateX(0) scale(1); }
+      100% { opacity: 0; transform: translateX(20px) scale(0.95); }
     }
     .animate-cutin {
       animation: cutin-pop 2.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Hazard Stripe Bar */
-    .hazard-line {
-      height: 3px;
-      background: repeating-linear-gradient(-45deg, #EF4444, #EF4444 8px, #F59E0B 8px, #F59E0B 16px);
+    .hazard-strip {
+      height: 4px;
+      background: repeating-linear-gradient(-45deg, #EF4444, #EF4444 10px, #F59E0B 10px, #F59E0B 20px);
     }
-
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #06080F; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
-    ::-webkit-scrollbar-thumb:hover { background: #F59E0B; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-amber-400 selection:text-slate-950">
 
   <!-- =====================================================================
-       1. SLEEK ANIME COMMAND HEADER
+       1. ULTRA-PUNCHY ANIME COMMAND HEADER
        ===================================================================== -->
-  <header class="sticky top-0 z-40 bg-[#06080F]/85 backdrop-blur-2xl border-b border-white/10">
-    <div class="hazard-line w-full"></div>
+  <header class="sticky top-0 z-50 bg-[#05070C]/90 backdrop-blur-2xl border-b border-white/10">
+    <div class="hazard-strip w-full"></div>
 
-    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-      <!-- Brand + Live Status Pill -->
+    <div class="max-w-[1420px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand -->
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/25 to-red-600/25 border border-amber-400/50 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.25)]">
-          <span class="text-lg">🛰️</span>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/30 to-red-600/30 border border-amber-400/60 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.3)]">
+          <span class="text-xl">🛰️</span>
         </div>
         <div>
           <div class="flex items-center gap-2">
             <span class="text-base font-black tracking-wider text-white">AEGIS SANBAO</span>
-            <span id="header-defcon-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-extrabold bg-red-500 text-slate-950">
+            <span id="header-defcon-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-red-500 text-slate-950">
               DEFCON 2
             </span>
+            <span id="iot-live-pill" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+              <i class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></i> OBD-II 寄生盒連線中
+            </span>
           </div>
-          <div class="text-[11px] text-slate-400 font-mono truncate max-w-[260px] sm:max-w-md" id="header-ticker-text">
-            目標左轉燈連閃 3.8km・晴天雨刷高速運轉中
+          <div id="header-ticker-text" class="text-xs text-amber-200/90 font-bold truncate max-w-[260px] sm:max-w-md mt-0.5">
+            左轉燈連閃 3.8km・晴天雨刷高速乾刷中
           </div>
         </div>
       </div>
 
-      <!-- Center: 3 Clean Mode Tabs -->
-      <nav class="flex items-center gap-1.5 bg-slate-950/90 p-1 rounded-xl border border-white/10">
-        <button id="tab-btn-radar" onclick="switchTab('radar')" class="px-4 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-red-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all">
-          📡 戰術雷達
+      <!-- 4 Main Mode Tabs (Added Hardware Vision Tab!) -->
+      <nav class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-white/10">
+        <button id="tab-btn-radar" onclick="switchTab('radar')" class="px-3.5 py-1.5 rounded-lg font-black text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-red-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.4)] transition-all">
+          🗺️ 真實地圖雷達
         </button>
-        <button id="tab-btn-route" onclick="switchTab('route')" class="px-4 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 text-slate-400 hover:text-white transition-all">
-          🧭 吉凶測算
+        <button id="tab-btn-hardware" onclick="switchTab('hardware')" class="px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 text-cyan-300 hover:text-white transition-all">
+          🔌 寄生追蹤盒 (願景硬體)
         </button>
-        <button id="tab-btn-dossier" onclick="switchTab('dossier')" class="px-4 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1.5 text-slate-400 hover:text-white transition-all">
+        <button id="tab-btn-route" onclick="switchTab('route')" class="px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 text-slate-400 hover:text-white transition-all">
+          🧭 出門吉凶
+        </button>
+        <button id="tab-btn-dossier" onclick="switchTab('dossier')" class="px-3.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 text-slate-400 hover:text-white transition-all">
           📋 戰力與目擊
         </button>
       </nav>
 
-      <!-- Right: Quick Actions -->
+      <!-- Quick Action Buttons -->
       <div class="flex items-center gap-2">
-        <span id="header-live-clock" class="hidden xl:inline-block font-mono text-xs text-cyan-400 px-2.5 py-1 rounded-lg bg-slate-900/90 border border-white/10">
-          12:57:18 CST
-        </span>
-        <button id="sound-toggle-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-mono text-amber-300 transition-all" title="切換音效">
+        <button id="sound-toggle-btn" class="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs font-mono text-amber-300">
           🔊 音效
         </button>
-        <button onclick="openCopilotModal()" class="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-300 text-xs font-bold transition-all">
-          📿 副駕木魚
+        <button onclick="openCopilotModal()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-xs font-black">
+          📿 副駕求救木魚
         </button>
-        <button onclick="openProfileModal()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/15 text-xs font-bold text-white transition-all">
-          ⚙️ 換人監控
+        <button onclick="openProfileModal()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-white/15 text-xs font-bold text-white">
+          ⚙️ 換人
         </button>
-        <button onclick="openPresidentialAlert()" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 text-white text-xs font-black shadow-[0_0_18px_rgba(239,68,68,0.5)] transition-all active:scale-95">
-          🚨 國家警報
+        <button onclick="openPresidentialAlert()" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-red-600 to-amber-600 hover:brightness-110 text-white text-xs font-black shadow-[0_0_18px_rgba(239,68,68,0.55)] active:scale-95">
+          🚨 警報
         </button>
       </div>
     </div>
   </header>
 
-  <!-- NON-BLOCKING ANIME CUT-IN NOTIFICATION (TOP-RIGHT) -->
-  <div id="anime-cutin-banner" class="hidden fixed top-20 right-5 z-50 pointer-events-none max-w-md w-full">
-    <div class="relative rounded-2xl overflow-hidden border-2 border-amber-400 shadow-[0_12px_40px_rgba(239,68,68,0.55)] bg-slate-950/95 h-24 flex items-center px-4 gap-3.5">
+  <!-- NON-BLOCKING ANIME CUT-IN NOTIFICATION -->
+  <div id="anime-cutin-banner" class="hidden fixed top-20 right-5 z-50 pointer-events-none max-w-sm w-full">
+    <div class="relative rounded-2xl overflow-hidden border-2 border-amber-400 shadow-[0_12px_40px_rgba(239,68,68,0.65)] bg-slate-950/95 h-24 flex items-center px-4 gap-3.5">
       <div id="anime-cutin-svg" class="absolute inset-0 opacity-75"></div>
       <img src="assets/sanbao_avatar.jpg" alt="Cut-In" class="relative z-10 w-16 h-16 rounded-xl object-cover border-2 border-amber-400 shrink-0" />
       <div class="relative z-10 min-w-0">
-        <div class="text-[9px] font-mono tracking-widest uppercase text-amber-300 font-bold">⚡ ANIME CUT-IN</div>
-        <div id="anime-cutin-title" class="text-sm sm:text-base font-black text-red-400 truncate">
-          MOBIUS ROUNDABOUT
-        </div>
-        <div id="anime-cutin-sub" class="text-xs text-slate-200 truncate mt-0.5">
-          打左轉燈卻往右偏・晴天雨刷全速乾刷！
-        </div>
+        <div class="text-[9px] font-mono tracking-widest text-amber-300 font-black">⚡ ANIME CUT-IN</div>
+        <div id="anime-cutin-title" class="text-base font-black text-red-400 truncate">MOBIUS LOOP</div>
+        <div id="anime-cutin-sub" class="text-xs text-slate-200 truncate">打左燈往右偏・晴天刷雨刷！</div>
       </div>
     </div>
   </div>
 
   <!-- =====================================================================
-       2. MAIN WORKSPACE CONTAINER
+       2. MAIN WORKSPACE
        ===================================================================== -->
-  <main class="max-w-[1400px] w-full mx-auto px-4 sm:px-6 py-5 space-y-5 flex-1">
+  <main class="max-w-[1420px] w-full mx-auto px-4 py-4 space-y-4 flex-1">
 
-    <!-- HERO ROW: ANIME CHARACTER CARD + LIVE TELEMETRY + 4-SCENARIO VISUAL CARDS -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <!-- TOP BAR: SSR OPERATOR + 3 GIANT NUMBERS + 4 ONE-CLICK SCENARIOS -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
 
-      <!-- Left 5 Cols: SSR Anime Operator Card -->
-      <div class="lg:col-span-5 anime-panel rounded-2xl p-4 flex items-center gap-4 screentone-bg">
+      <!-- SSR Operator Card (4 cols) -->
+      <div class="lg:col-span-4 anime-box rounded-2xl p-3.5 flex items-center gap-3.5">
         <div class="relative shrink-0">
-          <img src="assets/sanbao_avatar.jpg" alt="Sanbao Avatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.35)]" />
-          <span class="absolute -top-2 -left-2 px-2 py-0.5 rounded-md bg-gradient-to-r from-amber-400 to-red-500 text-slate-950 font-mono text-[10px] font-black shadow">
-            SSR 特級三寶
+          <img src="assets/sanbao_avatar.jpg" alt="Sanbao" class="w-20 h-20 rounded-2xl object-cover border-2 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.4)]" />
+          <span class="absolute -top-2 -left-2 px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-400 to-red-500 text-slate-950 font-mono text-[9px] font-black">
+            SSR 三寶
           </span>
         </div>
-
-        <div class="flex-1 min-w-0 space-y-1.5">
+        <div class="min-w-0 flex-1 space-y-1">
           <div class="flex items-center gap-2">
-            <span id="vip-plate" class="px-2 py-0.5 rounded bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 font-mono text-xs font-extrabold">
+            <span id="vip-plate" class="px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-mono text-xs font-black">
               SBO-8888
             </span>
-            <span id="vip-title" class="text-[11px] font-mono text-amber-300 truncate">
-              晴天雨刷宗師
-            </span>
+            <span id="vip-title" class="text-[11px] font-bold text-amber-300 truncate">晴天雨刷宗師</span>
           </div>
-
-          <h2 id="vip-name" class="text-xl font-black text-white truncate">
-            林小葵 (Aoi)
-          </h2>
-
-          <p id="vip-vehicle" class="text-xs text-slate-400 truncate">
-            巨型休旅裝甲坦克・盲區 85%
-          </p>
-
-          <!-- Compact Brain OS Pill -->
-          <div class="pt-1">
-            <div class="px-3 py-1.5 rounded-xl bg-slate-950/90 border border-amber-500/30 text-xs text-amber-200 truncate" id="vip-os-bubble">
-              💭 「救命！圓環怎麼出不去！」
-            </div>
+          <h2 id="vip-name" class="text-lg font-black text-white truncate">林小葵 (Aoi)</h2>
+          <div id="vip-os-bubble" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-amber-500/30 text-xs text-amber-200 font-bold truncate">
+            💭「救命！圓環怎麼出不去！」
           </div>
         </div>
       </div>
 
-      <!-- Middle 4 Cols: Big Crisp Numbers (Distance, Blast Radius, Survival %) -->
-      <div id="threat-overview-card" class="lg:col-span-4 anime-panel anime-panel-danger rounded-2xl p-4 flex flex-col justify-between">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-mono tracking-wider text-slate-400 uppercase">LIVE TELEMETRY</span>
-          <span id="metric-threat-level" class="px-2.5 py-0.5 rounded-full text-xs font-mono font-black bg-white/5 text-amber-400">
-            LV.4 圓環迷航
-          </span>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2.5 my-2">
-          <div class="p-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-center">
-            <div class="text-[10px] text-slate-400">暴風半徑</div>
-            <div id="metric-blast-radius" class="text-base sm:text-lg font-mono font-black text-red-400 mt-0.5">1.50 km</div>
+      <!-- 3 Giant Telemetry Numbers (4 cols) -->
+      <div id="threat-overview-card" class="lg:col-span-4 anime-box anime-box-danger rounded-2xl p-3.5 flex flex-col justify-between">
+        <div class="grid grid-cols-3 gap-2 text-center my-auto">
+          <div class="p-2 rounded-xl bg-slate-950/85 border border-white/10">
+            <div class="text-[10px] text-slate-400 font-bold">暴風半徑</div>
+            <div id="metric-blast-radius" class="text-lg font-mono font-black text-red-400">1.50 km</div>
           </div>
-          <div class="p-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-center">
-            <div class="text-[10px] text-slate-400">距您直線</div>
-            <div id="metric-user-dist" class="text-base sm:text-lg font-mono font-black text-cyan-300 mt-0.5">1.76 km</div>
+          <div class="p-2 rounded-xl bg-slate-950/85 border border-white/10">
+            <div class="text-[10px] text-slate-400 font-bold">距您距離</div>
+            <div id="metric-user-dist" class="text-lg font-mono font-black text-cyan-300">1.42 km</div>
           </div>
-          <div class="p-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-center">
-            <div class="text-[10px] text-slate-400">生還機率</div>
-            <div id="metric-survival-rate" class="text-base sm:text-lg font-mono font-black text-amber-400 mt-0.5">54.2%</div>
+          <div class="p-2 rounded-xl bg-slate-950/85 border border-white/10">
+            <div class="text-[10px] text-slate-400 font-bold">生還機率</div>
+            <div id="metric-survival-rate" class="text-lg font-mono font-black text-amber-400">54.2%</div>
           </div>
         </div>
-
-        <div class="space-y-1">
-          <div class="w-full h-2.5 rounded-full bg-slate-950 overflow-hidden border border-white/10 p-0.5">
-            <div id="metric-survival-bar" class="h-full rounded-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-300" style="width: 54%;"></div>
-          </div>
+        <div class="w-full h-2 rounded-full bg-slate-950 overflow-hidden border border-white/10 mt-2">
+          <div id="metric-survival-bar" class="h-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-all duration-300" style="width: 54%;"></div>
         </div>
       </div>
 
-      <!-- Right 3 Cols: Dynamic Anime CG Preview Card -->
-      <div class="lg:col-span-3 anime-panel rounded-2xl overflow-hidden relative group min-h-[148px] flex flex-col justify-end p-4">
-        <img id="command-banner-img" src="assets/scenario_roundabout.jpg" alt="Scenario Anime CG" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" />
-        <div class="absolute inset-0 bg-gradient-to-t from-[#06080F] via-[#06080F]/35 to-transparent"></div>
-        <div class="relative z-10 flex items-center justify-between">
+      <!-- 4 Instant Comedy Scenario Buttons (4 cols) -->
+      <div class="lg:col-span-4 grid grid-cols-2 gap-2">
+        <button data-scenario-btn="home" onclick="selectScenario('home')" class="anime-box rounded-xl p-2.5 text-left hover:border-emerald-400 transition-all flex items-center justify-between">
           <div>
-            <span class="px-2 py-0.5 rounded bg-red-600 text-white font-mono text-[9px] font-black uppercase">
-              LIVE ANIME CG
-            </span>
-            <h3 class="text-sm font-black text-white mt-1" id="cg-card-caption">
-              圓環莫比烏斯迷航
-            </h3>
+            <div class="text-xs font-black text-emerald-400">🏠 居家封印</div>
+            <div class="text-[10px] text-slate-400">道路和平</div>
           </div>
-          <span class="text-xs font-mono text-amber-300 bg-slate-950/80 px-2 py-1 rounded-lg border border-amber-400/30">
-            CAM-04
-          </span>
-        </div>
+          <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">LV.0</span>
+        </button>
+
+        <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="anime-box rounded-xl p-2.5 text-left hover:border-amber-400 transition-all flex items-center justify-between">
+          <div>
+            <div class="text-xs font-black text-amber-400">🛵 買鹹酥雞</div>
+            <div class="text-[10px] text-slate-400">雙腳滑行鬼切</div>
+          </div>
+          <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">LV.2</span>
+        </button>
+
+        <button data-scenario-btn="roundabout" onclick="selectScenario('roundabout')" class="anime-box rounded-xl p-2.5 text-left hover:border-orange-400 transition-all flex items-center justify-between">
+          <div>
+            <div class="text-xs font-black text-orange-400">🔄 圓環迷航</div>
+            <div class="text-[10px] text-slate-400">打左燈往右偏</div>
+          </div>
+          <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300">LV.4</span>
+        </button>
+
+        <button data-scenario-btn="parking" onclick="selectScenario('parking')" class="anime-box rounded-xl p-2.5 text-left hover:border-red-400 transition-all flex items-center justify-between">
+          <div>
+            <div class="text-xs font-black text-red-400">🅿️ 倒車魔王</div>
+            <div class="text-[10px] text-slate-400">R檔D檔狂切</div>
+          </div>
+          <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-red-500/20 text-red-300">LV.5</span>
+        </button>
       </div>
-    </section>
-
-    <!-- 4-SCENARIO ONE-CLICK SWITCHER (CONCISE & PUNCHY) -->
-    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <button data-scenario-btn="home" onclick="selectScenario('home')" class="anime-panel rounded-xl p-3 text-left hover:border-emerald-400/60 transition-all flex items-center justify-between">
-        <div>
-          <div class="text-sm font-black text-emerald-400">🏠 居家封印</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">追番吃餅乾・道路和平</div>
-        </div>
-        <span class="font-mono text-xs font-black px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300">LV.0</span>
-      </button>
-
-      <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="anime-panel rounded-xl p-3 text-left hover:border-amber-400/60 transition-all flex items-center justify-between">
-        <div>
-          <div class="text-sm font-black text-amber-400">🛵 巷口買宵夜</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">雙腳滑行・隨時鬼切</div>
-        </div>
-        <span class="font-mono text-xs font-black px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300">LV.2</span>
-      </button>
-
-      <button data-scenario-btn="roundabout" onclick="selectScenario('roundabout')" class="anime-panel rounded-xl p-3 text-left hover:border-orange-400/60 transition-all flex items-center justify-between">
-        <div>
-          <div class="text-sm font-black text-orange-400">🔄 圓環迷航中</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">打左燈往右偏・刷雨刷</div>
-        </div>
-        <span class="font-mono text-xs font-black px-2 py-1 rounded-lg bg-orange-500/15 text-orange-300">LV.4</span>
-      </button>
-
-      <button data-scenario-btn="parking" onclick="selectScenario('parking')" class="anime-panel rounded-xl p-3 text-left hover:border-red-400/60 transition-all flex items-center justify-between">
-        <div>
-          <div class="text-sm font-black text-red-400">🅿️ 倒車大魔王</div>
-          <div class="text-[11px] text-slate-400 mt-0.5">R/D檔狂切・雷達破音</div>
-        </div>
-        <span class="font-mono text-xs font-black px-2 py-1 rounded-lg bg-red-500/15 text-red-300">LV.5</span>
-      </button>
     </section>
 
     <!-- ===================================================================
-         TAB 1: 📡 戰術雷達 (ULTRA-DETAILED CITY MAP + CLEAN TELEMETRY)
+         TAB 1: 🗺️ 真實 GOOGLE MAP 戰術雷達 + 爆笑座艙互動
          =================================================================== -->
-    <section id="tab-panel-radar" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+    <section id="tab-panel-radar" class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
 
-      <!-- Left 8 Cols: Detailed City Radar Map (Zero Overlapping Overlays) -->
-      <div class="lg:col-span-8 anime-panel rounded-2xl p-4 space-y-3">
+      <!-- Left 8 Cols: REAL GOOGLE MAPS + TACTICAL OVERLAY -->
+      <div class="lg:col-span-8 anime-box rounded-2xl p-3.5 space-y-3">
 
-        <!-- Map Toolbar (Outside Canvas so nothing is covered) -->
+        <!-- Map Control Header -->
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
-            <h3 class="text-sm font-black text-white">新東京・台中戰術街區雷達</h3>
-            <span class="text-[11px] font-mono text-slate-400 hidden sm:inline">點擊地圖可瞬移座標</span>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-black text-white mr-1">🗺️ 真實地圖追蹤：</span>
+            <button onclick="setMapStyle('tactical')" id="mapstyle-tactical" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-amber-500 text-slate-950">
+              🕶️ 動漫戰術暗黑
+            </button>
+            <button onclick="setMapStyle('streets')" id="mapstyle-streets" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-slate-300 border border-white/10">
+              🛣️ Google 真實街道
+            </button>
+            <button onclick="setMapStyle('satellite')" id="mapstyle-satellite" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-slate-300 border border-white/10">
+              🛰️ Google 衛星空拍
+            </button>
           </div>
 
-          <div class="flex flex-wrap items-center gap-1.5">
-            <button id="mode-btn-sanbao" onclick="setRadarClickMode('sanbao')" class="px-3 py-1 rounded-lg text-xs font-bold bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.45)] transition-all">
-              🎯 瞬移三寶
+          <div class="flex items-center gap-1.5">
+            <button id="mode-btn-sanbao" onclick="setRadarClickMode('sanbao')" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-red-500 text-white">
+              🎯 點地圖移三寶
             </button>
-            <button id="mode-btn-user" onclick="setRadarClickMode('user')" class="px-3 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white bg-slate-900 border border-white/10 transition-all">
-              🛡️ 移動我
+            <button id="mode-btn-user" onclick="setRadarClickMode('user')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-slate-300 border border-white/10">
+              🛡️ 點地圖移我
             </button>
-            <button id="radar-pause-btn" onclick="toggleRadarPause()" class="px-2.5 py-1 rounded-lg text-xs font-mono text-slate-300 hover:text-white bg-slate-900 border border-white/10 transition-all">
-              ⏸️ 暫停
+            <button onclick="useRealBrowserGPS()" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950">
+              📍 定位我真實位置
             </button>
-            <button onclick="calculateFarthestEscape()" class="px-3 py-1 rounded-lg text-xs font-black bg-cyan-400 hover:bg-cyan-300 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all">
-              🏃 一鍵逃生導航
+            <button onclick="calculateFarthestEscape()" class="px-2.5 py-1 rounded-lg text-[11px] font-black bg-cyan-400 hover:bg-cyan-300 text-slate-950">
+              🏃 一鍵逃難
             </button>
           </div>
         </div>
 
-        <!-- THE CANVAS MAP (Clean, Unobstructed, High-Detail) -->
-        <div class="relative w-full h-[430px] sm:h-[470px] rounded-xl overflow-hidden border border-white/15 bg-[#05070B] cursor-crosshair shadow-inner">
-          <canvas id="tactical-radar-canvas" class="w-full h-full block"></canvas>
+        <!-- REAL INTERACTIVE GOOGLE MAP CONTAINER -->
+        <div class="relative w-full h-[460px] rounded-xl overflow-hidden border border-white/15 shadow-inner z-10">
+          <div id="real-google-map" class="w-full h-full"></div>
         </div>
 
-        <!-- Legend & Chaos Slider Bar (Cleanly below the map, never covering it) -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 pt-1 items-center">
-          <!-- Map Legend Pills -->
-          <div class="md:col-span-6 flex flex-wrap items-center gap-3 text-[11px] font-mono bg-slate-950/80 px-3.5 py-2.5 rounded-xl border border-white/10">
-            <span class="flex items-center gap-1.5 text-red-300">
-              <i class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></i> 絕對淨空圈
-            </span>
-            <span class="flex items-center gap-1.5 text-amber-300">
-              <i class="w-2.5 h-2.5 rounded-full border border-dashed border-amber-400 inline-block"></i> 方向燈欺敵圈
-            </span>
-            <span class="flex items-center gap-1.5 text-cyan-300">
-              <i class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></i> 逃生路線
-            </span>
+        <!-- Clean Footer Bar Below Map -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+          <div class="md:col-span-7 flex flex-wrap items-center gap-2 text-[11px] font-bold bg-slate-950/90 px-3 py-2 rounded-xl border border-white/10">
+            <span class="text-slate-400">快速跳轉熱點：</span>
+            <button onclick="flyToHotspot('costco')" class="px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30">
+              好市多 B2
+            </button>
+            <button onclick="flyToHotspot('roundabout')" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30">
+              台灣大道圓環
+            </button>
+            <button onclick="flyToHotspot('fengjia')" class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30">
+              逢甲夜市
+            </button>
+            <button onclick="openGoogleMapsNavigation()" class="ml-auto px-2.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 hover:bg-cyan-500/30 font-mono">
+              ↗ 在 Google Maps 開啟
+            </button>
           </div>
 
-          <!-- Chaos Slider -->
-          <div class="md:col-span-6 flex items-center gap-3 bg-slate-950/80 px-3.5 py-2 rounded-xl border border-white/10">
-            <span class="text-xs font-bold text-amber-300 shrink-0">🌪️ 混沌度</span>
+          <div class="md:col-span-5 flex items-center gap-2.5 bg-slate-950/90 px-3 py-2 rounded-xl border border-white/10">
+            <span class="text-xs font-black text-amber-300 shrink-0">🌪️ 暴走度</span>
             <input id="chaos-slider" type="range" min="0" max="100" value="76" class="w-full accent-amber-500 cursor-pointer" />
-            <span id="chaos-slider-val" class="font-mono text-xs font-black text-red-400 w-10 text-right">76%</span>
+            <span id="chaos-slider-val" class="font-mono text-xs font-black text-red-400 w-9 text-right">76%</span>
           </div>
         </div>
       </div>
 
-      <!-- Right 4 Cols: Cockpit Wiper Paradox + Mini Parking Game + Voice Log -->
-      <div class="lg:col-span-4 space-y-4">
+      <!-- Right 4 Cols: Eye-Catching Anime CG + Wiper Paradox + Mini Parking Game -->
+      <div class="lg:col-span-4 space-y-3.5">
 
-        <!-- Cockpit Wiper & Turn Signal Paradox -->
-        <div class="anime-panel rounded-2xl p-4 space-y-3">
+        <!-- Live Anime Scenario Visual Banner -->
+        <div class="anime-box rounded-2xl overflow-hidden relative h-32 flex flex-col justify-end p-3.5">
+          <img id="command-banner-img" src="assets/scenario_roundabout.jpg" alt="Anime CG" class="absolute inset-0 w-full h-full object-cover opacity-85" />
+          <div class="absolute inset-0 bg-gradient-to-t from-[#05070C] via-[#05070C]/30 to-transparent"></div>
+          <div class="relative z-10 flex items-center justify-between">
+            <div>
+              <span class="px-2 py-0.5 rounded bg-red-600 text-white font-mono text-[9px] font-black">ANIME LIVE CAM</span>
+              <h3 id="cg-card-caption" class="text-sm font-black text-white mt-0.5">圓環莫比烏斯迷航</h3>
+            </div>
+            <button onclick="switchTab('hardware')" class="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-black text-[11px] shadow-lg">
+              🔌 怎麼偷裝追蹤器？
+            </button>
+          </div>
+        </div>
+
+        <!-- Hilarious Cockpit Wiper Paradox -->
+        <div class="anime-box rounded-2xl p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-black text-white">🎛️ 座艙迷惑遙測</h3>
-            <span id="wiper-status-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/40">
+            <h3 class="text-xs font-black text-white">🎛️ OBD-II 寄生盒即時回傳</h3>
+            <span id="wiper-status-badge" class="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-red-500/20 text-red-300 border border-red-500/40">
               ☀️ 晴天雨刷 MAX
             </span>
           </div>
 
-          <!-- Turn Signals -->
           <div class="grid grid-cols-2 gap-2">
-            <div id="lamp-left-turn" class="py-1.5 px-2 rounded-lg border border-white/10 bg-slate-900 text-slate-400 font-mono text-xs font-bold text-center signal-blink-active">
-              ⬅️ 左燈 (常駐)
+            <div id="lamp-left-turn" class="py-1.5 rounded-lg border border-white/10 bg-slate-900 text-slate-400 font-mono text-xs font-black text-center signal-blink-active">
+              ⬅️ 左燈 (閃3.8km)
             </div>
-            <div id="lamp-right-turn" class="py-1.5 px-2 rounded-lg border border-white/10 bg-slate-900 text-slate-400 font-mono text-xs font-bold text-center">
-              右燈 (封印) ➡️
+            <div id="lamp-right-turn" class="py-1.5 rounded-lg border border-white/10 bg-slate-900 text-slate-400 font-mono text-xs font-black text-center">
+              右燈 (全新未用) ➡️
             </div>
           </div>
 
-          <!-- Windshield Wiper Animation Box -->
-          <div class="relative h-24 rounded-xl bg-gradient-to-b from-sky-950/70 to-slate-950 border border-cyan-500/25 overflow-hidden flex flex-col items-center justify-end p-2">
-            <div class="absolute top-2 inset-x-3 flex justify-between text-[10px] font-mono">
-              <span class="text-amber-300">☀️ 萬里無雲</span>
+          <!-- Windshield Wiper Animation -->
+          <div class="relative h-20 rounded-xl bg-gradient-to-b from-sky-950/75 to-slate-950 border border-cyan-500/30 overflow-hidden flex flex-col items-center justify-end p-1.5">
+            <div class="absolute top-1.5 inset-x-3 flex justify-between text-[10px] font-mono font-bold">
+              <span class="text-amber-300">☀️ 大晴天無雨</span>
               <span id="car-heading-paradox" class="text-cyan-300">打左燈 ➔ 右偏 +28°</span>
             </div>
-            <div class="flex items-end justify-around w-3/4 h-14">
-              <div id="wiper-arm-left" class="w-1 h-14 bg-amber-400 rounded-full shadow-[0_0_8px_#F59E0B] wiper-rapid"></div>
-              <div id="wiper-arm-right" class="w-1 h-14 bg-amber-400 rounded-full shadow-[0_0_8px_#F59E0B] wiper-rapid"></div>
+            <div class="flex items-end justify-around w-3/4 h-12">
+              <div id="wiper-arm-left" class="w-1 h-12 bg-amber-400 rounded-full shadow-[0_0_8px_#F59E0B] wiper-rapid"></div>
+              <div id="wiper-arm-right" class="w-1 h-12 bg-amber-400 rounded-full shadow-[0_0_8px_#F59E0B] wiper-rapid"></div>
             </div>
             <div class="w-full h-1 bg-slate-700 rounded-full"></div>
           </div>
 
-          <button onclick="triggerWiperParadox()" class="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-[0_0_18px_rgba(245,158,11,0.35)] transition-all active:scale-95">
-            🌧️ 觸發「要轉彎卻刷雨刷」
+          <button onclick="triggerWiperParadox()" class="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500 to-red-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-[0_0_15px_rgba(245,158,11,0.4)] active:scale-95 transition-all">
+            🌧️ 點擊觸發「想轉彎卻狂刷雨刷」！
           </button>
 
-          <!-- Compact 4-Metric Grid -->
-          <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="p-2 rounded-lg bg-slate-950/80 border border-white/10 flex justify-between items-center">
+          <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+            <div class="p-2 rounded-lg bg-slate-950 border border-white/10 flex justify-between">
               <span class="text-slate-400">時速</span>
-              <span id="obd-speed" class="font-mono font-bold text-white">16 km/h</span>
+              <span id="obd-speed" class="font-mono font-black text-white">16 km/h</span>
             </div>
-            <div class="p-2 rounded-lg bg-slate-950/80 border border-white/10 flex justify-between items-center">
+            <div class="p-2 rounded-lg bg-slate-950 border border-white/10 flex justify-between">
               <span class="text-slate-400">後照鏡</span>
-              <span class="font-mono font-bold text-emerald-400">0.0%</span>
+              <span class="font-mono font-black text-emerald-400">0% 裝飾品</span>
             </div>
-            <div class="p-2 rounded-lg bg-slate-950/80 border border-white/10 flex justify-between items-center">
-              <span class="text-slate-400">油門誤踩</span>
-              <span id="obd-confusion" class="font-mono font-bold text-red-400">68%</span>
+            <div class="p-2 rounded-lg bg-slate-950 border border-white/10 flex justify-between">
+              <span class="text-slate-400">油門當煞車</span>
+              <span id="obd-confusion" class="font-mono font-black text-red-400">68%</span>
             </div>
-            <div class="p-2 rounded-lg bg-slate-950/80 border border-white/10 flex justify-between items-center">
+            <div class="p-2 rounded-lg bg-slate-950 border border-white/10 flex justify-between">
               <span class="text-slate-400">導航崩潰</span>
-              <span id="obd-reroute" class="font-mono font-bold text-amber-300">34 次</span>
+              <span id="obd-reroute" class="font-mono font-black text-amber-300">34 次</span>
             </div>
           </div>
         </div>
 
-        <!-- Mini Game: Costco B2 Reverse Challenge -->
-        <div class="anime-panel rounded-2xl p-4 space-y-2.5">
+        <!-- Mini Game: Costco Reverse Challenge -->
+        <div class="anime-box rounded-2xl p-3.5 space-y-2">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-black text-amber-300">🎮 好市多倒車魔王小遊戲</h3>
-            <button onclick="startParkingMiniGame()" class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white">
-              重來
-            </button>
+            <h3 class="text-xs font-black text-amber-300">🎮 好市多「左右相反」倒車挑戰</h3>
+            <button onclick="startParkingMiniGame()" class="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-white">重來</button>
           </div>
-          <canvas id="parking-game-canvas" width="320" height="150" class="w-full h-28 rounded-xl border border-white/10 bg-[#060911]"></canvas>
+          <canvas id="parking-game-canvas" width="320" height="135" class="w-full h-24 rounded-xl border border-white/10 bg-[#060911]"></canvas>
           <div class="grid grid-cols-4 gap-1.5">
-            <button onclick="steerParkingCar('LEFT')" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-white border border-white/10">
-              ↰ 左打
-            </button>
-            <button onclick="steerParkingCar('RIGHT')" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-white border border-white/10">
-              ↱ 右打
-            </button>
-            <button onclick="steerParkingCar('REV')" class="py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-[11px] font-bold text-white">
-              ⏪ 倒車
-            </button>
-            <button onclick="steerParkingCar('FWD')" class="py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-[11px] font-bold text-slate-950">
-              ⏩ 暴衝
-            </button>
+            <button onclick="steerParkingCar('LEFT')" class="py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-black text-white border border-white/10">↰ 左打</button>
+            <button onclick="steerParkingCar('RIGHT')" class="py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-black text-white border border-white/10">↱ 右打</button>
+            <button onclick="steerParkingCar('REV')" class="py-1 rounded-lg bg-red-600 hover:bg-red-500 text-[11px] font-black text-white">⏪ 倒車</button>
+            <button onclick="steerParkingCar('FWD')" class="py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-[11px] font-black text-slate-950">⏩ 暴衝</button>
           </div>
-        </div>
-
-        <!-- Compact Blackbox Voice Wall -->
-        <div class="anime-panel rounded-2xl p-4 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-black text-white">🎙️ 座艙黑盒子語音</h3>
-            <span class="text-[10px] font-mono text-emerald-400">● LIVE</span>
-          </div>
-          <div id="blackbox-log-list" class="space-y-2 max-h-[155px] overflow-y-auto pr-1"></div>
         </div>
 
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 2: 🧭 吉凶測算與群組通報 (CONCISE & VISUAL)
+         TAB 2: 🔌 寄生追蹤盒 (SANBAO-TAG // MK-VI 實體硬體願景與真機配對)
          =================================================================== -->
-    <section id="tab-panel-route" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <section id="tab-panel-hardware" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
 
-      <!-- Left 5 Cols: Route Picker -->
-      <div class="lg:col-span-5 anime-panel rounded-2xl p-5 space-y-4">
+      <!-- Left 6 Cols: Anime Hardware Showcase & 3 Hilarious Sensors -->
+      <div class="lg:col-span-6 anime-box rounded-2xl p-5 flex flex-col justify-between space-y-4">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-mono text-[10px] font-black">
+              FUTURE HARDWARE VISION // 實體外掛計畫
+            </span>
+            <span class="font-mono text-xs font-black text-amber-400">NT$ 990 / 救親友一命</span>
+          </div>
+
+          <h2 class="text-xl sm:text-2xl font-black text-white mt-2">
+            🔌 SANBAO-TAG // 三寶車載寄生黑盒子
+          </h2>
+          <p class="text-xs text-slate-300 mt-1">
+            網頁無法自動通靈？只要趁三寶朋友買鹹酥雞時，把這顆磁吸黑盒子偷插進他方向盤下方的 **OBD-II 孔**，全群組親友就能 24 小時在 Google Map 上看到他即時發動警報！
+          </p>
+        </div>
+
+        <!-- Hardware Anime Visual Banner -->
+        <div class="relative rounded-2xl overflow-hidden border-2 border-amber-400/60 h-56 shadow-[0_0_35px_rgba(245,158,11,0.25)]">
+          <img id="hardware-showcase-img" src="assets/sanbao_iot_dongle.jpg" alt="SANBAO-TAG Hardware" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-[#05070C] via-transparent to-transparent"></div>
+          <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+            <span class="px-2.5 py-1 rounded-lg bg-slate-950/90 border border-amber-400/50 text-amber-300 font-mono text-xs font-black">
+              ⚡ 3秒強磁盲插・三寶絕對不會發現
+            </span>
+            <span class="px-2 py-1 rounded bg-red-600 text-white font-mono text-[10px] font-black">5G + 雙頻 GPS</span>
+          </div>
+        </div>
+
+        <!-- 3 Hilarious Hardware Specs -->
+        <div class="grid grid-cols-3 gap-2.5 text-center">
+          <div class="p-3 rounded-xl bg-slate-950/90 border border-amber-500/30">
+            <div class="text-xl mb-1">点火即推播</div>
+            <div class="text-xs font-black text-amber-300">鑰匙一轉 LINE 警報</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">他剛發動引擎，方圓 3km 親友手機立刻響起防空警報</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/90 border border-red-500/30">
+            <div class="text-xl mb-1">R檔陀螺儀</div>
+            <div class="text-xs font-black text-red-400">倒車入庫自動廣播</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">偵測到 R/D 檔切換超過 5 次，自動通知鄰車快逃</div>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/90 border border-cyan-500/30">
+            <div class="text-xl mb-1">雨刷電流計</div>
+            <div class="text-xs font-black text-cyan-300">晴天刷雨刷抓包</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">大晴天誤觸雨刷時，自動截圖傳到損友群組</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right 6 Cols: Real-Time IoT Device Simulator + Mobile Companion Beacon Mode -->
+      <div class="lg:col-span-6 space-y-4 flex flex-col justify-between">
+
+        <!-- Interactive Hardware Pairing & Stress Test -->
+        <div class="anime-box rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-[10px] font-mono text-emerald-400 font-black">● LIVE HARDWARE TELEMETRY</span>
+              <h3 class="text-base font-black text-white">📡 寄生追蹤盒・即時硬體測試台</h3>
+            </div>
+            <button onclick="pairNewSanbaoTag()" class="px-3 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+              🔄 重新掃描車載晶片
+            </button>
+          </div>
+
+          <!-- Hardware Status Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono">
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
+              <div class="text-[10px] text-slate-400">晶片編號</div>
+              <div id="hw-tag-id" class="text-xs font-black text-cyan-300 mt-0.5">TAG-8888X</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
+              <div class="text-[10px] text-slate-400">偽裝隱蔽度</div>
+              <div class="text-xs font-black text-emerald-400 mt-0.5">99.9% 未察覺</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
+              <div class="text-[10px] text-slate-400">G力鬼切感應</div>
+              <div id="hw-gforce" class="text-xs font-black text-amber-400 mt-0.5">2.4 G</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
+              <div class="text-[10px] text-slate-400">電池續航</div>
+              <div class="text-xs font-black text-white mt-0.5">OBD 永久供電</div>
+            </div>
+          </div>
+
+          <!-- 3 Comedy Hardware Trigger Buttons -->
+          <div class="space-y-2">
+            <div class="text-xs font-bold text-slate-400">👇 點擊模擬「車上寄生盒」偵測到三寶高危動作：</div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button onclick="simulateHardwareEvent('ignition')" class="p-3 rounded-xl bg-red-600/25 hover:bg-red-600/40 border border-red-500/50 text-left transition-all">
+                <div class="text-xs font-black text-red-300">🔑 偵測三寶發動引擎</div>
+                <div class="text-[10px] text-slate-300 mt-0.5">全網推播緊急避難</div>
+              </button>
+              <button onclick="simulateHardwareEvent('rgear')" class="p-3 rounded-xl bg-amber-500/25 hover:bg-amber-500/40 border border-amber-500/50 text-left transition-all">
+                <div class="text-xs font-black text-amber-300">🅿️ 偵測打入 R 檔倒車</div>
+                <div class="text-[10px] text-slate-300 mt-0.5">半徑瞬間擴大至 3km</div>
+              </button>
+              <button onclick="simulateHardwareEvent('ghostcut')" class="p-3 rounded-xl bg-cyan-500/25 hover:bg-cyan-500/40 border border-cyan-500/50 text-left transition-all">
+                <div class="text-xs font-black text-cyan-300">🛵 偵測 90度買宵夜鬼切</div>
+                <div class="text-[10px] text-slate-300 mt-0.5">G力飆升 + 晴天雨刷</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- REAL SOLUTION RIGHT NOW: Turn a Phone into a Live Sanbao GPS Beacon! -->
+        <div class="anime-box anime-box-danger rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-mono text-[10px] font-black">
+              免買硬體也能真用！
+            </span>
+            <span id="beacon-status-text" class="text-xs font-mono text-slate-400">尚未開啟手機信標</span>
+          </div>
+
+          <h3 class="text-base font-black text-white">
+            📱 把舊手機丟他車上 ＝ 免費真實 GPS 寄生器！
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            點擊下方按鈕開啟 **「真實手機 GPS 持續發射模式」**，會直接讀取手機真實衛星座標並同步到上方的 Google Map 雷達！把這個網頁在三寶朋友的手機（或副駕手機）打開，就能做到真正的即時定位！
+          </p>
+
+          <div class="flex flex-wrap gap-2.5 pt-1">
+            <button id="btn-live-beacon" onclick="toggleRealGpsBeacon()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 hover:brightness-110 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all">
+              🛰️ 啟動「真實手機 GPS 寄生發射器」模式
+            </button>
+            <button onclick="copyCustomUrl()" class="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/15 text-xs font-black text-amber-300">
+              🔗 複製專屬追蹤連結
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 3: 🧭 出門吉凶與 LINE 群組通報 (CONCISE)
+         =================================================================== -->
+    <section id="tab-panel-route" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-5 anime-box rounded-2xl p-5 space-y-3.5">
         <h3 class="text-base font-black text-white">🧭 出門生還吉凶測算</h3>
-
-        <div class="space-y-3">
+        <div class="space-y-2.5">
           <div>
             <label class="block text-xs font-bold text-slate-400 mb-1">📍 出發地</label>
-            <select id="route-origin" onchange="calculateRouteSafety(true)" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+            <select id="route-origin" onchange="calculateRouteSafety(true)" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs text-white">
               <option value="西屯・市政中心">西屯・市政中心</option>
               <option value="北屯・崇德商圈">北屯・崇德商圈</option>
               <option value="南屯・公益路戰區">南屯・公益路戰區</option>
               <option value="西區・勤美草悟道">西區・勤美草悟道</option>
             </select>
           </div>
-
           <div>
             <label class="block text-xs font-bold text-slate-400 mb-1">🏁 目的地</label>
-            <select id="route-dest" onchange="calculateRouteSafety(true)" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+            <select id="route-dest" onchange="calculateRouteSafety(true)" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs text-white">
               <option value="北屯好市多 B2 停車場">北屯好市多 B2 停車場</option>
               <option value="台灣大道大圓環">台灣大道大圓環</option>
               <option value="逢甲夜市窄巷">逢甲夜市窄巷</option>
               <option value="百貨螺旋停車場">百貨螺旋停車場</option>
             </select>
           </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-400 mb-1.5">🚀 移動方式</label>
-            <div class="grid grid-cols-2 gap-2">
-              <button data-transport-btn="walk" onclick="selectTransportMode('walk')" class="p-2.5 rounded-xl border border-white/10 bg-slate-900/70 text-slate-300 text-xs flex items-center gap-2 transition-all">
-                <span class="text-base">🚶</span> <span>步行騎樓</span>
-              </button>
-              <button data-transport-btn="scooter" onclick="selectTransportMode('scooter')" class="p-2.5 rounded-xl border-2 border-amber-400 bg-amber-500/20 text-white font-bold text-xs flex items-center gap-2 transition-all">
-                <span class="text-base">🛵</span> <span>機車肉包鐵</span>
-              </button>
-              <button data-transport-btn="car" onclick="selectTransportMode('car')" class="p-2.5 rounded-xl border border-white/10 bg-slate-900/70 text-slate-300 text-xs flex items-center gap-2 transition-all">
-                <span class="text-base">🚗</span> <span>開車硬扛</span>
-              </button>
-              <button data-transport-btn="mrt" onclick="selectTransportMode('mrt')" class="p-2.5 rounded-xl border border-white/10 bg-slate-900/70 text-slate-300 text-xs flex items-center gap-2 transition-all">
-                <span class="text-base">🚝</span> <span>高架捷運</span>
-              </button>
-            </div>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button data-transport-btn="walk" onclick="selectTransportMode('walk')" class="p-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚶 步行騎樓</button>
+            <button data-transport-btn="scooter" onclick="selectTransportMode('scooter')" class="p-2.5 rounded-xl border-2 border-amber-400 bg-amber-500/20 text-white text-xs font-black">🛵 機車肉包鐵</button>
+            <button data-transport-btn="car" onclick="selectTransportMode('car')" class="p-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚗 開車硬扛</button>
+            <button data-transport-btn="mrt" onclick="selectTransportMode('mrt')" class="p-2.5 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold">🚝 高架捷運</button>
           </div>
         </div>
       </div>
 
-      <!-- Right 7 Cols: Result & LINE Copy -->
-      <div class="lg:col-span-7 space-y-4">
-        <div class="anime-panel anime-panel-danger rounded-2xl p-5 space-y-3">
-          <div class="flex items-center justify-between border-b border-white/10 pb-3">
-            <div>
-              <div class="text-[10px] font-mono text-slate-400">ORACLE RESULT</div>
-              <div id="route-result-omen" class="text-xl font-black text-red-400">【大凶 // 建議就地掩護】</div>
+      <div class="lg:col-span-7 space-y-3.5">
+        <div class="anime-box anime-box-danger rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div id="route-result-omen" class="text-lg sm:text-xl font-black text-red-400">【大凶 // 建議就地掩護】</div>
+            <div id="route-result-prob" class="text-2xl font-mono font-black text-red-400">94.5% 遭遇率</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
+              <div class="text-amber-400 font-bold">📏 安全車距</div>
+              <div id="route-result-dist" class="text-slate-200 mt-0.5">隔開 3 個紅綠燈</div>
             </div>
-            <div class="text-right">
-              <div class="text-[10px] font-mono text-slate-400">遭遇率</div>
-              <div id="route-result-prob" class="text-2xl font-mono font-black text-red-400">94.5%</div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
+              <div class="text-red-400 font-bold">👁️ 致命盲區</div>
+              <div id="route-result-blindspot" class="text-slate-200 mt-0.5">全車 85% 視線死角</div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
+              <div class="text-cyan-300 font-bold">🛡️ 保命裝備</div>
+              <div id="route-result-gear" class="text-slate-200 mt-0.5">全罩帽 + 超額險</div>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-white/10">
-              <div class="text-amber-400 font-bold mb-1">📏 安全車距</div>
-              <div id="route-result-dist" class="text-slate-200">隔開 3 個紅綠燈以上</div>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-white/10">
-              <div class="text-red-400 font-bold mb-1">👁️ 致命盲區</div>
-              <div id="route-result-blindspot" class="text-slate-200">A/B/C柱與後照鏡 (85%)</div>
-            </div>
-            <div class="p-3 rounded-xl bg-slate-950/80 border border-white/10">
-              <div class="text-cyan-300 font-bold mb-1">🛡️ 推薦裝備</div>
-              <div id="route-result-gear" class="text-slate-200">全罩帽 + 超額險 3000 萬</div>
-            </div>
-          </div>
-          <div id="route-result-advice" class="text-xs text-amber-200 font-medium"></div>
         </div>
 
-        <!-- LINE Share Box -->
-        <div class="anime-panel rounded-2xl p-5 space-y-3">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h3 class="text-sm font-black text-white">📢 LINE 群組一鍵警報文案</h3>
-            <div class="flex items-center gap-1.5">
-              <button data-share-style-btn="defense" onclick="selectShareStyle('defense')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">
-                🚨 國防風
-              </button>
-              <button data-share-style-btn="elder" onclick="selectShareStyle('elder')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">
-                🌺 長輩圖
-              </button>
-              <button data-share-style-btn="news" onclick="selectShareStyle('news')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">
-                📺 快訊風
-              </button>
+        <div class="anime-box rounded-2xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-black text-white">📢 一鍵產生 LINE 群組爆笑警告</h3>
+            <div class="flex gap-1">
+              <button data-share-style-btn="defense" onclick="selectShareStyle('defense')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">🚨 國防風</button>
+              <button data-share-style-btn="elder" onclick="selectShareStyle('elder')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">🌺 長輩圖</button>
+              <button data-share-style-btn="news" onclick="selectShareStyle('news')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">📺 快訊風</button>
             </div>
           </div>
-
-          <textarea id="share-copy-textarea" rows="4" readonly class="w-full rounded-xl bg-slate-950/90 border border-white/15 p-3 text-xs text-amber-100 font-mono leading-relaxed focus:outline-none"></textarea>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <button onclick="copyShareText()" class="py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all">
-              📋 複製警告文案
-            </button>
-            <button onclick="copyCustomUrl()" class="py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition-all">
-              🔗 複製他的專屬防空網址
-            </button>
+          <textarea id="share-copy-textarea" rows="3" readonly class="w-full rounded-xl bg-slate-950 border border-white/15 p-2.5 text-xs text-amber-100 font-mono focus:outline-none"></textarea>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="copyShareText()" class="py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs">📋 複製警告文案</button>
+            <button onclick="copyCustomUrl()" class="py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs">🔗 複製專屬捉弄網址</button>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 3: 📋 六維戰力與目擊戰報 (HEXAGON + SIGHTINGS)
+         TAB 4: 📋 戰力六維圖與目擊戰報
          =================================================================== -->
-    <section id="tab-panel-dossier" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-5">
-
-      <!-- Left 5 Cols: 6-Axis Hexagon Radar -->
-      <div class="lg:col-span-5 anime-panel rounded-2xl p-5 flex flex-col justify-between space-y-4">
-        <h3 class="text-base font-black text-white">📊 目標六維戰力雷達</h3>
-
-        <div class="flex items-center justify-center">
-          <canvas id="hexagon-chart-canvas" width="320" height="320" class="max-w-full"></canvas>
+    <section id="tab-panel-dossier" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div class="lg:col-span-5 anime-box rounded-2xl p-4 flex flex-col justify-between">
+        <h3 class="text-sm font-black text-white">📊 三寶六維戰力分析</h3>
+        <div class="flex items-center justify-center my-1">
+          <canvas id="hexagon-chart-canvas" width="290" height="290" class="max-w-full"></canvas>
         </div>
-
-        <div class="grid grid-cols-2 gap-2.5 text-xs">
-          <div class="p-3 rounded-xl bg-slate-950/80 border border-white/10">
-            <div class="text-[10px] text-slate-400">單格停車耗時</div>
-            <div class="text-base font-mono font-black text-amber-400">18m 42s</div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10 flex justify-between">
+            <span class="text-slate-400">單格停車</span>
+            <span class="font-mono font-black text-amber-400">18m 42s</span>
           </div>
-          <div class="p-3 rounded-xl bg-slate-950/80 border border-white/10">
-            <div class="text-[10px] text-slate-400">晴天刷雨刷</div>
-            <div class="text-base font-mono font-black text-red-400">1,428 次</div>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-950/80 border border-white/10">
-            <div class="text-[10px] text-slate-400">方向燈未關紀錄</div>
-            <div class="text-base font-mono font-black text-cyan-300">14.6 km</div>
-          </div>
-          <div class="p-3 rounded-xl bg-slate-950/80 border border-white/10">
-            <div class="text-[10px] text-slate-400">副駕抓把手率</div>
-            <div class="text-base font-mono font-black text-emerald-400">99.8%</div>
+          <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10 flex justify-between">
+            <span class="text-slate-400">晴天雨刷</span>
+            <span class="font-mono font-black text-red-400">1,428 次</span>
           </div>
         </div>
       </div>
 
-      <!-- Right 7 Cols: Sightings Wall -->
-      <div class="lg:col-span-7 space-y-4">
-        <form onsubmit="submitNewSighting(event)" class="anime-panel rounded-2xl p-4 space-y-3">
-          <h3 class="text-sm font-black text-white">🕵️ 回報最新目擊事蹟</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <select id="new-sighting-rank" class="rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs text-white">
-              <option value="S">S級・毀滅災難</option>
-              <option value="A">A級・極度迷惑</option>
+      <div class="lg:col-span-7 space-y-3.5">
+        <form onsubmit="submitNewSighting(event)" class="anime-box rounded-2xl p-4 space-y-2.5">
+          <h3 class="text-xs font-black text-white">🕵️ 回報目擊事蹟</h3>
+          <div class="grid grid-cols-3 gap-2">
+            <select id="new-sighting-rank" class="rounded-xl bg-slate-900 border border-white/15 px-2.5 py-1.5 text-xs text-white">
+              <option value="S">S級毀滅</option>
+              <option value="A">A級迷惑</option>
             </select>
-            <input id="new-sighting-location" type="text" placeholder="目擊地點 (例：好市多 B2)" class="sm:col-span-2 rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs text-white" />
+            <input id="new-sighting-location" type="text" placeholder="地點 (例：好市多 B2)" class="col-span-2 rounded-xl bg-slate-900 border border-white/15 px-3 py-1.5 text-xs text-white" />
           </div>
           <div class="flex gap-2">
-            <input id="new-sighting-content" type="text" placeholder="一句話描述他的三寶事蹟..." class="flex-1 rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-xs text-white" />
-            <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shrink-0">
-              🚀 發送
-            </button>
+            <input id="new-sighting-content" type="text" placeholder="一句話描述他的三寶行為..." class="flex-1 rounded-xl bg-slate-900 border border-white/15 px-3 py-1.5 text-xs text-white" />
+            <button type="submit" class="px-4 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-black text-xs">🚀 發送</button>
           </div>
         </form>
 
-        <div class="anime-panel rounded-2xl p-4 space-y-3">
+        <div class="anime-box rounded-2xl p-4 space-y-2.5">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-black text-white">📋 親友目擊戰報牆</h3>
-            <div class="flex gap-1.5">
-              <button data-sighting-filter="ALL" onclick="filterSightings('ALL')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">全部</button>
-              <button data-sighting-filter="S" onclick="filterSightings('S')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">S級</button>
-              <button data-sighting-filter="A" onclick="filterSightings('A')" class="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10">A級</button>
+            <h3 class="text-xs font-black text-white">📋 親友目擊戰報牆</h3>
+            <div class="flex gap-1">
+              <button data-sighting-filter="ALL" onclick="filterSightings('ALL')" class="px-2 py-0.5 rounded text-xs font-bold bg-amber-500 text-slate-950">全部</button>
+              <button data-sighting-filter="S" onclick="filterSightings('S')" class="px-2 py-0.5 rounded text-xs bg-slate-900 text-slate-300 border border-white/10">S級</button>
+              <button data-sighting-filter="A" onclick="filterSightings('A')" class="px-2 py-0.5 rounded text-xs bg-slate-900 text-slate-300 border border-white/10">A級</button>
             </div>
           </div>
-          <div id="sightings-wall-list" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
+          <div id="sightings-wall-list" class="space-y-2 max-h-[290px] overflow-y-auto pr-1"></div>
         </div>
       </div>
     </section>
@@ -686,34 +734,25 @@
   <!-- =====================================================================
        3. MODALS
        ===================================================================== -->
-
-  <!-- 🚨 Presidential Alert Modal -->
+  <!-- 🚨 Presidential Alert -->
   <div id="modal-presidential-alert" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-    <div class="max-w-md w-full rounded-2xl overflow-hidden border-2 border-red-500 bg-[#12070B] shadow-[0_0_60px_rgba(239,68,68,0.65)]">
-      <div class="hazard-line"></div>
+    <div class="max-w-md w-full rounded-2xl overflow-hidden border-2 border-red-500 bg-[#12070B] shadow-[0_0_60px_rgba(239,68,68,0.7)]">
+      <div class="hazard-strip"></div>
       <div class="p-5 space-y-4">
         <div class="flex items-center justify-between">
-          <span class="px-2.5 py-1 rounded bg-red-600 text-white font-mono text-xs font-black animate-pulse">
-            🚨 國家級三寶防空警報
-          </span>
+          <span class="px-2.5 py-1 rounded bg-red-600 text-white font-mono text-xs font-black animate-pulse">🚨 國家級三寶警報</span>
           <button onclick="closePresidentialAlert()" class="text-slate-400 hover:text-white">✕</button>
         </div>
-
-        <div class="flex items-center gap-3.5 p-3 rounded-xl bg-red-950/40 border border-red-500/40">
-          <img src="assets/sanbao_avatar.jpg" alt="Alert" class="w-16 h-16 rounded-xl object-cover border border-red-400 shrink-0" />
-          <div class="text-xs space-y-1">
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-red-950/40 border border-red-500/40">
+          <img src="assets/sanbao_avatar.jpg" alt="Alert" class="w-14 h-14 rounded-xl object-cover border border-red-400" />
+          <div class="text-xs">
             <div class="text-sm font-black text-white">目標已握住方向盤！</div>
-            <div class="text-red-200">左轉燈常駐 + 晴天雨刷高速乾刷中，請方圓 3km 人車立即掩護！</div>
+            <div class="text-red-200 mt-0.5">OBD-II 寄生盒回傳：晴天雨刷全開 + 左轉燈常駐，方圓 3km 請立即避難！</div>
           </div>
         </div>
-
-        <div class="flex gap-2.5">
-          <button onclick="copyShareText(); closePresidentialAlert();" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs">
-            📋 複製警報並關閉
-          </button>
-          <button onclick="closePresidentialAlert()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 font-bold text-xs">
-            就地掩護
-          </button>
+        <div class="flex gap-2">
+          <button onclick="copyShareText(); closePresidentialAlert();" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs">📋 複製警報發群組</button>
+          <button onclick="closePresidentialAlert()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 font-bold text-xs">關閉</button>
         </div>
       </div>
     </div>
@@ -721,12 +760,11 @@
 
   <!-- ⚙️ Profile Modal -->
   <div id="modal-profile-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-    <div class="max-w-md w-full anime-panel rounded-2xl p-5 space-y-3.5">
+    <div class="max-w-sm w-full anime-box rounded-2xl p-5 space-y-3">
       <div class="flex items-center justify-between">
-        <h3 class="text-sm font-black text-white">⚙️ 換人監控（自訂三寶朋友）</h3>
+        <h3 class="text-sm font-black text-white">⚙️ 換人監控（自訂朋友）</h3>
         <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
-
       <form onsubmit="saveProfileSettings(event)" class="space-y-2.5 text-xs">
         <div>
           <label class="block text-slate-400 mb-1">朋友暱稱</label>
@@ -742,22 +780,11 @@
             <input id="input-profile-title" type="text" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-white" />
           </div>
         </div>
-        <div>
-          <label class="block text-slate-400 mb-1">駕駛載具</label>
-          <input id="input-profile-vehicle" type="text" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-white" />
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1">經典口頭禪</label>
-          <input id="input-profile-motto" type="text" class="w-full rounded-xl bg-slate-900 border border-white/15 px-3 py-2 text-white" />
-        </div>
-
+        <input id="input-profile-vehicle" type="hidden" />
+        <input id="input-profile-motto" type="hidden" />
         <div class="flex gap-2 pt-2">
-          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs">
-            💾 儲存設定
-          </button>
-          <button type="button" onclick="copyCustomUrl()" class="px-3 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs">
-            🔗 複製專屬網址
-          </button>
+          <button type="submit" class="flex-1 py-2.5 rounded-xl bg-amber-500 text-slate-950 font-black text-xs">💾 儲存</button>
+          <button type="button" onclick="copyCustomUrl()" class="px-3 py-2.5 rounded-xl bg-cyan-500 text-slate-950 font-black text-xs">🔗 複製專屬網址</button>
         </div>
       </form>
     </div>
@@ -765,27 +792,23 @@
 
   <!-- 📿 Co-Pilot Woodfish Modal -->
   <div id="modal-copilot-sos" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-red-950/85 backdrop-blur-md">
-    <div class="max-w-sm w-full rounded-2xl p-5 bg-[#14070B] border-2 border-amber-400 text-center space-y-3.5">
+    <div class="max-w-xs w-full rounded-2xl p-5 bg-[#14070B] border-2 border-amber-400 text-center space-y-3">
       <div class="flex items-center justify-between">
-        <span class="px-2 py-0.5 rounded bg-red-600 text-white font-mono text-[10px] font-bold">SOS // 副駕求生模式</span>
+        <span class="px-2 py-0.5 rounded bg-red-600 text-white font-mono text-[10px] font-black">SOS // 副駕求生</span>
         <button onclick="closeCopilotModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
-
-      <h3 class="text-base font-black text-white">📿 副駕賽博木魚</h3>
-
-      <div class="grid grid-cols-2 gap-2.5">
-        <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
-          <div class="text-[10px] text-slate-400">副駕心率</div>
-          <div id="copilot-heart-rate" class="text-lg font-mono font-black text-red-400">138 BPM</div>
+      <h3 class="text-base font-black text-white">📿 副駕保命賽博木魚</h3>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="p-2 rounded-xl bg-slate-950 border border-white/10">
+          <div class="text-[10px] text-slate-400">心率</div>
+          <div id="copilot-heart-rate" class="text-base font-mono font-black text-red-400">138 BPM</div>
         </div>
-        <div class="p-2.5 rounded-xl bg-slate-950 border border-white/10">
-          <div class="text-[10px] text-slate-400">保命功德</div>
-          <div id="copilot-merit-count" class="text-lg font-mono font-black text-amber-400">108</div>
+        <div class="p-2 rounded-xl bg-slate-950 border border-white/10">
+          <div class="text-[10px] text-slate-400">功德</div>
+          <div id="copilot-merit-count" class="text-base font-mono font-black text-amber-400">108</div>
         </div>
       </div>
-
       <div id="woodfish-float-zone" class="h-5 flex items-center justify-center"></div>
-
       <button onclick="knockCopilotWoodfish()" class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-sm shadow-[0_0_25px_rgba(245,158,11,0.5)] active:scale-95 transition-all">
         🪵 狂敲木魚 // 抓緊把手 (+1)
       </button>
