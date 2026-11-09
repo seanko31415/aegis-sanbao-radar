@@ -1,12 +1,12 @@
 /**
- * AEGIS SANBAO // 損友出車即時雷達 v7.0
- * Real Google Map Radar + Friends Squad Live Location Sharing & One-Tap Hilarious SOS Broadcast
+ * 2027 SANBAO // 皇家交響防空星盤 v10.0
+ * Real Google Map Radar + Friends Squad Sharing + Precision Costco Reverse Game + Tarot Oracle
  */
 
 const SCENARIOS = {
   home: {
     id: 'home',
-    badge: 'LV.0 安全',
+    badge: 'LV.0',
     level: '🏠 封印在家',
     levelNum: 0,
     radiusKm: 0.08,
@@ -15,10 +15,8 @@ const SCENARIOS = {
     leftSignal: false,
     rightSignal: false,
     carTiltDeg: 0,
-    color: '#10B981',
-    bannerImg: 'assets/fantasy_harbor_bg.jpg',
-    cgCaption: '🏠 封印休止符・道路和平',
-    cutInTitle: '🏠 封印在家',
+    color: '#2DD4BF',
+    cutInTitle: '🏠 封印休止符',
     cutInSub: '正在沙發追番吃洋芋片！',
     lat: 24.1632,
     lng: 120.6405,
@@ -26,7 +24,7 @@ const SCENARIOS = {
   },
   snack: {
     id: 'snack',
-    badge: 'LV.2 警戒',
+    badge: 'LV.2',
     level: '🛵 買鹹酥雞',
     levelNum: 2,
     radiusKm: 0.65,
@@ -36,9 +34,7 @@ const SCENARIOS = {
     rightSignal: false,
     carTiltDeg: 14,
     color: '#F59E0B',
-    bannerImg: 'assets/fantasy_harbor_bg.jpg',
-    cgCaption: '🛵 雙腳滑行・宵夜狂想曲',
-    cutInTitle: '🛵 買鹹酥雞鬼切',
+    cutInTitle: '🛵 宵夜狂想曲',
     cutInSub: '左燈連閃 3.8km・聞香瞬間右切！',
     lat: 24.1788,
     lng: 120.6458,
@@ -46,7 +42,7 @@ const SCENARIOS = {
   },
   roundabout: {
     id: 'roundabout',
-    badge: 'LV.4 危險',
+    badge: 'LV.4',
     level: '🔄 圓環迷航',
     levelNum: 4,
     radiusKm: 1.50,
@@ -56,9 +52,7 @@ const SCENARIOS = {
     rightSignal: false,
     carTiltDeg: 28,
     color: '#F97316',
-    bannerImg: 'assets/scenario_roundabout.jpg',
-    cgCaption: '🔄 圓環莫比烏斯迷航',
-    cutInTitle: '🔄 圓環迷航中',
+    cutInTitle: '🔄 圓環圓舞曲',
     cutInSub: '打左燈往右偏 + 晴天刷雨刷！',
     lat: 24.1618,
     lng: 120.6469,
@@ -66,7 +60,7 @@ const SCENARIOS = {
   },
   parking: {
     id: 'parking',
-    badge: 'LV.5 毀滅',
+    badge: 'LV.5',
     level: '🅿️ 倒車魔王',
     levelNum: 5,
     radiusKm: 3.00,
@@ -75,10 +69,8 @@ const SCENARIOS = {
     leftSignal: true,
     rightSignal: true,
     carTiltDeg: -35,
-    color: '#EF4444',
-    bannerImg: 'assets/scenario_parking.jpg',
-    cgCaption: '🅿️ B2 倒車入庫大魔王',
-    cutInTitle: '🅿️ 倒車入庫魔王',
+    color: '#F43F5E',
+    cutInTitle: '🅿️ 倒車魔王曲',
     cutInSub: 'R/D檔切換第 24 次・後方回堵 1.2km！',
     lat: 24.1896,
     lng: 120.6933,
@@ -87,64 +79,29 @@ const SCENARIOS = {
 };
 
 const REAL_HOTSPOTS = {
-  costco: { name: '好市多 B2 (倒車魔王)', lat: 24.1896, lng: 120.6933, color: '#EF4444' },
+  costco: { name: '好市多 B2 (倒車魔王)', lat: 24.1896, lng: 120.6933, color: '#F43F5E' },
   roundabout: { name: '台灣大道圓環 (迷航熱點)', lat: 24.1618, lng: 120.6469, color: '#F59E0B' },
   fengjia: { name: '逢甲夜市 (鬼切窄巷)', lat: 24.1788, lng: 120.6458, color: '#F97316' },
-  mrt: { name: '市政府捷運站 (安全區)', lat: 24.1622, lng: 120.6492, color: '#10B981' }
+  mrt: { name: '市政府捷運站 (安全區)', lat: 24.1622, lng: 120.6492, color: '#2DD4BF' }
 };
 
+const TAROT_CARDS = [
+  { name: '🃏 逆位・雨刷之神', desc: '今日轉彎 100% 誤觸雨刷，前擋玻璃比臉還乾淨！' },
+  { name: '🃏 正位・莫比烏斯圓環', desc: '一旦進入圓環將強制繞行 5 圈以上，導航姊姊已崩潰！' },
+  { name: '🃏 逆位・薛丁格方向燈', desc: '打左燈必往右轉，後車猜中機率 0%！' },
+  { name: '🃏 正位・好市多雙格王', desc: '路邊停車耗時 +18 分鐘，建議直接停去頂樓！' }
+];
+
 const DEFAULT_SQUAD = [
-  {
-    id: 'f1',
-    name: '林小葵 (Aoi)',
-    plate: 'SBO-8888',
-    mode: 'roundabout',
-    lat: 24.1618,
-    lng: 120.6469,
-    sosMsg: '🔄 卡在圓環第 7 圈出不去！'
-  },
-  {
-    id: 'f2',
-    name: '陳大明',
-    plate: 'BBB-9999',
-    mode: 'parking',
-    lat: 24.1896,
-    lng: 120.6933,
-    sosMsg: '🅿️ 正在好市多 B2 倒車，快逃！'
-  },
-  {
-    id: 'f3',
-    name: '張阿豪',
-    plate: 'KKK-6666',
-    mode: 'snack',
-    lat: 24.1788,
-    lng: 120.6458,
-    sosMsg: '🛵 出門買鹹酥雞，雙腳滑行中'
-  },
-  {
-    id: 'f4',
-    name: '王小美',
-    plate: 'AAA-5566',
-    mode: 'home',
-    lat: 24.1510,
-    lng: 120.6410,
-    sosMsg: '🏠 已平安停好車在家追劇'
-  }
+  { id: 'f1', name: '林小葵 (Aoi)', plate: 'SBO-8888', mode: 'roundabout', lat: 24.1618, lng: 120.6469, sosMsg: '🔄 卡在圓環第 7 圈出不去！' },
+  { id: 'f2', name: '陳大明', plate: 'BBB-9999', mode: 'parking', lat: 24.1896, lng: 120.6933, sosMsg: '🅿️ 好市多 B2 倒車中，快逃！' },
+  { id: 'f3', name: '張阿豪', plate: 'KKK-6666', mode: 'snack', lat: 24.1788, lng: 120.6458, sosMsg: '🛵 買鹹酥雞，雙腳滑行中' },
+  { id: 'f4', name: '王小美', plate: 'AAA-5566', mode: 'home', lat: 24.1510, lng: 120.6410, sosMsg: '🏠 已停好車在家追劇' }
 ];
 
 const DEFAULT_SIGHTINGS = [
-  {
-    id: 's1',
-    location: '北屯好市多 B2',
-    content: '雙格車位嚕了 19 分鐘，大晴天雨刷狂刷 40 幾下，最後停在安全島上！',
-    likes: 128
-  },
-  {
-    id: 's2',
-    location: '台灣大道 × 文心路',
-    content: '左轉燈連閃 3.8 公里，結果突然大迴旋右轉進得來速買薯條！',
-    likes: 94
-  }
+  { id: 's1', location: '北屯好市多 B2', content: '雙格車位嚕了 19 分鐘，大晴天雨刷狂刷 40 下！', likes: 128 },
+  { id: 's2', location: '台灣大道圓環', content: '左轉燈連閃 3.8 公里，結果突然右轉進得來速！', likes: 94 }
 ];
 
 const appState = {
@@ -163,7 +120,14 @@ const appState = {
   meritCount: 108,
   heartRate: 138,
   beaconWatchId: null,
-  parkingGame: { active: false, carX: 70, carY: 64, carAngle: 0, status: 'PLAYING' }
+  // Upgraded Costco B2 Parking Game State (Clear geometry & overlap %!)
+  parkingGame: {
+    carX: 72,
+    carY: 82,
+    carAngle: 0,
+    overlapPct: 0,
+    status: 'PLAYING' // 'PLAYING' | 'WIN' | 'CRASH'
+  }
 };
 
 let leafletMap = null;
@@ -178,20 +142,19 @@ let squadMarkers = [];
 
 function loadPersistedData() {
   try {
-    const savedSquad = localStorage.getItem('aegis_sanbao_squad_v7');
+    const savedSquad = localStorage.getItem('aegis_sanbao_squad_v10');
     appState.squad = savedSquad ? JSON.parse(savedSquad) : [...DEFAULT_SQUAD];
   } catch (e) {
     appState.squad = [...DEFAULT_SQUAD];
   }
 
   try {
-    const savedSightings = localStorage.getItem('aegis_sanbao_sightings_v7');
+    const savedSightings = localStorage.getItem('aegis_sanbao_sightings_v10');
     appState.sightings = savedSightings ? JSON.parse(savedSightings) : [...DEFAULT_SIGHTINGS];
   } catch (e) {
     appState.sightings = [...DEFAULT_SIGHTINGS];
   }
 
-  // URL Query Params (?name=...&plate=...&mode=...&lat=...&lng=...)
   try {
     const params = new URLSearchParams(window.location.search);
     if (params.get('name')) appState.profile.name = params.get('name');
@@ -211,23 +174,23 @@ function loadPersistedData() {
 }
 
 function saveSquadToStorage() {
-  try { localStorage.setItem('aegis_sanbao_squad_v7', JSON.stringify(appState.squad)); } catch (e) {}
+  try { localStorage.setItem('aegis_sanbao_squad_v10', JSON.stringify(appState.squad)); } catch (e) {}
 }
 function saveSightingsToStorage() {
-  try { localStorage.setItem('aegis_sanbao_sightings_v7', JSON.stringify(appState.sightings)); } catch (e) {}
+  try { localStorage.setItem('aegis_sanbao_sightings_v10', JSON.stringify(appState.sightings)); } catch (e) {}
 }
 
 function showToast(title, message, type = 'amber') {
   const container = document.getElementById('toast-container');
   if (!container) return;
   const styles = {
-    amber: 'border-amber-400/60 bg-slate-950/95 text-amber-200',
-    red: 'border-red-500/70 bg-red-950/95 text-red-200',
-    emerald: 'border-emerald-400/60 bg-slate-950/95 text-emerald-200',
-    cyan: 'border-cyan-400/60 bg-slate-950/95 text-cyan-200'
+    amber: 'border-amber-300/70 bg-[#070B19]/95 text-amber-200',
+    red: 'border-rose-500/70 bg-rose-950/95 text-rose-200',
+    emerald: 'border-teal-400/70 bg-[#070B19]/95 text-teal-200',
+    cyan: 'border-cyan-400/70 bg-[#070B19]/95 text-cyan-200'
   };
   const toast = document.createElement('div');
-  toast.className = `pointer-events-auto px-3.5 py-2.5 rounded-xl border backdrop-blur-xl shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 text-xs ${styles[type] || styles.amber}`;
+  toast.className = `pointer-events-auto px-3.5 py-2.5 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 text-xs ${styles[type] || styles.amber}`;
   toast.innerHTML = `<div class="font-black text-white">${title}</div><div class="text-[11px] opacity-90 mt-0.5">${message}</div>`;
   container.appendChild(toast);
   requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
@@ -238,16 +201,15 @@ function showToast(title, message, type = 'amber') {
 }
 
 let cutInTimeout = null;
-function triggerAnimeCutIn(title, subtitle, color = '#EF4444') {
+function triggerAnimeCutIn(title, subtitle, color = '#D4AF37') {
   const banner = document.getElementById('anime-cutin-banner');
   const bgSvg = document.getElementById('anime-cutin-svg');
   const titleEl = document.getElementById('anime-cutin-title');
   const subEl = document.getElementById('anime-cutin-sub');
   if (!banner || !bgSvg || !titleEl || !subEl) return;
 
-  bgSvg.innerHTML = window.getAnimeCutInSVG(color, 'ALERT');
+  bgSvg.innerHTML = window.getAnimeCutInSVG(color, 'SYMPHONY');
   titleEl.textContent = title;
-  titleEl.style.color = color;
   subEl.textContent = subtitle;
 
   banner.classList.remove('hidden', 'animate-cutin');
@@ -287,7 +249,7 @@ function computeTacticalMetrics() {
 }
 
 // ============================================================================
-// REAL GOOGLE MAP + SQUAD FRIENDS PINS
+// REAL GOOGLE MAP ENGINE
 // ============================================================================
 function initRealGoogleMap() {
   const mapEl = document.getElementById('real-google-map');
@@ -303,7 +265,7 @@ function initRealGoogleMap() {
 
   outerDeceptionCircle = L.circle([appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng], {
     radius: 1500,
-    color: '#F59E0B',
+    color: '#FEF08A',
     weight: 2,
     dashArray: '8, 6',
     fillColor: '#F59E0B',
@@ -312,14 +274,14 @@ function initRealGoogleMap() {
 
   innerBlastCircle = L.circle([appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng], {
     radius: 950,
-    color: '#EF4444',
+    color: '#F43F5E',
     weight: 2.5,
-    fillColor: '#EF4444',
+    fillColor: '#F43F5E',
     fillOpacity: 0.18
   }).addTo(leafletMap);
 
-  ghostTrajectoryLine = L.polyline([], { color: '#EF4444', weight: 3, dashArray: '6, 6' }).addTo(leafletMap);
-  tetherPolyline = L.polyline([], { color: '#06B6D4', weight: 2, dashArray: '4, 6' }).addTo(leafletMap);
+  ghostTrajectoryLine = L.polyline([], { color: '#F43F5E', weight: 3, dashArray: '6, 6' }).addTo(leafletMap);
+  tetherPolyline = L.polyline([], { color: '#2DD4BF', weight: 2, dashArray: '4, 6' }).addTo(leafletMap);
 
   refreshMainMarkers();
   renderSquadMapMarkers();
@@ -333,7 +295,7 @@ function initRealGoogleMap() {
     } else {
       appState.userLatLng.lat = e.latlng.lat;
       appState.userLatLng.lng = e.latlng.lng;
-      showToast('🛡️ 已更新您的位置', '生還率已重算！', 'cyan');
+      showToast('🛡️ 已更新您的位置', '生還率已重算！', 'emerald');
     }
     updateRealMapOverlays();
     syncUI();
@@ -377,8 +339,8 @@ function refreshMainMarkers() {
     className: 'custom-user-marker',
     html: `
       <div class="relative flex items-center justify-center" style="width:40px;height:40px;">
-        <div class="w-8 h-8 rounded-full bg-cyan-500 border-2 border-white flex items-center justify-center text-sm shadow-[0_0_15px_#06B6D4]">🛡️</div>
-        <div class="absolute -bottom-5 whitespace-nowrap px-1.5 py-0.5 rounded bg-slate-950/95 border border-cyan-400 text-[10px] font-bold text-cyan-300 shadow">我</div>
+        <div class="w-8 h-8 rounded-full bg-teal-400 border-2 border-white flex items-center justify-center text-sm shadow-[0_0_15px_#2DD4BF]">🛡️</div>
+        <div class="absolute -bottom-5 whitespace-nowrap px-1.5 py-0.5 rounded bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow">我</div>
       </div>`,
     iconSize: [40, 40],
     iconAnchor: [20, 20]
@@ -398,7 +360,7 @@ function renderSquadMapMarkers() {
     const sc = SCENARIOS[f.mode] || SCENARIOS.snack;
     const m = L.circleMarker([f.lat, f.lng], {
       radius: 7,
-      color: '#FFFFFF',
+      color: '#FEF08A',
       fillColor: sc.color,
       fillOpacity: 0.9,
       weight: 2
@@ -447,8 +409,8 @@ window.setMapStyle = function (style) {
     if (btn) {
       btn.className =
         s === style
-          ? 'px-2.5 py-1 rounded-lg text-[11px] font-black bg-amber-500 text-slate-950'
-          : 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-slate-300 border border-white/10';
+          ? 'px-3 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950'
+          : 'px-3 py-1 rounded-xl text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30';
     }
   });
 
@@ -489,7 +451,238 @@ window.useRealBrowserGPS = function () {
 };
 
 // ============================================================================
-// TAB 2: 🚗 好友出車即時定位 & 一鍵發送三寶警訊 (SOCIAL SQUAD HUB)
+// EXTRA INTERACTIVE COCKPIT PRANKS & TAROT DRAW
+// ============================================================================
+window.triggerCockpitAction = function (type) {
+  if (type === 'horn') {
+    window.soundEngine.playHorn();
+    triggerAnimeCutIn('📯 驚慌連按喇叭！', '想按雨刷怎麼按到喇叭了啦！', '#F43F5E');
+    showToast('📯 叭叭——！！', `${appState.profile.name} 被路邊小狗嚇到狂按喇叭！`, 'red');
+  } else if (type === 'rgear') {
+    window.soundEngine.playRadarBeep();
+    triggerAnimeCutIn('🔊 倒車雷達破音！', '嗶嗶嗶嗶——離柱子只剩 3 公分！', '#2DD4BF');
+    showToast('🔊 倒車雷達長鳴！', '後方車主已經嚇到棄車逃跑了！', 'amber');
+  }
+};
+
+window.drawRandomTarotCard = function () {
+  window.soundEngine.playPing();
+  const card = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
+  triggerAnimeCutIn(card.name, card.desc, '#FEF08A');
+  showToast(card.name, card.desc, 'amber');
+};
+
+// ============================================================================
+// RE-ENGINEERED COSTCO B2 PARKING GAME (Crystal Clear Bay, Guide Line & %!)
+// ============================================================================
+const PARKING_BAY = { x: 222, y: 42, w: 92, h: 80 };
+const PILLARS = [
+  { x: 204, y: 18, r: 9 },
+  { x: 204, y: 146, r: 9 }
+];
+
+function computeParkingState(g) {
+  // Check pillar collision
+  for (const p of PILLARS) {
+    const dist = Math.hypot(g.carX - p.x, g.carY - p.y);
+    if (dist < p.r + 17) {
+      return { status: 'CRASH', pct: 0, msg: '💥 撞上好市多紅柱了！(點任意鍵重試)' };
+    }
+  }
+  // Check wall bounds
+  if (g.carX < 24 || g.carX > 322 || g.carY < 20 || g.carY > 145) {
+    return { status: 'CRASH', pct: 0, msg: '💥 擦撞地下室牆壁！(點任意鍵重試)' };
+  }
+
+  // Calculate how close car center is to bay center (268, 82)
+  const bayCx = PARKING_BAY.x + PARKING_BAY.w / 2;
+  const bayCy = PARKING_BAY.y + PARKING_BAY.h / 2;
+  const distToCenter = Math.hypot(g.carX - bayCx, g.carY - bayCy);
+  const rawPct = Math.max(0, Math.min(100, Math.round((1 - distToCenter / 185) * 115)));
+
+  // Win condition: Car center inside bay inner region & reasonably straight
+  const insideBay =
+    g.carX >= PARKING_BAY.x + 22 &&
+    g.carX <= PARKING_BAY.x + PARKING_BAY.w - 22 &&
+    g.carY >= PARKING_BAY.y + 16 &&
+    g.carY <= PARKING_BAY.y + PARKING_BAY.h - 16;
+
+  if (insideBay) {
+    return { status: 'WIN', pct: 100, msg: '🏆 完美停進 B2 金色車格！(點任意鍵再玩)' };
+  }
+  return {
+    status: 'PLAYING',
+    pct: rawPct,
+    msg: `💡 方向盤左右相反・請按【⏪ 倒車】停進右側金框`
+  };
+}
+
+window.startParkingMiniGame = function () {
+  window.soundEngine.playPing();
+  appState.parkingGame = {
+    carX: 72,
+    carY: 82,
+    carAngle: 0,
+    overlapPct: 12,
+    status: 'PLAYING'
+  };
+  renderParkingMiniGame();
+};
+
+window.steerParkingCar = function (cmd) {
+  const g = appState.parkingGame;
+  if (g.status !== 'PLAYING') {
+    window.startParkingMiniGame();
+    return;
+  }
+
+  window.soundEngine.playClick(660);
+  // Inverted steering!
+  if (cmd === 'LEFT') g.carAngle += 18;
+  if (cmd === 'RIGHT') g.carAngle -= 18;
+  if (cmd === 'REV') {
+    const rad = (g.carAngle * Math.PI) / 180;
+    g.carX += Math.cos(rad) * 22;
+    g.carY += Math.sin(rad) * 22;
+  }
+  if (cmd === 'FWD') {
+    const rad = (g.carAngle * Math.PI) / 180;
+    g.carX -= Math.cos(rad) * 18;
+    g.carY -= Math.sin(rad) * 18;
+  }
+
+  const res = computeParkingState(g);
+  g.status = res.status;
+  g.overlapPct = res.pct;
+
+  if (res.status === 'WIN') {
+    window.soundEngine.playPing();
+    triggerAnimeCutIn('🏆 奇蹟入庫成功！', '雖然刷了 20 下雨刷，但成功停進好市多車位了！', '#2DD4BF');
+    showToast('🏆 入庫率 100%！', '恭喜通過好市多 B2 倒車考驗！', 'emerald');
+  } else if (res.status === 'CRASH') {
+    window.soundEngine.playWiperSlap();
+    showToast('💥 擦撞警報！', res.msg, 'red');
+  }
+
+  renderParkingMiniGame();
+};
+
+function renderParkingMiniGame() {
+  const canvas = document.getElementById('parking-game-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const g = appState.parkingGame;
+  const res = computeParkingState(g);
+
+  const badge = document.getElementById('parking-progress-badge');
+  if (badge) {
+    badge.textContent = `入庫率 ${res.pct}%`;
+    badge.className =
+      res.status === 'WIN'
+        ? 'px-2 py-0.5 rounded-full bg-teal-400 text-slate-950 font-mono text-[10px] font-black'
+        : 'px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 font-mono text-[10px] font-black text-amber-300';
+  }
+
+  // 1. Deep Royal Garage Floor
+  ctx.fillStyle = '#060916';
+  ctx.fillRect(0, 0, w, h);
+
+  // Subtle lane markings
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 28) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+
+  // 2. Target Golden Parking Bay (Clearly highlighted with glowing fill)
+  ctx.save();
+  ctx.fillStyle = res.status === 'WIN' ? 'rgba(45, 212, 191, 0.22)' : 'rgba(254, 240, 138, 0.10)';
+  ctx.fillRect(PARKING_BAY.x, PARKING_BAY.y, PARKING_BAY.w, PARKING_BAY.h);
+
+  ctx.strokeStyle = res.status === 'WIN' ? '#2DD4BF' : '#FEF08A';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(PARKING_BAY.x, PARKING_BAY.y, PARKING_BAY.w, PARKING_BAY.h);
+
+  ctx.font = '900 11px "JetBrains Mono", monospace';
+  ctx.fillStyle = res.status === 'WIN' ? '#2DD4BF' : '#FEF08A';
+  ctx.textAlign = 'center';
+  ctx.fillText('🅿️ VIP B2-88', PARKING_BAY.x + PARKING_BAY.w / 2, PARKING_BAY.y + PARKING_BAY.h / 2 + 4);
+  ctx.restore();
+
+  // 3. Dashed Reversing Trajectory Guide Line from Car Rear to Bay
+  if (g.status === 'PLAYING') {
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(45, 212, 191, 0.55)';
+    ctx.lineWidth = 1.5;
+    const rad = (g.carAngle * Math.PI) / 180;
+    ctx.beginPath();
+    ctx.moveTo(g.carX, g.carY);
+    ctx.lineTo(g.carX + Math.cos(rad) * 85, g.carY + Math.sin(rad) * 85);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 4. Red Concrete Pillars (With clear circular boundary)
+  PILLARS.forEach((p) => {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = '#F43F5E';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#FECDD3';
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // 5. Top-Down SUV with Clear Front Headlights & Rear Red Taillights
+  ctx.save();
+  ctx.translate(g.carX, g.carY);
+  ctx.rotate((g.carAngle * Math.PI) / 180);
+
+  // Car body (-22 to +22, where +X is REAR for reversing into right bay, -X is FRONT)
+  ctx.fillStyle = g.status === 'CRASH' ? '#F43F5E' : g.status === 'WIN' ? '#2DD4BF' : '#3B82F6';
+  ctx.beginPath();
+  ctx.roundRect(-22, -13, 44, 26, 6);
+  ctx.fill();
+  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = '#FEF08A';
+  ctx.stroke();
+
+  // Roof & Windshield (Left side is Front, Right side is Rear)
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(-12, -9, 22, 18);
+
+  // Rear Red Reverse Lights (Right side +X facing the parking bay!)
+  ctx.fillStyle = '#EF4444';
+  ctx.fillRect(19, -11, 3, 6);
+  ctx.fillRect(19, 5, 3, 6);
+
+  // Front Golden Headlights (Left side -X)
+  ctx.fillStyle = '#FEF08A';
+  ctx.fillRect(-22, -10, 3, 5);
+  ctx.fillRect(-22, 5, 3, 5);
+
+  ctx.font = '700 8px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#FEF08A';
+  ctx.textAlign = 'center';
+  ctx.fillText('R➔', 0, 3);
+  ctx.restore();
+
+  // 6. Bottom Status Tip
+  ctx.font = '700 10px "Noto Sans TC", sans-serif';
+  ctx.fillStyle = res.status === 'CRASH' ? '#FDA4AF' : res.status === 'WIN' ? '#5EEAD4' : '#FDE68A';
+  ctx.fillText(res.msg, 10, 156);
+}
+
+// ============================================================================
+// TAB 2: 🚗 好友出車共享
 // ============================================================================
 function renderSquadFriendsList() {
   const container = document.getElementById('squad-friends-list');
@@ -500,25 +693,23 @@ function renderSquadFriendsList() {
       const sc = SCENARIOS[f.mode] || SCENARIOS.snack;
       const isSelected = f.name === appState.profile.name;
       return `
-      <div onclick="focusSquadFriend('${f.id}')" class="cursor-pointer p-3.5 rounded-2xl border transition-all ${
-        isSelected
-          ? 'bg-amber-500/15 border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.25)]'
-          : 'bg-slate-950/90 border-white/10 hover:border-white/30'
+      <div onclick="focusSquadFriend('${f.id}')" class="cursor-pointer tarot-btn p-3.5 ${
+        isSelected ? 'ring-2 ring-amber-300' : ''
       } flex flex-col justify-between gap-2">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full" style="background:${sc.color}"></span>
             <span class="font-black text-sm text-white">${f.name}</span>
-            <span class="px-1.5 py-0.5 rounded bg-slate-900 border border-white/10 font-mono text-[10px] text-cyan-300 font-bold">${f.plate}</span>
+            <span class="px-1.5 py-0.5 rounded bg-[#060916] border border-amber-300/30 font-mono text-[10px] text-amber-300 font-bold">${f.plate}</span>
           </div>
-          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-black text-slate-950" style="background:${sc.color}">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black text-slate-950" style="background:${sc.color}">
             ${sc.level}
           </span>
         </div>
-        <div class="text-xs text-amber-200 font-bold truncate">${f.sosMsg}</div>
-        <div class="flex items-center justify-between text-[11px] pt-1 border-t border-white/5">
-          <span class="text-slate-400 font-mono">📍 點擊在 Google Map 鎖定他</span>
-          <span class="text-cyan-300 font-bold">查看雷達 ➔</span>
+        <div class="text-xs text-amber-100 font-bold truncate">${f.sosMsg}</div>
+        <div class="flex items-center justify-between text-[11px] pt-1 border-t border-amber-300/15">
+          <span class="text-slate-400">📍 點擊在星盤鎖定他</span>
+          <span class="text-amber-300 font-bold">查看 ➔</span>
         </div>
       </div>`;
     })
@@ -545,7 +736,7 @@ window.focusSquadFriend = function (id) {
 
   window.switchTab('radar');
   if (leafletMap) leafletMap.flyTo([friend.lat, friend.lng], 15, { duration: 0.8 });
-  triggerAnimeCutIn(`🎯 已鎖定好友：${friend.name}`, friend.sosMsg, SCENARIOS[friend.mode].color);
+  triggerAnimeCutIn(`✦ 已鎖定：${friend.name}`, friend.sosMsg, SCENARIOS[friend.mode].color);
 };
 
 window.addFriendToSquad = function (e) {
@@ -559,13 +750,13 @@ window.addFriendToSquad = function (e) {
   const mode = statusEl?.value || 'parking';
 
   if (!name) {
-    showToast('⚠️ 請輸入好友名字', '輸入後即可加入即時雷達車隊！', 'red');
+    showToast('⚠️ 請輸入好友名字', '輸入後即可加入星盤車隊！', 'red');
     return;
   }
 
   window.soundEngine.playPing();
   const sc = SCENARIOS[mode];
-  const newFriend = {
+  appState.squad.unshift({
     id: 'f_' + Date.now(),
     name,
     plate,
@@ -573,19 +764,16 @@ window.addFriendToSquad = function (e) {
     lat: sc.lat + (Math.random() - 0.5) * 0.012,
     lng: sc.lng + (Math.random() - 0.5) * 0.012,
     sosMsg: sc.osList[0].replace('💭', '')
-  };
-
-  appState.squad.unshift(newFriend);
+  });
   saveSquadToStorage();
   renderSquadFriendsList();
   renderSquadMapMarkers();
 
   nameEl.value = '';
   plateEl.value = '';
-  showToast('➕ 好友已加入雷達！', `點擊【${name}】卡片即可在地圖上追蹤他！`, 'emerald');
+  showToast('➕ 好友已加入星盤！', `點擊【${name}】卡片即可在地圖追蹤他！`, 'emerald');
 };
 
-// One-Tap "Broadcast My SOS Signal"
 window.broadcastDriverSOS = function (sosType) {
   const myName = document.getElementById('my-driver-name')?.value.trim() || appState.profile.name;
   const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.profile.plate;
@@ -594,32 +782,15 @@ window.broadcastDriverSOS = function (sosType) {
   appState.profile.plate = myPlate;
 
   const mapConfig = {
-    parking: {
-      mode: 'parking',
-      msg: '🚨「我要開始倒車入庫了！方圓 3km 快把車移走！」',
-      title: '🅿️ 倒車入庫警報發送！'
-    },
-    lost: {
-      mode: 'roundabout',
-      msg: '🔄「救命我卡在圓環繞第 7 圈出不去！」',
-      title: '🔄 圓環迷航求救已發送！'
-    },
-    wiper: {
-      mode: 'snack',
-      msg: '🌧️「我想轉彎卻一直刷雨刷！別看我方向燈！」',
-      title: '🌧️ 晴天雨刷警報已發送！'
-    },
-    safe: {
-      mode: 'home',
-      msg: '🏠「我終於平安停好車了！全城解除警報！」',
-      title: '🏠 平安停車通報已發送！'
-    }
+    parking: { mode: 'parking', msg: '🚨「我要開始倒車入庫了！方圓 3km 快移車！」' },
+    lost: { mode: 'roundabout', msg: '🔄「救命我卡在圓環繞第 7 圈出不去！」' },
+    wiper: { mode: 'snack', msg: '🌧️「我想轉彎卻一直刷雨刷！別看我方向燈！」' },
+    safe: { mode: 'home', msg: '🏠「我終於平安停好車了！全城解除警報！」' }
   }[sosType];
 
   appState.scenario = mapConfig.mode;
   appState.chaosIndex = SCENARIOS[mapConfig.mode].baseChaos;
 
-  // Update or add user into Squad list at top
   const existing = appState.squad.find((f) => f.name === myName);
   if (existing) {
     existing.plate = myPlate;
@@ -648,7 +819,6 @@ window.broadcastDriverSOS = function (sosType) {
   if (sosType === 'safe') window.soundEngine.playPing();
   else window.soundEngine.playSiren();
 
-  // Pop up Presidential Alert Modal with the broadcast!
   document.getElementById('presidential-alert-title').textContent = `${myName} (${myPlate}) 發出全城警報！`;
   document.getElementById('presidential-alert-desc').textContent = mapConfig.msg;
   document.getElementById('modal-presidential-alert')?.classList.remove('hidden');
@@ -686,8 +856,7 @@ window.toggleRealGpsBeacon = function () {
       { enableHighAccuracy: true }
     );
   }
-
-  showToast('🚗 出車定位已開啟！', `系統正在地圖上即時廣播【${myName}】的行車位置！`, 'red');
+  showToast('🚗 出車定位已開啟！', `正在星盤上即時廣播【${myName}】的位置！`, 'red');
 };
 
 window.shareMyDrivingLink = function () {
@@ -696,14 +865,14 @@ window.shareMyDrivingLink = function () {
   const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.profile.plate;
   const { lat, lng } = appState.sanbaoLatLng;
   const url = `https://seanko31415.github.io/aegis-sanbao-radar/?name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(myPlate)}&mode=${appState.scenario}&lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}`;
-  const msg = `🚨【緊急避難通知】${myName} (${myPlate}) 剛剛開車上路了！\n點開看他的即時防空雷達位置，快避開：\n${url}`;
+  const msg = `🚨【三寶出車通知】${myName} (${myPlate}) 剛剛開車上路了！\n點開看他的即時防空雷達位置，快避開：\n${url}`;
   navigator.clipboard?.writeText(msg).then(() => {
     showToast('📲 已複製出車連結！', '快貼到 LINE 群組叫朋友閃開！', 'emerald');
   });
 };
 
 // ============================================================================
-// UI SYNC & CORE CONTROLS
+// UI SYNC & TABS
 // ============================================================================
 function syncUI() {
   const sc = SCENARIOS[appState.scenario];
@@ -719,21 +888,16 @@ function syncUI() {
   document.getElementById('vip-plate').textContent = appState.profile.plate;
   document.getElementById('vip-os-bubble').textContent = sc.osList[appState.osIndex % sc.osList.length];
 
-  const commandBannerImg = document.getElementById('command-banner-img');
-  const cgCaption = document.getElementById('cg-card-caption');
-  if (commandBannerImg && sc.bannerImg) commandBannerImg.src = sc.bannerImg;
-  if (cgCaption) cgCaption.textContent = sc.cgCaption;
-
   document.getElementById('metric-blast-radius').textContent = `${metrics.effectiveRadius} km`;
   document.getElementById('metric-user-dist').textContent = `${metrics.distKm} km`;
   const survEl = document.getElementById('metric-survival-rate');
   survEl.textContent = `${metrics.survival}%`;
-  survEl.style.color = metrics.survival < 40 ? '#EF4444' : metrics.survival < 75 ? '#F59E0B' : '#10B981';
+  survEl.style.color = metrics.survival < 40 ? '#F43F5E' : metrics.survival < 75 ? '#FEF08A' : '#2DD4BF';
 
   document.querySelectorAll('[data-scenario-btn]').forEach((btn) => {
     const active = btn.getAttribute('data-scenario-btn') === appState.scenario;
     btn.classList.toggle('ring-2', active);
-    btn.classList.toggle('ring-amber-400', active);
+    btn.classList.toggle('ring-amber-300', active);
   });
 
   document.getElementById('lamp-left-turn').classList.toggle('signal-blink-active', sc.leftSignal);
@@ -794,7 +958,7 @@ window.switchTab = function (tabId) {
       btn.className =
         id === tabId
           ? 'px-4 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,0.5)] transition-all'
-          : 'px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/70 hover:text-white transition-all';
+          : 'px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/75 hover:text-white transition-all';
     }
   });
 
@@ -810,7 +974,7 @@ window.switchTab = function (tabId) {
 window.triggerWiperParadox = function () {
   window.soundEngine.playWiperSlap();
   appState.wiperBoostActive = true;
-  triggerAnimeCutIn('🌧️ 轉彎誤刷雨刷！', '前擋玻璃快被刷破了！', '#F59E0B');
+  triggerAnimeCutIn('🪄 轉彎誤刷雨刷！', '前擋玻璃快被刷破了！', '#FEF08A');
   syncUI();
   setTimeout(() => {
     appState.wiperBoostActive = false;
@@ -823,12 +987,12 @@ window.setRadarClickMode = function (mode) {
   appState.clickMode = mode;
   document.getElementById('mode-btn-sanbao').className =
     mode === 'sanbao'
-      ? 'px-2.5 py-1 rounded-lg text-[11px] font-black bg-red-500 text-white'
-      : 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-slate-300 border border-white/10';
+      ? 'px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-600 text-white'
+      : 'px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-amber-100 border border-amber-300/30';
   document.getElementById('mode-btn-user').className =
     mode === 'user'
-      ? 'px-2.5 py-1 rounded-lg text-[11px] font-black bg-cyan-400 text-slate-950'
-      : 'px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-slate-300 border border-white/10';
+      ? 'px-2.5 py-1 rounded-xl text-[11px] font-black bg-teal-400 text-slate-950'
+      : 'px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-amber-100 border border-amber-300/30';
 };
 
 // Route & Share
@@ -838,8 +1002,8 @@ window.selectTransportMode = function (mode) {
   document.querySelectorAll('[data-transport-btn]').forEach((btn) => {
     const active = btn.getAttribute('data-transport-btn') === mode;
     btn.className = active
-      ? 'p-3 rounded-xl border-2 border-amber-400 bg-amber-500/20 text-white text-xs font-black'
-      : 'p-3 rounded-xl border border-white/10 bg-slate-900 text-slate-300 text-xs font-bold';
+      ? 'tarot-btn p-3 text-xs font-black text-amber-300 ring-2 ring-amber-300'
+      : 'tarot-btn p-3 text-xs font-bold text-slate-200';
   });
   calculateRouteSafety(true);
 };
@@ -854,19 +1018,19 @@ window.calculateRouteSafety = function (playSound = true) {
   if (mode === 'mrt') prob = Math.max(1.2, prob * 0.15);
 
   let omen = '【大吉 // 安心出門】';
-  let color = '#10B981';
+  let color = '#2DD4BF';
   if (prob >= 70) {
-    omen = '【大凶 // 建議就地臥倒】';
-    color = '#EF4444';
+    omen = '【大凶 // 建議就地掩護】';
+    color = '#F43F5E';
   } else if (prob >= 35) {
     omen = '【偏凶 // 嚴禁與他併行】';
-    color = '#F59E0B';
+    color = '#FEF08A';
   }
 
   const omenEl = document.getElementById('route-result-omen');
   const probEl = document.getElementById('route-result-prob');
   if (omenEl) { omenEl.textContent = omen; omenEl.style.color = color; }
-  if (probEl) { probEl.textContent = `${prob.toFixed(1)}% 正面遭遇`; probEl.style.color = color; }
+  if (probEl) { probEl.textContent = `${prob.toFixed(1)}% 正面遭遇`; }
 };
 
 window.selectShareStyle = function (style) {
@@ -875,7 +1039,7 @@ window.selectShareStyle = function (style) {
   document.querySelectorAll('[data-share-style-btn]').forEach((btn) => {
     btn.className =
       btn.getAttribute('data-share-style-btn') === style
-        ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-slate-950'
+        ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950'
         : 'px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900 text-slate-300 border border-white/10';
   });
   updateSharePreviewText();
@@ -941,7 +1105,7 @@ function drawHexagonChart() {
       else ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.strokeStyle = step === 1 ? 'rgba(245, 158, 11, 0.45)' : 'rgba(255, 255, 255, 0.1)';
+    ctx.strokeStyle = step === 1 ? 'rgba(254, 240, 138, 0.5)' : 'rgba(255, 255, 255, 0.1)';
     ctx.stroke();
   });
 
@@ -950,7 +1114,7 @@ function drawHexagonChart() {
     const lx = cx + Math.cos(a) * (maxR + 26);
     const ly = cy + Math.sin(a) * (maxR + 18);
     ctx.font = '700 11px "Noto Sans TC", sans-serif';
-    ctx.fillStyle = '#F8FAFC';
+    ctx.fillStyle = '#FEF08A';
     ctx.textAlign = 'center';
     ctx.fillText(axis.label, lx, ly);
   });
@@ -965,9 +1129,9 @@ function drawHexagonChart() {
     else ctx.lineTo(x, y);
   });
   ctx.closePath();
-  ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+  ctx.fillStyle = 'rgba(244, 63, 94, 0.35)';
   ctx.fill();
-  ctx.strokeStyle = '#F59E0B';
+  ctx.strokeStyle = '#FEF08A';
   ctx.lineWidth = 2.2;
   ctx.stroke();
 }
@@ -978,12 +1142,12 @@ function renderSightingsList() {
   listEl.innerHTML = appState.sightings
     .map(
       (item) => `
-      <div class="p-3 rounded-xl bg-slate-950 border border-white/10 flex items-center justify-between gap-2">
+      <div class="p-3 rounded-xl bg-[#060916] border border-amber-300/25 flex items-center justify-between gap-2">
         <div class="text-xs">
-          <span class="font-black text-amber-400">📍 ${item.location}：</span>
+          <span class="font-black text-amber-300">📍 ${item.location}：</span>
           <span class="text-slate-200">${item.content}</span>
         </div>
-        <button onclick="likeSighting('${item.id}')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/10 text-[11px] font-mono text-amber-300 shrink-0">
+        <button onclick="likeSighting('${item.id}')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-amber-300/30 text-[11px] font-mono text-amber-200 shrink-0">
           🙏 +${item.likes}
         </button>
       </div>`
@@ -1014,7 +1178,7 @@ window.submitNewSighting = function (e) {
   document.getElementById('new-sighting-content').value = '';
 };
 
-// Modals & Mini-Game
+// Modals
 window.openPresidentialAlert = function () {
   window.soundEngine.playSiren();
   document.getElementById('modal-presidential-alert')?.classList.remove('hidden');
@@ -1038,74 +1202,8 @@ window.knockCopilotWoodfish = function () {
   appState.heartRate = Math.min(210, appState.heartRate + 3);
   document.getElementById('copilot-merit-count').textContent = appState.meritCount;
   document.getElementById('copilot-heart-rate').textContent = `${appState.heartRate} BPM`;
-  document.getElementById('woodfish-float-zone').innerHTML = `<span class="text-xs font-mono font-bold text-amber-300 animate-bounce">🙏 保命功德 +1</span>`;
+  document.getElementById('woodfish-float-zone').innerHTML = `<span class="text-xs font-mono font-bold text-amber-300 animate-bounce">✨ 星光功德 +1</span>`;
 };
-
-window.startParkingMiniGame = function () {
-  window.soundEngine.playPing();
-  appState.parkingGame = { active: true, carX: 70, carY: 64, carAngle: 0, status: 'PLAYING' };
-  renderParkingMiniGame();
-};
-
-window.steerParkingCar = function (cmd) {
-  const g = appState.parkingGame;
-  if (g.status !== 'PLAYING') { window.startParkingMiniGame(); return; }
-  window.soundEngine.playClick(620);
-  if (cmd === 'LEFT') g.carAngle += 22;
-  if (cmd === 'RIGHT') g.carAngle -= 22;
-  if (cmd === 'REV') {
-    const rad = (g.carAngle * Math.PI) / 180;
-    g.carX += Math.cos(rad) * 24;
-    g.carY += Math.sin(rad) * 24;
-  }
-  if (cmd === 'FWD') {
-    const rad = (g.carAngle * Math.PI) / 180;
-    g.carX -= Math.cos(rad) * 18;
-    g.carY -= Math.sin(rad) * 18;
-  }
-  if (g.carX >= 205 && g.carX <= 275 && g.carY >= 36 && g.carY <= 92) {
-    g.status = 'WIN';
-    window.soundEngine.playPing();
-    showToast('🏆 奇蹟停進去了！', '沒撞柱子！', 'emerald');
-  } else if (g.carX < 18 || g.carX > 302 || g.carY < 14 || g.carY > 114) {
-    g.status = 'CRASH';
-    window.soundEngine.playWiperSlap();
-    showToast('💥 撞上水泥柱！', '方向盤左右相反太難了！', 'red');
-  }
-  renderParkingMiniGame();
-};
-
-function renderParkingMiniGame() {
-  const canvas = document.getElementById('parking-game-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const g = appState.parkingGame;
-  ctx.fillStyle = '#060911';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.strokeStyle = '#F59E0B';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(205, 32, 75, 58);
-
-  ctx.fillStyle = '#EF4444';
-  ctx.fillRect(186, 18, 12, 12);
-  ctx.fillRect(186, 94, 12, 12);
-
-  ctx.save();
-  ctx.translate(g.carX, g.carY);
-  ctx.rotate((g.carAngle * Math.PI) / 180);
-  ctx.fillStyle = g.status === 'CRASH' ? '#EF4444' : g.status === 'WIN' ? '#10B981' : '#38BDF8';
-  ctx.beginPath();
-  ctx.roundRect(-18, -10, 36, 20, 4);
-  ctx.fill();
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.font = '700 10px "Noto Sans TC", sans-serif';
-  ctx.fillStyle = '#94A3B8';
-  ctx.fillText(g.status === 'WIN' ? '✅ 成功 (點按重玩)' : g.status === 'CRASH' ? '💥 撞柱 (點按重試)' : '方向盤左右相反・請倒車入黃格', 10, 118);
-}
 
 document.addEventListener('DOMContentLoaded', () => {
   loadPersistedData();
@@ -1115,6 +1213,16 @@ document.addEventListener('DOMContentLoaded', () => {
   renderParkingMiniGame();
   calculateRouteSafety(false);
   syncUI();
+
+  // Keyboard Arrow Support for Costco Parking Game!
+  window.addEventListener('keydown', (e) => {
+    if (appState.activeTab !== 'radar') return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); window.steerParkingCar('LEFT'); }
+    if (e.key === 'ArrowRight') { e.preventDefault(); window.steerParkingCar('RIGHT'); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); window.steerParkingCar('REV'); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); window.steerParkingCar('FWD'); }
+  });
 
   setInterval(() => {
     appState.osIndex = (appState.osIndex + 1) % 10;
