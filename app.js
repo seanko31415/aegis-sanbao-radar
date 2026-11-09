@@ -1,6 +1,9 @@
 /**
- * 損友三寶監測局 // 雞腿駕照防空雷達 v11.0
- * High-Precision GPS & Search + Working LINE Share + 3D Costco Reverse Simulator + Interactive Stamp Gun & Voice
+ * 損友三寶監測局 // 真人即時連線防空雷達 v12.0
+ * 1. Real-Time Multi-Device Friend Login & Live GPS Sync (MQTT over WSS + BroadcastChannel + URL Invite)
+ * 2. Zero Virtual People — Add Real Friends & Click "確定查看位置" to Track Their Real GPS
+ * 3. Real 360° Interactive Google Street View Panorama (Not 2D tiles!)
+ * 4. 3D Costco Reverse Parking Simulator with Continuous Keyboard & Touch Controls
  */
 
 const DRIVER_AVATARS = [
@@ -14,20 +17,18 @@ const SCENARIOS = {
   home: {
     id: 'home',
     badge: 'LV.0',
-    level: '🏠 封印在家',
+    level: '🏠 平安在家',
     levelNum: 0,
-    radiusKm: 0.08,
+    radiusKm: 0.05,
     baseChaos: 8,
     wiperRapid: false,
     leftSignal: false,
     rightSignal: false,
     carTiltDeg: 0,
     color: '#2DD4BF',
-    cutInTitle: '🏠 封印休止符',
-    cutInSub: '正在沙發追番啃雞腿，馬路暫時安全！',
-    lat: 24.1632,
-    lng: 120.6405,
-    osList: ['💭「這集動漫超好看，今天不出門～」', '💭「車停在B2還B3？算了明天再找！」']
+    cutInTitle: '🏠 平安休止符',
+    cutInSub: '目前已熄火休息，馬路暫時安全！',
+    osList: ['💭「已經平安停好車在家休息囉～」', '💭「今天不開車，大家放心出門！」']
   },
   snack: {
     id: 'snack',
@@ -41,11 +42,9 @@ const SCENARIOS = {
     rightSignal: false,
     carTiltDeg: 14,
     color: '#F59E0B',
-    cutInTitle: '🛵 宵夜鬼切曲',
-    cutInSub: '左燈連閃 3.8km・聞到雞排香瞬間右切！',
-    lat: 24.1788,
-    lng: 120.6458,
-    osList: ['💭「左燈亮著？不管了先右切買甜不辣！」', '💭「雙腳放地上滑行比較安全啦～」']
+    cutInTitle: '🛵 宵夜出車中',
+    cutInSub: '正在路上覓食買宵夜，請注意車距！',
+    osList: ['💭「出來買個鹹酥雞，看到我請閃遠一點！」', '💭「左轉燈亮著？我考慮一下要轉哪邊～」']
   },
   roundabout: {
     id: 'roundabout',
@@ -59,16 +58,14 @@ const SCENARIOS = {
     rightSignal: false,
     carTiltDeg: 28,
     color: '#F97316',
-    cutInTitle: '🔄 圓環圓舞曲',
+    cutInTitle: '🔄 圓環迷航中',
     cutInSub: '打左燈往右偏 + 大晴天狂刷雨刷！',
-    lat: 24.1618,
-    lng: 120.6469,
-    osList: ['💭「救命！圓環繞第 7 圈怎麼出不去！」', '💭「想打方向燈怎麼雨刷又在狂刷啦！」']
+    osList: ['💭「救命！這個路口怎麼這麼複雜出不去！」', '💭「想打方向燈怎麼雨刷又在狂刷啦！」']
   },
   parking: {
     id: 'parking',
     badge: 'LV.5',
-    level: '🅿️ 倒車魔王',
+    level: '🅿️ 正在倒車',
     levelNum: 5,
     radiusKm: 3.0,
     baseChaos: 98,
@@ -77,19 +74,10 @@ const SCENARIOS = {
     rightSignal: true,
     carTiltDeg: -35,
     color: '#F43F5E',
-    cutInTitle: '🅿️ 好市多倒車魔王',
-    cutInSub: 'R/D檔切換第 24 次・後方回堵 1.2km！',
-    lat: 24.1896,
-    lng: 120.6933,
-    osList: ['💭「方向盤往左打，車屁股怎麼往右邊柱子撞？！」', '💭「斜停跨兩格應該沒人發現吧？」']
+    cutInTitle: '🅿️ 倒車大魔王',
+    cutInSub: '正在倒車入庫中・方圓 3km 請注意！',
+    osList: ['💭「方向盤往左打，車屁股怎麼往右邊柱子撞？！」', '💭「正在努力倒車入庫，後面的人別按我喇叭！」']
   }
-};
-
-const REAL_HOTSPOTS = {
-  costco: { name: '台中北屯好市多 B2', lat: 24.1896, lng: 120.6933, color: '#F43F5E' },
-  roundabout: { name: '台灣大道圓環', lat: 24.1618, lng: 120.6469, color: '#F59E0B' },
-  fengjia: { name: '逢甲夜市窄巷', lat: 24.1788, lng: 120.6458, color: '#F97316' },
-  taipei101: { name: '台北信義區 101 圓環', lat: 25.0339, lng: 121.5645, color: '#2DD4BF' }
 };
 
 const TAROT_CARDS = [
@@ -100,52 +88,60 @@ const TAROT_CARDS = [
   { name: '🃏 隱藏SSR・黃金烤雞腿駕照', desc: '教練當年含淚送出駕照，拜託你別再開回駕訓班！' }
 ];
 
-const DEFAULT_SQUAD = [
-  { id: 'f1', name: '林小葵 (Aoi)', plate: 'SBO-8888', mode: 'roundabout', avatar: 'assets/sanbao_chicken_avatar.jpg', lat: 24.1618, lng: 120.6469, sosMsg: '🔄 卡在圓環第 7 圈出不去！' },
-  { id: 'f2', name: '陳大明', plate: 'BBB-9999', mode: 'parking', avatar: 'assets/scenario_parking.jpg', lat: 24.1896, lng: 120.6933, sosMsg: '🅿️ 好市多 B2 倒車中，方圓3km快逃！' },
-  { id: 'f3', name: '張阿豪', plate: 'KKK-6666', mode: 'snack', avatar: 'assets/sanbao_avatar.jpg', lat: 24.1788, lng: 120.6458, sosMsg: '🛵 買鹹酥雞，雙腳滑行鬼切中' },
-  { id: 'f4', name: '王小美', plate: 'AAA-5566', mode: 'home', avatar: 'assets/royal_conductor.jpg', lat: 24.1510, lng: 120.6410, sosMsg: '🏠 已平安停好車在家追劇' }
-];
-
 const DEFAULT_SIGHTINGS = [
   { id: 's1', location: '北屯好市多 B2', content: '雙格車位嚕了 19 分鐘，大晴天雨刷狂刷 40 下，最後乾脆停在車道中間！', likes: 168 },
-  { id: 's2', location: '台灣大道圓環', content: '左轉燈連閃 3.8 公里，結果突然右切進得來速買大薯！', likes: 112 },
-  { id: 's3', location: '逢甲夜市口', content: '想按喇叭提醒路人，結果按到噴水雨刷，路人被噴了一臉雨刷水！', likes: 95 }
+  { id: 's2', location: '台灣大道圓環', content: '左轉燈連閃 3.8 公里，結果突然右切進得來速買大薯！', likes: 112 }
 ];
 
 const appState = {
   activeTab: 'radar',
   scenario: 'roundabout',
   chaosIndex: 76,
-  clickMode: 'sanbao',
   avatarIndex: 0,
   bountyAmount: 88000,
   stamps: ['🍗 雞腿換駕照', '🌧️ 晴天刷雨刷'],
-  profile: { name: '林小葵 (Aoi)', plate: 'SBO-8888', avatar: 'assets/sanbao_chicken_avatar.jpg' },
-  sanbaoLatLng: { lat: 24.1618, lng: 120.6469, heading: 45 },
-  userLatLng: { lat: 24.1552, lng: 120.6625, accuracy: 8 },
+  // My Own Real Identity & GPS
+  myUser: {
+    id: 'u_' + Math.random().toString(36).slice(2, 9),
+    name: '',
+    plate: '',
+    roomCode: '8888',
+    avatar: 'assets/sanbao_chicken_avatar.jpg',
+    loggedIn: false,
+    lat: 24.1618,
+    lng: 120.6469,
+    accuracy: 10,
+    hasRealGps: false,
+    mode: 'roundabout',
+    sosMsg: '🚗 剛登入上線，正在分享即時位置！'
+  },
+  // Currently Tracked Friend (or myself if no friend selected yet)
+  selectedFriendId: null,
+  // Real Friends Map (ZERO virtual people!)
+  friends: [],
+  pendingIncomingFriend: null,
   osIndex: 0,
-  squad: [],
   sightings: [],
   routeForm: { transport: 'scooter' },
   shareStyle: 'defense',
   meritCount: 108,
   heartRate: 138,
   beaconWatchId: null,
+  streetViewOpen: false,
   // 3D Costco Reverse Parking Simulator State
   parkingGame: {
-    active: false,       // Becomes true when user clicks "▶️ 點擊開始挑戰" or presses a control
-    viewMode: '3D',      // '3D' (Perspective + Rear Cam + Radar PIP) | '2D' (Full Top-Down)
-    invertSteer: true,   // Costco Sanbao Inverted Steering Mode
-    level: 1,            // 1, 2, 3
+    active: false,
+    viewMode: '3D',
+    invertSteer: true,
+    level: 1,
     carX: 82,
     carY: 125,
-    carAngle: 0,         // 0 deg = rear of car (+X) points right toward the bay
-    steerWheelDeg: 0,    // Visual steering wheel angle (-45 to +45)
-    gear: 'R',           // 'R' | 'D' | 'P'
+    carAngle: 0,
+    steerWheelDeg: 0,
+    gear: 'R',
     overlapPct: 0,
     rearDistCm: 180,
-    status: 'READY',     // 'READY' | 'PLAYING' | 'WIN' | 'CRASH'
+    status: 'READY',
     keys: { left: false, right: false, up: false, down: false },
     carts: [
       { x: 185, y: 65, vy: 1.15, label: '🛒大媽A' },
@@ -156,59 +152,491 @@ const appState = {
 
 let leafletMap = null;
 let tileLayerGroup = null;
-let sanbaoMarker = null;
+let targetMarker = null;
 let userMarker = null;
 let userAccuracyCircle = null;
 let innerBlastCircle = null;
 let outerDeceptionCircle = null;
 let tetherPolyline = null;
-let ghostTrajectoryLine = null;
-let squadMarkers = [];
+let friendMarkers = [];
+
+// Cloud MQTT Clients & Local BroadcastChannel for Instant Cross-Device & Cross-Tab Sync
+let mqttClients = [];
+let localBroadcast = null;
+
+function getTrackedProfile() {
+  if (appState.selectedFriendId) {
+    const f = appState.friends.find((x) => x.id === appState.selectedFriendId);
+    if (f) return f;
+  }
+  if (appState.myUser.loggedIn) {
+    return {
+      id: appState.myUser.id,
+      name: appState.myUser.name + ' (我)',
+      plate: appState.myUser.plate || '我的定位',
+      avatar: appState.myUser.avatar,
+      lat: appState.myUser.lat,
+      lng: appState.myUser.lng,
+      mode: appState.myUser.mode,
+      sosMsg: appState.myUser.sosMsg
+    };
+  }
+  return {
+    id: 'none',
+    name: '尚未選擇好友',
+    plate: '請先登入或加好友',
+    avatar: appState.myUser.avatar,
+    lat: appState.myUser.lat,
+    lng: appState.myUser.lng,
+    mode: appState.scenario,
+    sosMsg: '💭 點右上「👤 登入我的定位」或邀朋友登入即可即時監測！'
+  };
+}
 
 function loadPersistedData() {
   try {
-    const savedSquad = localStorage.getItem('aegis_sanbao_squad_v11');
-    appState.squad = savedSquad ? JSON.parse(savedSquad) : [...DEFAULT_SQUAD];
+    const savedMe = localStorage.getItem('aegis_sanbao_my_user_v12');
+    if (savedMe) {
+      const parsed = JSON.parse(savedMe);
+      appState.myUser = { ...appState.myUser, ...parsed };
+    }
+  } catch (e) {}
+
+  try {
+    const savedFriends = localStorage.getItem('aegis_sanbao_real_friends_v12');
+    appState.friends = savedFriends ? JSON.parse(savedFriends) : [];
   } catch (e) {
-    appState.squad = [...DEFAULT_SQUAD];
+    appState.friends = [];
   }
 
   try {
-    const savedSightings = localStorage.getItem('aegis_sanbao_sightings_v11');
+    const savedSightings = localStorage.getItem('aegis_sanbao_sightings_v12');
     appState.sightings = savedSightings ? JSON.parse(savedSightings) : [...DEFAULT_SIGHTINGS];
   } catch (e) {
     appState.sightings = [...DEFAULT_SIGHTINGS];
   }
 
+  // Check URL parameters for friend invite / shared location link
   try {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('name')) appState.profile.name = params.get('name');
-    if (params.get('plate')) appState.profile.plate = params.get('plate');
-    const modeParam = params.get('mode');
-    if (modeParam && SCENARIOS[modeParam]) {
-      appState.scenario = modeParam;
-      appState.chaosIndex = SCENARIOS[modeParam].baseChaos;
-      appState.sanbaoLatLng.lat = SCENARIOS[modeParam].lat;
-      appState.sanbaoLatLng.lng = SCENARIOS[modeParam].lng;
+    if (params.get('room')) {
+      appState.myUser.roomCode = params.get('room').trim();
     }
-    if (params.get('lat') && params.get('lng')) {
-      const parsedLat = parseFloat(params.get('lat'));
-      const parsedLng = parseFloat(params.get('lng'));
-      if (!isNaN(parsedLat) && !isNaN(parsedLng)) {
-        appState.sanbaoLatLng.lat = parsedLat;
-        appState.sanbaoLatLng.lng = parsedLng;
-      }
+    const friendName = params.get('name');
+    const friendPlate = params.get('plate');
+    const friendLat = parseFloat(params.get('lat'));
+    const friendLng = parseFloat(params.get('lng'));
+    const friendId = params.get('uid') || (friendName ? 'url_' + encodeURIComponent(friendName) : null);
+
+    if (friendName && !isNaN(friendLat) && !isNaN(friendLng) && friendId !== appState.myUser.id) {
+      handleIncomingFriendPacket({
+        id: friendId,
+        name: friendName,
+        plate: friendPlate || '好友座駕',
+        mode: params.get('mode') || 'roundabout',
+        avatar: 'assets/sanbao_chicken_avatar.jpg',
+        lat: friendLat,
+        lng: friendLng,
+        sosMsg: '📍 透過專屬連結分享的即時位置',
+        updatedAt: Date.now()
+      });
     }
   } catch (e) {}
+
+  // Populate inputs if saved
+  const nameIn = document.getElementById('my-driver-name');
+  const plateIn = document.getElementById('my-driver-plate');
+  const roomIn = document.getElementById('my-room-code');
+  if (nameIn && appState.myUser.name) nameIn.value = appState.myUser.name;
+  if (plateIn && appState.myUser.plate) plateIn.value = appState.myUser.plate;
+  if (roomIn && appState.myUser.roomCode) roomIn.value = appState.myUser.roomCode;
 }
 
-function saveSquadToStorage() {
-  try { localStorage.setItem('aegis_sanbao_squad_v11', JSON.stringify(appState.squad)); } catch (e) {}
+function saveMyUserToStorage() {
+  try { localStorage.setItem('aegis_sanbao_my_user_v12', JSON.stringify(appState.myUser)); } catch (e) {}
+}
+function saveFriendsToStorage() {
+  try { localStorage.setItem('aegis_sanbao_real_friends_v12', JSON.stringify(appState.friends)); } catch (e) {}
 }
 function saveSightingsToStorage() {
-  try { localStorage.setItem('aegis_sanbao_sightings_v11', JSON.stringify(appState.sightings)); } catch (e) {}
+  try { localStorage.setItem('aegis_sanbao_sightings_v12', JSON.stringify(appState.sightings)); } catch (e) {}
 }
 
+// ============================================================================
+// REAL-TIME CLOUD SYNC ENGINE (MQTT over WSS Port 443 + 8084 + BroadcastChannel)
+// ============================================================================
+function initRealtimeCloudSync() {
+  const room = appState.myUser.roomCode || '8888';
+  const topicPrefix = `sanbao-radar-v12/room/${room}/user/`;
+
+  // 1. Local BroadcastChannel (for instant multi-tab sync on same device)
+  try {
+    if ('BroadcastChannel' in window) {
+      if (localBroadcast) localBroadcast.close();
+      localBroadcast = new BroadcastChannel(`sanbao_room_${room}`);
+      localBroadcast.onmessage = (ev) => {
+        if (ev.data && ev.data.id && ev.data.id !== appState.myUser.id) {
+          handleIncomingFriendPacket(ev.data);
+        }
+      };
+    }
+  } catch (e) {}
+
+  // 2. Cloud MQTT over Secure WebSockets (Port 443 & 8084 for cross-phone/PC real-time sync!)
+  if (typeof mqtt === 'undefined') return;
+
+  mqttClients.forEach((c) => {
+    try { c.end(true); } catch (e) {}
+  });
+  mqttClients = [];
+
+  const brokers = [
+    'wss://mqtt.eclipseprojects.io:443/mqtt',
+    'wss://broker.emqx.io:8084/mqtt'
+  ];
+
+  brokers.forEach((brokerUrl) => {
+    try {
+      const client = mqtt.connect(brokerUrl, {
+        clientId: 'sanbao_' + appState.myUser.id + '_' + Math.random().toString(36).slice(2, 6),
+        clean: true,
+        connectTimeout: 6000,
+        reconnectPeriod: 4000
+      });
+
+      client.on('connect', () => {
+        const badge = document.getElementById('cloud-sync-badge');
+        if (badge) {
+          badge.textContent = `🟢 房號 #${room} 雲端即時連線中`;
+        }
+        client.subscribe(`${topicPrefix}+`, { qos: 0 });
+        if (appState.myUser.loggedIn) {
+          publishMyPresence();
+        }
+      });
+
+      client.on('message', (topic, payload) => {
+        try {
+          const data = JSON.parse(payload.toString());
+          if (data && data.id && data.id !== appState.myUser.id) {
+            handleIncomingFriendPacket(data);
+          }
+        } catch (err) {}
+      });
+
+      mqttClients.push(client);
+    } catch (e) {}
+  });
+}
+
+function publishMyPresence() {
+  if (!appState.myUser.loggedIn || !appState.myUser.name) return;
+  const room = appState.myUser.roomCode || '8888';
+  const topic = `sanbao-radar-v12/room/${room}/user/${appState.myUser.id}`;
+  const packet = {
+    id: appState.myUser.id,
+    name: appState.myUser.name,
+    plate: appState.myUser.plate || '汽車/機車',
+    avatar: appState.myUser.avatar,
+    lat: appState.myUser.lat,
+    lng: appState.myUser.lng,
+    accuracy: appState.myUser.accuracy || 10,
+    mode: appState.myUser.mode || appState.scenario,
+    sosMsg: appState.myUser.sosMsg || '🚗 已登入網站並即時分享位置中',
+    updatedAt: Date.now()
+  };
+
+  try {
+    if (localBroadcast) localBroadcast.postMessage(packet);
+  } catch (e) {}
+
+  const str = JSON.stringify(packet);
+  mqttClients.forEach((client) => {
+    try {
+      if (client.connected) {
+        client.publish(topic, str, { qos: 0, retain: true });
+      }
+    } catch (e) {}
+  });
+}
+
+function handleIncomingFriendPacket(packet) {
+  if (!packet || !packet.name) return;
+  // Ignore stale retained packets older than 12 hours
+  if (packet.updatedAt && Date.now() - packet.updatedAt > 12 * 3600 * 1000) return;
+
+  // Check if friend already exists by id or by name
+  let friend = appState.friends.find((f) => f.id === packet.id || f.name === packet.name);
+  const isNewOnline = !friend || !friend.online;
+
+  if (friend) {
+    friend.id = packet.id;
+    friend.name = packet.name;
+    friend.plate = packet.plate || friend.plate;
+    friend.avatar = packet.avatar || friend.avatar;
+    friend.lat = packet.lat;
+    friend.lng = packet.lng;
+    friend.mode = packet.mode || 'roundabout';
+    friend.sosMsg = packet.sosMsg || '🚗 即時分享位置中';
+    friend.online = true;
+    friend.updatedAt = packet.updatedAt || Date.now();
+  } else {
+    friend = {
+      id: packet.id,
+      name: packet.name,
+      plate: packet.plate || '好友座駕',
+      avatar: packet.avatar || 'assets/sanbao_chicken_avatar.jpg',
+      lat: packet.lat,
+      lng: packet.lng,
+      mode: packet.mode || 'roundabout',
+      sosMsg: packet.sosMsg || '🚗 剛登入網站並開啟定位！',
+      online: true,
+      confirmed: false,
+      updatedAt: packet.updatedAt || Date.now()
+    };
+    appState.friends.unshift(friend);
+  }
+
+  saveFriendsToStorage();
+  renderSquadFriendsList();
+  renderOnlineFriendPills();
+  renderFriendMapMarkers();
+
+  // If this friend is not yet confirmed by the user (or just logged in), show the confirmation banner!
+  if (!friend.confirmed || isNewOnline) {
+    promptIncomingFriendConfirmation(friend);
+  } else if (appState.selectedFriendId === friend.id) {
+    // Update live map marker position if we are already tracking them!
+    updateRealMapOverlays();
+    syncUI();
+  }
+}
+
+function promptIncomingFriendConfirmation(friend) {
+  appState.pendingIncomingFriend = friend;
+  const banner = document.getElementById('incoming-friend-banner');
+  const titleEl = document.getElementById('incoming-friend-title');
+  const subEl = document.getElementById('incoming-friend-sub');
+  const imgEl = document.getElementById('incoming-friend-avatar');
+  const confirmBtn = document.getElementById('incoming-confirm-btn');
+  if (!banner || !titleEl || !subEl || !confirmBtn) return;
+
+  window.soundEngine.playPing();
+  if (imgEl) imgEl.src = friend.avatar || 'assets/sanbao_chicken_avatar.jpg';
+  titleEl.textContent = `好友【${friend.name} (${friend.plate})】已登入並分享定位！`;
+  subEl.textContent = `${friend.sosMsg} ・ 點擊「確定」立即查看他的位置`;
+  confirmBtn.onclick = () => confirmAndLocateFriend(friend.id);
+  banner.classList.remove('hidden');
+}
+
+window.dismissIncomingFriendBanner = function () {
+  document.getElementById('incoming-friend-banner')?.classList.add('hidden');
+};
+
+window.confirmAndLocateFriend = function (friendId) {
+  const friend = appState.friends.find((f) => f.id === friendId);
+  if (!friend) return;
+
+  window.soundEngine.playWinFanfare();
+  friend.confirmed = true;
+  appState.selectedFriendId = friend.id;
+  appState.scenario = friend.mode || 'roundabout';
+  appState.chaosIndex = SCENARIOS[appState.scenario]?.baseChaos || 76;
+
+  saveFriendsToStorage();
+  dismissIncomingFriendBanner();
+  renderSquadFriendsList();
+  renderOnlineFriendPills();
+  refreshMainMarkers();
+  renderFriendMapMarkers();
+  updateRealMapOverlays();
+  syncUI();
+
+  window.switchTab('radar');
+  if (leafletMap && !isNaN(friend.lat) && !isNaN(friend.lng)) {
+    leafletMap.flyTo([friend.lat, friend.lng], 17, { duration: 0.9 });
+  }
+  if (appState.streetViewOpen) {
+    updateStreetViewIframe(friend.lat, friend.lng, `${friend.name} (${friend.plate})`);
+  }
+
+  triggerAnimeCutIn(`✅ 已鎖定好友：${friend.name}`, `正在追蹤他的即時位置 (${friend.lat.toFixed(4)}, ${friend.lng.toFixed(4)})`, '#2DD4BF');
+  showToast(`📍 已顯示【${friend.name}】的位置！`, '地圖已自動飛往他的即時 GPS 座標！', 'emerald');
+};
+
+// ============================================================================
+// LOGIN & MY REAL GPS BROADCAST
+// ============================================================================
+window.openLoginModal = function () {
+  window.soundEngine.playClick(780);
+  const m = document.getElementById('modal-login');
+  if (!m) return;
+  document.getElementById('modal-login-name').value = appState.myUser.name || '';
+  document.getElementById('modal-login-plate').value = appState.myUser.plate || '';
+  document.getElementById('modal-login-room').value = appState.myUser.roomCode || '8888';
+  m.classList.remove('hidden');
+};
+
+window.closeLoginModal = function () {
+  document.getElementById('modal-login')?.classList.add('hidden');
+};
+
+window.submitModalLogin = function () {
+  const name = document.getElementById('modal-login-name')?.value.trim();
+  const plate = document.getElementById('modal-login-plate')?.value.trim().toUpperCase() || '我的座駕';
+  const room = document.getElementById('modal-login-room')?.value.trim() || '8888';
+  if (!name) {
+    showToast('⚠️ 請輸入你的名字', '輸入名字後好友才能看到是誰登入喔！', 'red');
+    return;
+  }
+  document.getElementById('my-driver-name').value = name;
+  document.getElementById('my-driver-plate').value = plate;
+  document.getElementById('my-room-code').value = room;
+  closeLoginModal();
+  window.loginAndStartRealGpsBroadcast();
+};
+
+window.loginAndStartRealGpsBroadcast = function () {
+  const name = document.getElementById('my-driver-name')?.value.trim();
+  const plate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || '我的座駕';
+  const room = document.getElementById('my-room-code')?.value.trim() || '8888';
+
+  if (!name) {
+    window.openLoginModal();
+    return;
+  }
+
+  const roomChanged = room !== appState.myUser.roomCode;
+  appState.myUser.name = name;
+  appState.myUser.plate = plate;
+  appState.myUser.roomCode = room;
+  appState.myUser.loggedIn = true;
+  saveMyUserToStorage();
+
+  if (roomChanged) {
+    initRealtimeCloudSync();
+  }
+
+  const headerBtn = document.getElementById('header-login-btn');
+  if (headerBtn) {
+    headerBtn.textContent = `🟢 ${name} (#${room})`;
+  }
+  const pill = document.getElementById('my-login-status-pill');
+  if (pill) {
+    pill.textContent = `🟢 已登入 #${room}`;
+    pill.className = 'px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-mono text-[10px] font-black';
+  }
+  const beaconBtn = document.getElementById('btn-live-beacon');
+  if (beaconBtn) {
+    beaconBtn.textContent = `🟢 已登入【${name}】並持續向房號 #${room} 廣播真實定位`;
+  }
+
+  window.soundEngine.playWinFanfare();
+  showToast('🛰️ 正在開啟真實 GPS 定位...', `已登入為【${name}】，連線房號 #${room}`, 'emerald');
+
+  // Start High-Accuracy Real GPS Watch
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        appState.myUser.lat = pos.coords.latitude;
+        appState.myUser.lng = pos.coords.longitude;
+        appState.myUser.accuracy = Math.round(pos.coords.accuracy || 8);
+        appState.myUser.hasRealGps = true;
+        saveMyUserToStorage();
+        publishMyPresence();
+        refreshMainMarkers();
+        updateRealMapOverlays();
+        syncUI();
+        if (!appState.selectedFriendId && leafletMap) {
+          leafletMap.flyTo([pos.coords.latitude, pos.coords.longitude], 17, { duration: 0.9 });
+        }
+        showToast('✅ 真實定位已連線並廣播！', `同房號 (#${room}) 的好友現在打開網站就能看到你了！`, 'emerald');
+      },
+      () => {
+        publishMyPresence();
+        refreshMainMarkers();
+        updateRealMapOverlays();
+        syncUI();
+        showToast('🟢 帳號已上線！', '若未授權瀏覽器定位，系統將使用目前地圖中心作為您的初始位置', 'amber');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+
+    if (appState.beaconWatchId) navigator.geolocation.clearWatch(appState.beaconWatchId);
+    appState.beaconWatchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        appState.myUser.lat = pos.coords.latitude;
+        appState.myUser.lng = pos.coords.longitude;
+        appState.myUser.accuracy = Math.round(pos.coords.accuracy || 8);
+        appState.myUser.hasRealGps = true;
+        publishMyPresence();
+        refreshMainMarkers();
+        updateRealMapOverlays();
+        syncUI();
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 0 }
+    );
+  } else {
+    publishMyPresence();
+  }
+};
+
+// ============================================================================
+// REAL 360° GOOGLE STREET VIEW PANORAMA (NOT 2D TILES!)
+// ============================================================================
+window.toggleRealStreetViewPanorama = function () {
+  window.soundEngine.playClick(820);
+  if (appState.streetViewOpen) {
+    window.closeRealStreetViewPanorama();
+    return;
+  }
+  const target = getTrackedProfile();
+  const lat = target.lat || appState.myUser.lat;
+  const lng = target.lng || appState.myUser.lng;
+  const label = target.id !== 'none' ? `${target.name}` : '目前地圖中心';
+
+  appState.streetViewOpen = true;
+  const panel = document.getElementById('real-streetview-panel');
+  if (panel) panel.classList.remove('hidden');
+
+  const btn = document.getElementById('mapstyle-streetview');
+  if (btn) {
+    btn.className = 'px-2.5 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950';
+  }
+
+  updateStreetViewIframe(lat, lng, label);
+  showToast('🏙️ 已切換至 360° 真實街景！', `正在顯示【${label}】所在路口的 360° 實景畫面`, 'emerald');
+};
+
+function updateStreetViewIframe(lat, lng, labelText) {
+  const iframe = document.getElementById('streetview-iframe');
+  const label = document.getElementById('streetview-coord-label');
+  const extLink = document.getElementById('streetview-external-link');
+  if (label) {
+    label.textContent = `🏙️ 360° 真實街景：${labelText} (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+  }
+  if (extLink) {
+    extLink.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+  }
+  if (iframe) {
+    iframe.src = `https://maps.google.com/maps?q=&layer=c&cbll=${lat},${lng}&cbp=12,0,0,0,0&output=svembed`;
+  }
+}
+
+window.closeRealStreetViewPanorama = function () {
+  window.soundEngine.playClick(680);
+  appState.streetViewOpen = false;
+  document.getElementById('real-streetview-panel')?.classList.add('hidden');
+  const btn = document.getElementById('mapstyle-streetview');
+  if (btn) {
+    btn.className = 'px-2.5 py-1 rounded-xl text-[11px] font-black bg-indigo-950 text-amber-200 border border-amber-300/50 hover:bg-indigo-900';
+  }
+};
+
+// ============================================================================
+// TOAST & ANIME CUT-IN
+// ============================================================================
 function showToast(title, message, type = 'amber') {
   const container = document.getElementById('toast-container');
   if (!container) return;
@@ -226,7 +654,7 @@ function showToast(title, message, type = 'amber') {
   setTimeout(() => {
     toast.classList.add('translate-y-2', 'opacity-0');
     setTimeout(() => toast.remove(), 250);
-  }, 2600);
+  }, 2800);
 }
 
 let cutInTimeout = null;
@@ -238,7 +666,8 @@ function triggerAnimeCutIn(title, subtitle, color = '#D4AF37') {
   const cutinImg = document.getElementById('cutin-avatar-img');
   if (!banner || !bgSvg || !titleEl || !subEl) return;
 
-  if (cutinImg) cutinImg.src = appState.profile.avatar;
+  const target = getTrackedProfile();
+  if (cutinImg) cutinImg.src = target.avatar || appState.myUser.avatar;
   bgSvg.innerHTML = window.getAnimeCutInSVG(color, 'SANBAO ALERT');
   titleEl.textContent = title;
   subEl.textContent = subtitle;
@@ -258,7 +687,16 @@ window.cycleDriverAvatar = function () {
   window.soundEngine.playClick(840);
   appState.avatarIndex = (appState.avatarIndex + 1) % DRIVER_AVATARS.length;
   const chosen = DRIVER_AVATARS[appState.avatarIndex];
-  appState.profile.avatar = chosen.src;
+  appState.myUser.avatar = chosen.src;
+  saveMyUserToStorage();
+
+  if (appState.selectedFriendId) {
+    const f = appState.friends.find((x) => x.id === appState.selectedFriendId);
+    if (f) {
+      f.avatar = chosen.src;
+      saveFriendsToStorage();
+    }
+  }
 
   const vipImg = document.getElementById('vip-avatar-img');
   const vipBadge = document.getElementById('vip-avatar-badge');
@@ -267,16 +705,19 @@ window.cycleDriverAvatar = function () {
   if (vipBadge) vipBadge.textContent = chosen.badge;
   if (modalImg) modalImg.src = chosen.src;
 
+  if (appState.myUser.loggedIn) publishMyPresence();
   refreshMainMarkers();
-  showToast(`🎭 已切換三寶頭像：${chosen.badge}`, '地圖雷達與警報頭像已同步更新！', 'amber');
+  renderSquadFriendsList();
+  showToast(`🎭 已切換頭像：${chosen.badge}`, '雷達與好友清單頭像已同步更新！', 'amber');
 };
 
 window.speakCurrentSanbaoOS = function () {
+  const target = getTrackedProfile();
   const sc = SCENARIOS[appState.scenario];
-  const raw = sc.osList[appState.osIndex % sc.osList.length].replace(/[💭「」]/g, '');
+  const raw = (target.sosMsg || sc.osList[0]).replace(/[💭「」]/g, '');
   window.soundEngine.playPing();
-  window.soundEngine.speak(`${appState.profile.name}大喊：${raw}`);
-  triggerAnimeCutIn(`🎙️ ${appState.profile.name} 崩潰廣播`, raw, sc.color);
+  window.soundEngine.speak(`${target.name}說：${raw}`);
+  triggerAnimeCutIn(`🎙️ ${target.name} 即時廣播`, raw, sc.color);
 };
 
 window.slapSanbaoStamp = function (stampText) {
@@ -288,7 +729,8 @@ window.slapSanbaoStamp = function (stampText) {
   }
   renderVipStamps();
   syncUI();
-  triggerAnimeCutIn(`💮 蓋章認證：${stampText}`, `${appState.profile.name} 懸賞金暴增至 $${appState.bountyAmount.toLocaleString()}！`, '#F43F5E');
+  const target = getTrackedProfile();
+  triggerAnimeCutIn(`💮 蓋章認證：${stampText}`, `${target.name} 懸賞金暴增至 $${appState.bountyAmount.toLocaleString()}！`, '#F43F5E');
   showToast(`💮 已蓋上【${stampText}】違規章！`, `三寶懸賞金 +$15,000！`, 'red');
 };
 
@@ -334,7 +776,7 @@ window.spinChickenLicenseRoulette = function () {
 };
 
 // ============================================================================
-// HIGH-PRECISION GPS & LANDMARK SEARCH ENGINE
+// HIGH-PRECISION GPS MAP ENGINE (NO FAKE DRIFT & NO CLICK-TO-MOVE SANBAO!)
 // ============================================================================
 function calcGpsDistanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -347,19 +789,20 @@ function calcGpsDistanceKm(lat1, lng1, lat2, lng2) {
 }
 
 function computeTacticalMetrics() {
-  const sc = SCENARIOS[appState.scenario];
-  const distKm = Math.max(
-    0.02,
-    calcGpsDistanceKm(appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng, appState.userLatLng.lat, appState.userLatLng.lng)
-  );
+  const sc = SCENARIOS[appState.scenario] || SCENARIOS.roundabout;
+  const target = getTrackedProfile();
+  const distKm =
+    appState.selectedFriendId && target.id !== 'none'
+      ? Math.max(0.01, calcGpsDistanceKm(target.lat, target.lng, appState.myUser.lat, appState.myUser.lng))
+      : 0.0;
+
   const chaosScale = 0.55 + (appState.chaosIndex / 100) * 0.9;
   const effectiveRadius = +(sc.radiusKm * chaosScale).toFixed(2);
 
   let survival = 99;
-  if (appState.scenario !== 'home') {
+  if (appState.selectedFriendId && appState.scenario !== 'home') {
     const ratio = distKm / Math.max(0.2, effectiveRadius);
-    const raw = Math.min(99, Math.max(2, Math.round(ratio * 52 - appState.chaosIndex * 0.18 + (5 - sc.levelNum) * 8)));
-    survival = raw;
+    survival = Math.min(99, Math.max(5, Math.round(ratio * 52 - appState.chaosIndex * 0.15 + (5 - sc.levelNum) * 8)));
   }
   return { distKm: +distKm.toFixed(2), effectiveRadius, survival };
 }
@@ -369,163 +812,143 @@ function initRealGoogleMap() {
   if (!mapEl || typeof L === 'undefined') return;
 
   leafletMap = L.map('real-google-map', {
-    center: [appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng],
+    center: [appState.myUser.lat, appState.myUser.lng],
     zoom: 16,
     zoomControl: true
   });
 
   window.setMapStyle('tactical');
 
-  outerDeceptionCircle = L.circle([appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng], {
-    radius: 850,
+  outerDeceptionCircle = L.circle([appState.myUser.lat, appState.myUser.lng], {
+    radius: 600,
     color: '#FEF08A',
     weight: 2,
     dashArray: '8, 6',
     fillColor: '#F59E0B',
-    fillOpacity: 0.06
+    fillOpacity: 0.05
   }).addTo(leafletMap);
 
-  innerBlastCircle = L.circle([appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng], {
-    radius: 450,
+  innerBlastCircle = L.circle([appState.myUser.lat, appState.myUser.lng], {
+    radius: 320,
     color: '#F43F5E',
-    weight: 2.5,
+    weight: 2,
     fillColor: '#F43F5E',
-    fillOpacity: 0.18
+    fillOpacity: 0.15
   }).addTo(leafletMap);
 
-  userAccuracyCircle = L.circle([appState.userLatLng.lat, appState.userLatLng.lng], {
-    radius: 25,
+  userAccuracyCircle = L.circle([appState.myUser.lat, appState.myUser.lng], {
+    radius: 20,
     color: '#2DD4BF',
     weight: 1.5,
     fillColor: '#2DD4BF',
     fillOpacity: 0.15
   }).addTo(leafletMap);
 
-  ghostTrajectoryLine = L.polyline([], { color: '#F43F5E', weight: 3, dashArray: '6, 6' }).addTo(leafletMap);
-  tetherPolyline = L.polyline([], { color: '#2DD4BF', weight: 2, dashArray: '4, 6' }).addTo(leafletMap);
+  tetherPolyline = L.polyline([], { color: '#2DD4BF', weight: 2.5, dashArray: '5, 6' }).addTo(leafletMap);
 
   refreshMainMarkers();
-  renderSquadMapMarkers();
-
-  leafletMap.on('click', (e) => {
-    window.soundEngine.playPing();
-    if (appState.clickMode === 'sanbao') {
-      appState.sanbaoLatLng.lat = e.latlng.lat;
-      appState.sanbaoLatLng.lng = e.latlng.lng;
-      showToast('🎯 已精準釘選三寶位置', `座標: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`, 'red');
-    } else {
-      appState.userLatLng.lat = e.latlng.lat;
-      appState.userLatLng.lng = e.latlng.lng;
-      showToast('🛡️ 已更新您的避難位置', `座標: ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`, 'emerald');
-    }
-    updateRealMapOverlays();
-    syncUI();
-  });
-
-  setInterval(() => {
-    if (appState.scenario !== 'home' && !appState.beaconWatchId) {
-      const step = (appState.chaosIndex / 100) * 0.00018;
-      appState.sanbaoLatLng.heading += (Math.random() - 0.45) * 50;
-      const rad = (appState.sanbaoLatLng.heading * Math.PI) / 180;
-      appState.sanbaoLatLng.lat += Math.sin(rad) * step;
-      appState.sanbaoLatLng.lng += Math.cos(rad) * step;
-      updateRealMapOverlays();
-      syncUI();
-    }
-  }, 1000);
-
+  renderFriendMapMarkers();
   updateRealMapOverlays();
 }
 
 function refreshMainMarkers() {
   if (!leafletMap) return;
-  if (sanbaoMarker) leafletMap.removeLayer(sanbaoMarker);
+  if (targetMarker) leafletMap.removeLayer(targetMarker);
   if (userMarker) leafletMap.removeLayer(userMarker);
 
-  const sanbaoIcon = L.divIcon({
-    className: 'custom-sanbao-marker',
-    html: `
-      <div class="relative flex items-center justify-center" style="width:60px;height:60px;">
-        <div class="absolute inset-0 rounded-full bg-rose-500/55 marker-pulse"></div>
-        <img src="${appState.profile.avatar}" onerror="this.src='assets/sanbao_avatar.jpg'" class="w-13 h-13 rounded-full object-cover border-2 border-amber-300 shadow-[0_0_18px_#D4AF37] relative z-10" style="width:50px;height:50px;" />
-        <div class="absolute -bottom-5 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-amber-300 text-[10px] font-mono font-black text-amber-200 shadow z-20">
-          🚨 ${appState.profile.name}
-        </div>
-      </div>`,
-    iconSize: [60, 60],
-    iconAnchor: [30, 30]
-  });
-
+  // My Own Real Location Marker
+  const myLabel = appState.myUser.name ? `🛡️ ${appState.myUser.name} (我)` : '🛡️ 我的位置';
   const userIcon = L.divIcon({
     className: 'custom-user-marker',
     html: `
-      <div class="relative flex items-center justify-center" style="width:42px;height:42px;">
+      <div class="relative flex items-center justify-center" style="width:46px;height:46px;">
         <div class="w-9 h-9 rounded-full bg-teal-400 border-2 border-white flex items-center justify-center text-sm shadow-[0_0_15px_#2DD4BF]">🛡️</div>
-        <div class="absolute -bottom-5 whitespace-nowrap px-1.5 py-0.5 rounded bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow">我的位置</div>
+        <div class="absolute -bottom-5 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow">${myLabel}</div>
       </div>`,
-    iconSize: [42, 42],
-    iconAnchor: [21, 21]
+    iconSize: [46, 46],
+    iconAnchor: [23, 23]
   });
+  userMarker = L.marker([appState.myUser.lat, appState.myUser.lng], { icon: userIcon, zIndexOffset: 900 }).addTo(leafletMap);
 
-  sanbaoMarker = L.marker([appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng], { icon: sanbaoIcon, zIndexOffset: 1000 }).addTo(leafletMap);
-  userMarker = L.marker([appState.userLatLng.lat, appState.userLatLng.lng], { icon: userIcon, zIndexOffset: 900 }).addTo(leafletMap);
+  // Selected Friend Marker (Only shown when a real friend is selected!)
+  if (appState.selectedFriendId) {
+    const f = appState.friends.find((x) => x.id === appState.selectedFriendId);
+    if (f) {
+      const friendIcon = L.divIcon({
+        className: 'custom-sanbao-marker',
+        html: `
+          <div class="relative flex items-center justify-center" style="width:60px;height:60px;">
+            <div class="absolute inset-0 rounded-full bg-rose-500/55 marker-pulse"></div>
+            <img src="${f.avatar || 'assets/sanbao_chicken_avatar.jpg'}" onerror="this.src='assets/sanbao_avatar.jpg'" class="rounded-full object-cover border-2 border-amber-300 shadow-[0_0_18px_#D4AF37] relative z-10" style="width:50px;height:50px;" />
+            <div class="absolute -bottom-5 whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-amber-300 text-[10px] font-mono font-black text-amber-200 shadow z-20">
+              🚨 ${f.name} (${f.plate})
+            </div>
+          </div>`,
+        iconSize: [60, 60],
+        iconAnchor: [30, 30]
+      });
+      targetMarker = L.marker([f.lat, f.lng], { icon: friendIcon, zIndexOffset: 1000 }).addTo(leafletMap);
+    }
+  }
 }
 
-function renderSquadMapMarkers() {
+function renderFriendMapMarkers() {
   if (!leafletMap) return;
-  squadMarkers.forEach((m) => leafletMap.removeLayer(m));
-  squadMarkers = [];
+  friendMarkers.forEach((m) => leafletMap.removeLayer(m));
+  friendMarkers = [];
 
-  appState.squad.forEach((f) => {
-    if (f.name === appState.profile.name) return;
-    const sc = SCENARIOS[f.mode] || SCENARIOS.snack;
+  appState.friends.forEach((f) => {
+    if (f.id === appState.selectedFriendId) return;
+    if (isNaN(f.lat) || isNaN(f.lng)) return;
+    const sc = SCENARIOS[f.mode] || SCENARIOS.roundabout;
     const m = L.circleMarker([f.lat, f.lng], {
-      radius: 8,
+      radius: 9,
       color: '#FEF08A',
       fillColor: sc.color,
-      fillOpacity: 0.92,
-      weight: 2
+      fillOpacity: 0.95,
+      weight: 2.5
     })
       .addTo(leafletMap)
-      .bindTooltip(`<b>${f.name} (${f.plate})</b><br/>${f.sosMsg}`, { direction: 'top' });
+      .bindTooltip(`<b>${f.name} (${f.plate})</b><br/>${f.sosMsg}<br/><i>點擊鎖定位置</i>`, { direction: 'top' });
 
-    m.on('click', () => focusSquadFriend(f.id));
-    squadMarkers.push(m);
+    m.on('click', () => window.confirmAndLocateFriend(f.id));
+    friendMarkers.push(m);
   });
 }
 
 function updateRealMapOverlays() {
-  if (!leafletMap || !sanbaoMarker) return;
-  const sc = SCENARIOS[appState.scenario];
+  if (!leafletMap || !userMarker) return;
+  const sc = SCENARIOS[appState.scenario] || SCENARIOS.roundabout;
   const metrics = computeTacticalMetrics();
-  const sPos = [appState.sanbaoLatLng.lat, appState.sanbaoLatLng.lng];
-  const uPos = [appState.userLatLng.lat, appState.userLatLng.lng];
+  const uPos = [appState.myUser.lat, appState.myUser.lng];
 
-  sanbaoMarker.setLatLng(sPos);
   userMarker.setLatLng(uPos);
   if (userAccuracyCircle) {
     userAccuracyCircle.setLatLng(uPos);
-    userAccuracyCircle.setRadius(Math.max(12, appState.userLatLng.accuracy || 20));
+    userAccuracyCircle.setRadius(Math.max(12, appState.myUser.accuracy || 15));
   }
 
-  const innerMeters = Math.max(60, metrics.effectiveRadius * 360);
-  innerBlastCircle.setLatLng(sPos);
+  const target = getTrackedProfile();
+  const tPos = [target.lat || uPos[0], target.lng || uPos[1]];
+
+  if (targetMarker && appState.selectedFriendId) {
+    targetMarker.setLatLng(tPos);
+  }
+
+  const innerMeters = Math.max(60, metrics.effectiveRadius * 320);
+  innerBlastCircle.setLatLng(tPos);
   innerBlastCircle.setRadius(innerMeters);
   innerBlastCircle.setStyle({ color: sc.color, fillColor: sc.color });
 
-  outerDeceptionCircle.setLatLng(sPos);
+  outerDeceptionCircle.setLatLng(tPos);
   outerDeceptionCircle.setRadius(innerMeters * 1.45);
 
-  tetherPolyline.setLatLngs([sPos, uPos]);
-
-  const rad = (appState.sanbaoLatLng.heading * Math.PI) / 180;
-  const p1 = [sPos[0] + Math.sin(rad + 0.5) * 0.0025, sPos[1] + Math.cos(rad + 0.5) * 0.0025];
-  const p2 = [p1[0] + Math.sin(rad - 0.8) * 0.0025, p1[1] + Math.cos(rad - 0.8) * 0.0025];
-  ghostTrajectoryLine.setLatLngs(appState.scenario === 'home' ? [] : [sPos, p1, p2]);
+  tetherPolyline.setLatLngs(appState.selectedFriendId ? [tPos, uPos] : []);
 }
 
 window.setMapStyle = function (style) {
   if (!leafletMap) return;
+  window.closeRealStreetViewPanorama();
   window.soundEngine.playClick(720);
   if (tileLayerGroup) leafletMap.removeLayer(tileLayerGroup);
 
@@ -547,50 +970,35 @@ window.setMapStyle = function (style) {
   }).addTo(leafletMap);
 };
 
-window.flyToHotspot = function (key) {
-  const spot = REAL_HOTSPOTS[key];
-  if (!spot || !leafletMap) return;
-  window.soundEngine.playPing();
-  appState.sanbaoLatLng.lat = spot.lat;
-  appState.sanbaoLatLng.lng = spot.lng;
-  appState.userLatLng.lat = spot.lat - 0.0022;
-  appState.userLatLng.lng = spot.lng + 0.0022;
-  leafletMap.flyTo([spot.lat, spot.lng], 17, { duration: 0.85 });
-  updateRealMapOverlays();
-  syncUI();
-  showToast(`📍 已瞬移至：${spot.name}`, `街角級精準鎖定 (${spot.lat.toFixed(4)}, ${spot.lng.toFixed(4)})`, 'amber');
-};
-
 window.useRealBrowserGPS = function () {
   if (!navigator.geolocation) {
-    showToast('⚠️ 瀏覽器不支援定位', '請使用上方搜尋欄輸入地標定位！', 'red');
+    showToast('⚠️ 瀏覽器不支援定位', '請使用搜尋欄輸入地標定位！', 'red');
     return;
   }
   window.soundEngine.playPing();
-  showToast('🛰️ 啟動高精準衛星定位...', '請在瀏覽器點選「允許」位置權限', 'cyan');
+  showToast('🛰️ 正在取得您的精準衛星定位...', '請允許瀏覽器位置權限', 'cyan');
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const { latitude, longitude, accuracy } = pos.coords;
-      appState.userLatLng.lat = latitude;
-      appState.userLatLng.lng = longitude;
-      appState.userLatLng.accuracy = Math.round(accuracy || 10);
-      // Spawn Sanbao friend 160m away on nearby street for realistic street-level monitoring
-      appState.sanbaoLatLng.lat = latitude + 0.0014;
-      appState.sanbaoLatLng.lng = longitude + 0.0012;
+      appState.myUser.lat = latitude;
+      appState.myUser.lng = longitude;
+      appState.myUser.accuracy = Math.round(accuracy || 8);
+      appState.myUser.hasRealGps = true;
+      saveMyUserToStorage();
+      if (appState.myUser.loggedIn) publishMyPresence();
 
       if (leafletMap) leafletMap.flyTo([latitude, longitude], 17, { duration: 0.9 });
+      if (appState.streetViewOpen) {
+        updateStreetViewIframe(latitude, longitude, '我的即時位置');
+      }
+      refreshMainMarkers();
       updateRealMapOverlays();
       syncUI();
-      showToast(
-        '✅ 街角級精準定位成功！',
-        `誤差 ±${appState.userLatLng.accuracy}m・損友三寶就在離你 180 公尺處！`,
-        'emerald'
-      );
+      showToast('✅ 精準定位成功！', `座標: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (誤差 ±${appState.myUser.accuracy}m)`, 'emerald');
     },
     () => {
-      showToast('⚠️ 無法取得衛星權限', '已為您切換至高精準預設街口，也可直接在搜尋框輸入路名！', 'amber');
-      if (leafletMap) leafletMap.setZoom(17);
+      showToast('⚠️ 無法取得定位權限', '請檢查瀏覽器網址列左側的位置權限設定，或使用搜尋框定位！', 'red');
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
@@ -603,7 +1011,7 @@ window.searchMapLocation = async function (e) {
   if (!query) return;
 
   window.soundEngine.playPing();
-  showToast('🔍 正在搜尋精準座標...', `查詢：「${query}」`, 'cyan');
+  showToast('🔍 正在搜尋路名與座標...', `查詢：「${query}」`, 'cyan');
 
   try {
     const res = await fetch(
@@ -613,68 +1021,75 @@ window.searchMapLocation = async function (e) {
     if (data && data.length > 0) {
       const lat = parseFloat(data[0].lat);
       const lng = parseFloat(data[0].lon);
-      appState.sanbaoLatLng.lat = lat;
-      appState.sanbaoLatLng.lng = lng;
-      appState.userLatLng.lat = lat - 0.0018;
-      appState.userLatLng.lng = lng + 0.0018;
+      if (!appState.selectedFriendId) {
+        appState.myUser.lat = lat;
+        appState.myUser.lng = lng;
+        if (appState.myUser.loggedIn) publishMyPresence();
+      }
       if (leafletMap) leafletMap.flyTo([lat, lng], 17, { duration: 0.9 });
+      if (appState.streetViewOpen) {
+        updateStreetViewIframe(lat, lng, query);
+      }
+      refreshMainMarkers();
       updateRealMapOverlays();
       syncUI();
-      showToast('🛰️ 街角鎖定成功！', `${data[0].display_name.slice(0, 36)}...`, 'emerald');
+      showToast('🛰️ 已飛往該路段！', `${data[0].display_name.slice(0, 38)}...`, 'emerald');
       return;
     }
   } catch (err) {}
 
-  showToast('⚠️ 找不到該路名', '請嘗試輸入更完整的地標（例如：台中好市多、台北101）', 'red');
+  showToast('⚠️ 找不到該路名', '請嘗試輸入更完整的地標（例如：台中北屯好市多、台北101）', 'red');
 };
 
 // ============================================================================
-// WORKING DIRECT LINE SHARE INTEGRATION
+// WORKING DIRECT LINE SHARE & FRIEND INVITE
 // ============================================================================
+window.inviteFriendViaLine = function () {
+  window.soundEngine.playClick(880);
+  const room = appState.myUser.roomCode || '8888';
+  const myName = appState.myUser.name || '你的好友';
+  const inviteUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&uid=${encodeURIComponent(appState.myUser.id)}&name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(appState.myUser.plate || '汽車')}&mode=${appState.scenario}&lat=${appState.myUser.lat.toFixed(5)}&lng=${appState.myUser.lng.toFixed(5)}`;
+  const msg = `🚨【損友三寶即時監測邀請】${myName} 邀請你加入即時防空雷達（連線房號 #${room}）！\n點開網址並按下「登入我的定位」，我們就能在雷達地圖上互相看到彼此的真實位置：\n${inviteUrl}`;
+
+  try { navigator.clipboard?.writeText(msg); } catch (e) {}
+  window.open(`https://line.me/R/share?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+  showToast('💬 已開啟 LINE 邀請好友！', `好友點開連結並登入房號 #${room} 後，你就能按「確定」看到他的位置！`, 'emerald');
+};
+
 function buildCurrentAlertShareText() {
   const box = document.getElementById('share-copy-textarea');
   if (box && box.value) return box.value;
   const sc = SCENARIOS[appState.scenario];
   const metrics = computeTacticalMetrics();
-  const { name, plate } = appState.profile;
-  const { lat, lng } = appState.sanbaoLatLng;
-  const shareUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?name=${encodeURIComponent(name)}&plate=${encodeURIComponent(plate)}&mode=${appState.scenario}&lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}`;
-  return `🚨【損友三寶出車警報】「${name}」(${plate}) 已經拿著雞腿駕照握住方向盤了！\n目前狀態：【${sc.level}】暴風半徑 ${metrics.effectiveRadius}km！\n📡 點開看他的即時防空雷達位置：\n${shareUrl}`;
+  const target = getTrackedProfile();
+  const room = appState.myUser.roomCode || '8888';
+  const shareUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&name=${encodeURIComponent(target.name)}&plate=${encodeURIComponent(target.plate)}&mode=${appState.scenario}&lat=${target.lat.toFixed(5)}&lng=${target.lng.toFixed(5)}`;
+  return `🚨【損友三寶出車警報】「${target.name}」(${target.plate}) 目前狀態：【${sc.level}】警戒半徑 ${metrics.effectiveRadius}km！\n📡 點開查看即時定位與連線：\n${shareUrl}`;
 }
 
 window.shareDirectlyToLine = function () {
   window.soundEngine.playClick(880);
   updateSharePreviewText();
   const text = buildCurrentAlertShareText();
-
-  // Copy to clipboard as backup AND open official LINE universal share link
-  try {
-    navigator.clipboard?.writeText(text);
-  } catch (e) {}
-
-  const lineShareUrl = `https://line.me/R/share?text=${encodeURIComponent(text)}`;
-  window.open(lineShareUrl, '_blank', 'noopener,noreferrer');
-  showToast('💬 已開啟 LINE 分享視窗！', '同時已複製警報文字，可直接選擇好友或群組傳送！', 'emerald');
+  try { navigator.clipboard?.writeText(text); } catch (e) {}
+  window.open(`https://line.me/R/share?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  showToast('💬 已開啟 LINE 分享視窗！', '可選擇好友或群組直接傳送即時定位！', 'emerald');
 };
 
 window.shareMyDrivingLink = function (openLine = false) {
   window.soundEngine.playClick(880);
-  const myName = document.getElementById('my-driver-name')?.value.trim() || appState.profile.name;
-  const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.profile.plate;
-  const { lat, lng } = appState.sanbaoLatLng;
-  const url = `https://seanko31415.github.io/aegis-sanbao-radar/?name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(myPlate)}&mode=${appState.scenario}&lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}`;
-  const msg = `🚨【損友三寶出車通知】${myName} (${myPlate}) 剛剛開車上路了！\n點開看他的即時防空雷達位置，方圓 3km 快閃開：\n${url}`;
+  const myName = document.getElementById('my-driver-name')?.value.trim() || appState.myUser.name || '我';
+  const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.myUser.plate || '汽車';
+  const room = document.getElementById('my-room-code')?.value.trim() || appState.myUser.roomCode || '8888';
+  const url = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&uid=${encodeURIComponent(appState.myUser.id)}&name=${encodeURIComponent(myName)}&plate=${encodeURIComponent(myPlate)}&mode=${appState.scenario}&lat=${appState.myUser.lat.toFixed(5)}&lng=${appState.myUser.lng.toFixed(5)}`;
+  const msg = `🚨【損友三寶出車通知】${myName} (${myPlate}) 正在線上分享即時位置（房號 #${room}）！\n點開按「確定」即可查看我的即時位置：\n${url}`;
 
-  try {
-    navigator.clipboard?.writeText(msg);
-  } catch (e) {}
-
+  try { navigator.clipboard?.writeText(msg); } catch (e) {}
   if (openLine) {
-    const lineUrl = `https://line.me/R/share?text=${encodeURIComponent(msg)}`;
-    window.open(lineUrl, '_blank', 'noopener,noreferrer');
-    showToast('💬 已開啟 LINE 傳送定位！', '選擇群組即可一鍵發送即時雷達連結！', 'emerald');
+    window.open(`https://line.me/R/share?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    showToast('💬 已開啟 LINE 傳送定位！', '選擇群組即可發送即時連線網址！', 'emerald');
   } else {
-    showToast('📋 已複製出車定位連結！', '快貼到 LINE 群組叫朋友閃開！', 'emerald');
+    showToast('📋 已複製邀請連線網址！', '傳給朋友打開並登入，就能在網站上互相看到位置！', 'emerald');
   }
 };
 
@@ -682,11 +1097,12 @@ window.shareMyDrivingLink = function (openLine = false) {
 // EXTRA INTERACTIVE COCKPIT PRANKS & TAROT DRAW
 // ============================================================================
 window.triggerCockpitAction = function (type) {
+  const target = getTrackedProfile();
   if (type === 'horn') {
     window.soundEngine.playHorn();
     window.soundEngine.speak('叭叭叭！讓開讓開！我也不知道我現在要轉哪邊！');
     triggerAnimeCutIn('📯 驚慌連按喇叭！', '想按雨刷怎麼按到喇叭了啦！', '#F43F5E');
-    showToast('📯 叭叭——！！', `${appState.profile.name} 驚慌中把喇叭當方向燈按！`, 'red');
+    showToast('📯 叭叭——！！', `${target.name} 驚慌中把喇叭當方向燈按！`, 'red');
   } else if (type === 'rgear') {
     window.soundEngine.playRadarBeep();
     window.soundEngine.speak('嗶嗶嗶！誰把好市多的柱子放在我車屁股後面啦！');
@@ -705,7 +1121,6 @@ window.drawRandomTarotCard = function () {
 
 // ============================================================================
 // UPGRADED 3D / 2.5D COSTCO B2 REVERSE PARKING SIMULATOR
-// (Supports "▶️ 點擊開始挑戰", Continuous Arrow Keys ↑↓←→, Touch Hold, 3D View + Radar PIP & Moving Carts!)
 // ============================================================================
 const PARKING_BAY = { x: 325, y: 75, w: 105, h: 100 };
 const PILLARS_BY_LEVEL = {
@@ -776,11 +1191,6 @@ window.toggleParkingInvertMode = function () {
       ? 'px-2 py-0.5 rounded-lg bg-rose-600/30 border border-rose-400/50 text-[10px] font-black text-rose-200'
       : 'px-2 py-0.5 rounded-lg bg-teal-500/30 border border-teal-400/50 text-[10px] font-black text-teal-200';
   }
-  showToast(
-    g.invertSteer ? '🔀 已開啟「三寶左右相反」腦袋打結模式' : '🛞 已切換為「一般正常方向盤」模式',
-    g.invertSteer ? '左打方向盤車尾會往右偏喔！' : '方向盤方向已恢復直覺模式！',
-    'amber'
-  );
 };
 
 window.selectParkingLevel = function (lvl) {
@@ -841,7 +1251,6 @@ window.stepParkingCar = function (cmd) {
 function computeParkingState(g) {
   const pillars = PILLARS_BY_LEVEL[g.level] || PILLARS_BY_LEVEL[1];
 
-  // Check pillar collision
   for (const p of pillars) {
     const dist = Math.hypot(g.carX - p.x, g.carY - p.y);
     if (dist < p.r + 19) {
@@ -849,14 +1258,12 @@ function computeParkingState(g) {
     }
   }
 
-  // Check neighboring parked cars in Lv.3
   if (g.level === 3) {
     if (g.carX > 310 && (g.carY < 58 || g.carY > 192)) {
       return { status: 'CRASH', pct: 0, msg: '💥 擦撞隔壁百萬進口休旅車！' };
     }
   }
 
-  // Check moving Costco shopping carts in Lv.2 & Lv.3
   if (g.level >= 2) {
     for (const c of g.carts) {
       const dist = Math.hypot(g.carX - c.x, g.carY - c.y);
@@ -866,7 +1273,6 @@ function computeParkingState(g) {
     }
   }
 
-  // Check wall bounds
   if (g.carX < 28 || g.carX > 432 || g.carY < 24 || g.carY > 226) {
     return { status: 'CRASH', pct: 0, msg: '💥 擦撞 B2 地下室車道牆壁！' };
   }
@@ -876,7 +1282,6 @@ function computeParkingState(g) {
   const distToCenter = Math.hypot(g.carX - bayCx, g.carY - bayCy);
   const rawPct = Math.max(0, Math.min(100, Math.round((1 - distToCenter / 260) * 115)));
 
-  // Normalize angle check (straight within ±28 deg)
   const normAngle = Math.abs((((g.carAngle % 360) + 540) % 360) - 180);
   const angleError = Math.min(Math.abs(g.carAngle % 360), 360 - Math.abs(g.carAngle % 360));
 
@@ -923,9 +1328,7 @@ function evaluateParkingCollision() {
   }
 }
 
-// 3D Perspective Projection Helper for 3D Mode
 function projectIso3D(x, y, z = 0) {
-  // Maps (0..460, 0..250, z) into a sleek 2.5D/3D tilted garage perspective
   const cx = 230;
   const cy = 125;
   const dx = x - cx;
@@ -954,7 +1357,6 @@ function draw3DExtrudedBox(ctx, cx, cy, w, h, heightZ, angleDeg, topColor, sideC
   const basePts = localCorners.map((p) => projectIso3D(cx + p.x * cos - p.y * sin, cy + p.x * sin + p.y * cos, 0));
   const topPts = localCorners.map((p) => projectIso3D(cx + p.x * cos - p.y * sin, cy + p.x * sin + p.y * cos, heightZ));
 
-  // Draw side faces
   ctx.fillStyle = sideColor;
   ctx.strokeStyle = borderColor;
   ctx.lineWidth = 1.2;
@@ -970,7 +1372,6 @@ function draw3DExtrudedBox(ctx, cx, cy, w, h, heightZ, angleDeg, topColor, sideC
     ctx.stroke();
   }
 
-  // Draw top face
   ctx.fillStyle = topColor;
   ctx.beginPath();
   ctx.moveTo(topPts[0].sx, topPts[0].sy);
@@ -978,8 +1379,6 @@ function draw3DExtrudedBox(ctx, cx, cy, w, h, heightZ, angleDeg, topColor, sideC
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-
-  return { basePts, topPts };
 }
 
 function renderParkingMiniGame() {
@@ -1001,7 +1400,6 @@ function renderParkingMiniGame() {
         : 'px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 font-mono text-[10px] font-black text-amber-300';
   }
 
-  // Background Sky / Garage Ceiling Gradient
   const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
   bgGrad.addColorStop(0, '#050814');
   bgGrad.addColorStop(0.3, '#0B132B');
@@ -1010,10 +1408,6 @@ function renderParkingMiniGame() {
   ctx.fillRect(0, 0, w, h);
 
   if (g.viewMode === '3D') {
-    // ========================================================================
-    // 3D PERSPECTIVE GARAGE MODE + MINI RADAR PIP
-    // ========================================================================
-    // 1. 3D Perspective Floor Grid
     ctx.strokeStyle = 'rgba(254, 240, 138, 0.07)';
     ctx.lineWidth = 1;
     for (let gx = 20; gx <= 440; gx += 35) {
@@ -1033,7 +1427,6 @@ function renderParkingMiniGame() {
       ctx.stroke();
     }
 
-    // 2. 3D Golden Target Parking Bay
     const bayCorners = [
       projectIso3D(PARKING_BAY.x, PARKING_BAY.y, 0),
       projectIso3D(PARKING_BAY.x + PARKING_BAY.w, PARKING_BAY.y, 0),
@@ -1058,11 +1451,9 @@ function renderParkingMiniGame() {
     ctx.fillText('🅿️ VIP B2-88', bayCenter3D.sx, bayCenter3D.sy + 4);
     ctx.restore();
 
-    // 3. Neighboring 3D Parked Cars (in Lv.3 or decorative)
     draw3DExtrudedBox(ctx, 375, 32, 82, 34, 16, 0, '#1E293B', '#0F172A', 'rgba(148,163,184,0.4)');
     draw3DExtrudedBox(ctx, 375, 218, 82, 34, 16, 0, '#1E293B', '#0F172A', 'rgba(148,163,184,0.4)');
 
-    // 4. 3D Curved Reversing Camera Guidelines (Red / Yellow / Green)
     const rad = (g.carAngle * Math.PI) / 180;
     [35, 65, 95].forEach((dist, idx) => {
       const gx = g.carX + Math.cos(rad) * dist;
@@ -1077,7 +1468,6 @@ function renderParkingMiniGame() {
       ctx.stroke();
     });
 
-    // 5. Moving 3D Costco Shopping Carts (Lv.2 & Lv.3)
     if (g.level >= 2) {
       g.carts.forEach((c) => {
         draw3DExtrudedBox(ctx, c.x, c.y, 22, 16, 14, 90, '#F59E0B', '#B45309', '#FEF08A');
@@ -1089,28 +1479,23 @@ function renderParkingMiniGame() {
       });
     }
 
-    // 6. 3D Extruded Player SUV (Chassis + Cabin Roof + Headlights + Reverse Taillights!)
     const bodyColor = g.status === 'CRASH' ? '#E11D48' : g.status === 'WIN' ? '#14B8A6' : '#2563EB';
     const sideColor = g.status === 'CRASH' ? '#881337' : g.status === 'WIN' ? '#0F766E' : '#1E3A8A';
     draw3DExtrudedBox(ctx, g.carX, g.carY, 52, 30, 12, g.carAngle, bodyColor, sideColor, '#FEF08A');
-    // SUV Cabin Roof
     draw3DExtrudedBox(ctx, g.carX - Math.cos(rad) * 3, g.carY - Math.sin(rad) * 3, 28, 22, 20, g.carAngle, '#0F172A', '#1E293B', '#93C5FD');
 
-    // Rear Red Reverse Lights (+X direction)
     const rearL = projectIso3D(g.carX + Math.cos(rad) * 26 - Math.sin(rad) * 10, g.carY + Math.sin(rad) * 26 + Math.cos(rad) * 10, 8);
     const rearR = projectIso3D(g.carX + Math.cos(rad) * 26 + Math.sin(rad) * 10, g.carY + Math.sin(rad) * 26 - Math.cos(rad) * 10, 8);
     ctx.fillStyle = '#FF2E4C';
     ctx.beginPath(); ctx.arc(rearL.sx, rearL.sy, 3.5, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.arc(rearR.sx, rearR.sy, 3.5, 0, Math.PI * 2); ctx.fill();
 
-    // Car Roof Label
     const carTopPt = projectIso3D(g.carX, g.carY, 26);
     ctx.font = '900 10px "JetBrains Mono", monospace';
     ctx.fillStyle = '#FEF08A';
     ctx.textAlign = 'center';
     ctx.fillText(`🚗 ${g.gear}檔`, carTopPt.sx, carTopPt.sy);
 
-    // 7. 3D Extruded Red Concrete Pillars
     pillars.forEach((p) => {
       draw3DExtrudedBox(ctx, p.x, p.y, p.r * 1.8, p.r * 1.8, 34, 0, '#F43F5E', '#9F1239', '#FECDD3');
       const topP = projectIso3D(p.x, p.y, 38);
@@ -1120,7 +1505,7 @@ function renderParkingMiniGame() {
       ctx.fillText(p.label, topP.sx, topP.sy);
     });
 
-    // 8. Top-Left Mini 2D Radar PIP (Picture-in-Picture)
+    // Mini Top-Down Radar PIP
     ctx.save();
     ctx.fillStyle = 'rgba(6, 9, 22, 0.88)';
     ctx.strokeStyle = 'rgba(254, 240, 138, 0.5)';
@@ -1129,24 +1514,18 @@ function renderParkingMiniGame() {
     ctx.strokeRect(10, 10, 96, 56);
     const sx = 96 / w;
     const sy = 56 / h;
-    // PIP Bay
     ctx.strokeStyle = '#FEF08A';
     ctx.strokeRect(10 + PARKING_BAY.x * sx, 10 + PARKING_BAY.y * sy, PARKING_BAY.w * sx, PARKING_BAY.h * sy);
-    // PIP Pillars
     ctx.fillStyle = '#F43F5E';
     pillars.forEach((p) => {
       ctx.beginPath();
       ctx.arc(10 + p.x * sx, 10 + p.y * sy, 2.5, 0, Math.PI * 2);
       ctx.fill();
     });
-    // PIP Car
     ctx.fillStyle = '#38BDF8';
     ctx.fillRect(10 + g.carX * sx - 4, 10 + g.carY * sy - 2.5, 8, 5);
     ctx.restore();
   } else {
-    // ========================================================================
-    // 2D TOP-DOWN PRECISION RADAR MODE
-    // ========================================================================
     ctx.fillStyle = res.status === 'WIN' ? 'rgba(45, 212, 191, 0.22)' : 'rgba(254, 240, 138, 0.12)';
     ctx.fillRect(PARKING_BAY.x, PARKING_BAY.y, PARKING_BAY.w, PARKING_BAY.h);
     ctx.strokeStyle = res.status === 'WIN' ? '#2DD4BF' : '#FEF08A';
@@ -1198,10 +1577,7 @@ function renderParkingMiniGame() {
     ctx.restore();
   }
 
-  // ==========================================================================
-  // COCKPIT HUD OVERLAY: STEERING WHEEL + GEAR + ULTRASONIC SENSOR BAR
-  // ==========================================================================
-  // Steering Wheel HUD (Bottom Left)
+  // Steering Wheel HUD
   ctx.save();
   ctx.translate(34, h - 32);
   ctx.rotate((g.steerWheelDeg * Math.PI) / 180);
@@ -1218,7 +1594,6 @@ function renderParkingMiniGame() {
   ctx.stroke();
   ctx.restore();
 
-  // Bottom Status Bar
   ctx.fillStyle = 'rgba(6, 9, 22, 0.86)';
   ctx.fillRect(62, h - 28, w - 70, 22);
   ctx.font = '700 11px "Noto Sans TC", sans-serif';
@@ -1227,7 +1602,6 @@ function renderParkingMiniGame() {
   ctx.fillText(`${res.msg} (後距: ${g.rearDistCm}cm)`, 68, h - 13);
 }
 
-// 60FPS Continuous Loop for 3D Costco Parking Game (Keyboard Hold + Touch Hold + Moving Shopping Carts!)
 function updateParkingGameLoop() {
   const g = appState.parkingGame;
   if (g.active && g.status === 'PLAYING') {
@@ -1262,7 +1636,6 @@ function updateParkingGameLoop() {
       changed = true;
     }
 
-    // Move Costco Shopping Carts in Lv.2 & Lv.3
     if (g.level >= 2) {
       g.carts.forEach((c) => {
         c.y += c.vy * (g.level === 3 ? 1.35 : 1);
@@ -1280,110 +1653,169 @@ function updateParkingGameLoop() {
 }
 
 // ============================================================================
-// TAB 2: 🚗 損友出車共享
+// TAB 2: 👥 真人好友監測清單 (ZERO VIRTUAL PEOPLE!)
 // ============================================================================
+function renderOnlineFriendPills() {
+  const bar = document.getElementById('map-online-friends-pills');
+  const countBadge = document.getElementById('nav-friend-count');
+  if (countBadge) countBadge.textContent = appState.friends.length;
+  if (!bar) return;
+
+  if (appState.friends.length === 0) {
+    bar.innerHTML = `
+      <span class="text-amber-200/70 font-bold">👥 線上好友定位：</span>
+      <button onclick="switchTab('squad')" class="px-2.5 py-0.5 rounded-lg bg-teal-400/20 border border-teal-300/40 text-teal-300 font-bold text-[11px]">
+        ➕ 點此新增好友或邀朋友登入連線
+      </button>`;
+    return;
+  }
+
+  bar.innerHTML =
+    `<span class="text-amber-200/70 font-bold">👥 點擊查看好友位置：</span>` +
+    appState.friends
+      .map((f) => {
+        const isSel = f.id === appState.selectedFriendId;
+        return `<button onclick="confirmAndLocateFriend('${f.id}')" class="px-2.5 py-0.5 rounded-lg font-bold text-[11px] transition-all ${
+          isSel
+            ? 'bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black shadow'
+            : 'bg-blue-950/90 text-amber-200 border border-amber-300/40 hover:border-amber-300'
+        }">🟢 ${f.name} ${f.confirmed ? '📍' : '(按確定查看)'}</button>`;
+      })
+      .join('');
+}
+
 function renderSquadFriendsList() {
   const container = document.getElementById('squad-friends-list');
   if (!container) return;
 
-  container.innerHTML = appState.squad
+  if (appState.friends.length === 0) {
+    container.innerHTML = `
+      <div class="sm:col-span-2 p-6 rounded-2xl bg-[#060916]/80 border border-dashed border-amber-300/35 text-center space-y-2">
+        <div class="text-2xl">📡</div>
+        <div class="text-sm font-black text-amber-200">目前清單中還沒有好友（已移除所有虛擬人物）</div>
+        <p class="text-xs text-slate-300 max-w-md mx-auto">
+          請在上方輸入好友名字新增，或請朋友打開這個網站、輸入相同房號 <span class="text-teal-300 font-mono font-bold">#${appState.myUser.roomCode}</span> 並按下「登入我的定位」，他就會即時出現在這裡！
+        </p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = appState.friends
     .map((f) => {
-      const sc = SCENARIOS[f.mode] || SCENARIOS.snack;
-      const isSelected = f.name === appState.profile.name;
+      const sc = SCENARIOS[f.mode] || SCENARIOS.roundabout;
+      const isSelected = f.id === appState.selectedFriendId;
       const avatarSrc = f.avatar || 'assets/sanbao_chicken_avatar.jpg';
       return `
-      <div onclick="focusSquadFriend('${f.id}')" class="cursor-pointer tarot-btn p-3 ${
-        isSelected ? 'ring-2 ring-amber-300' : ''
-      } flex items-center gap-3">
-        <img src="${avatarSrc}" onerror="this.src='assets/sanbao_avatar.jpg'" class="w-12 h-12 rounded-xl object-cover border border-amber-300 shrink-0" />
-        <div class="min-w-0 flex-1 space-y-1">
-          <div class="flex items-center justify-between gap-1">
-            <span class="font-black text-sm text-white truncate">${f.name}</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black text-slate-950 shrink-0" style="background:${sc.color}">
-              ${sc.level}
-            </span>
+      <div class="tarot-btn p-3.5 ${
+        isSelected ? 'ring-2 ring-teal-300' : ''
+      } flex flex-col justify-between gap-2.5">
+        <div class="flex items-center gap-3">
+          <img src="${avatarSrc}" onerror="this.src='assets/sanbao_avatar.jpg'" class="w-12 h-12 rounded-xl object-cover border border-amber-300 shrink-0" />
+          <div class="min-w-0 flex-1 space-y-0.5">
+            <div class="flex items-center justify-between gap-1">
+              <span class="font-black text-sm text-white truncate">${f.name}</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black text-slate-950 shrink-0" style="background:${sc.color}">
+                ${sc.level}
+              </span>
+            </div>
+            <div class="text-[11px] text-amber-300/90 font-mono">${f.plate} ・ ${f.online ? '🟢 線上定位中' : '⚪ 等待好友登入更新'}</div>
+            <div class="text-xs text-amber-100 font-bold truncate">${f.sosMsg}</div>
           </div>
-          <div class="text-xs text-amber-100 font-bold truncate">${f.sosMsg}</div>
-          <div class="flex items-center justify-between text-[10px] text-amber-300/80 font-mono">
-            <span>${f.plate}</span>
-            <span>📍 點擊在地圖鎖定 ➔</span>
-          </div>
+        </div>
+        <div class="flex items-center gap-2 pt-1.5 border-t border-amber-300/20">
+          <button onclick="confirmAndLocateFriend('${f.id}')" class="flex-1 py-1.5 rounded-xl bg-gradient-to-r from-teal-300 to-emerald-400 text-slate-950 font-black text-xs shadow active:scale-95">
+            ✅ 確定查看他的位置
+          </button>
+          <button onclick="removeFriend('${f.id}')" class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-white/15 text-xs text-slate-400 hover:text-rose-400" title="移除好友">
+            ✕
+          </button>
         </div>
       </div>`;
     })
     .join('');
 }
 
-window.focusSquadFriend = function (id) {
-  const friend = appState.squad.find((f) => f.id === id);
-  if (!friend) return;
-  window.soundEngine.playPing();
-
-  appState.profile.name = friend.name;
-  appState.profile.plate = friend.plate;
-  if (friend.avatar) appState.profile.avatar = friend.avatar;
-  appState.scenario = friend.mode;
-  appState.chaosIndex = SCENARIOS[friend.mode].baseChaos;
-  appState.sanbaoLatLng.lat = friend.lat;
-  appState.sanbaoLatLng.lng = friend.lng;
-
-  const vipImg = document.getElementById('vip-avatar-img');
-  if (vipImg) vipImg.src = appState.profile.avatar;
-
-  refreshMainMarkers();
-  renderSquadMapMarkers();
-  updateRealMapOverlays();
-  renderSquadFriendsList();
-  syncUI();
-
-  window.switchTab('radar');
-  if (leafletMap) leafletMap.flyTo([friend.lat, friend.lng], 17, { duration: 0.8 });
-  triggerAnimeCutIn(`✦ 已鎖定損友：${friend.name}`, friend.sosMsg, SCENARIOS[friend.mode].color);
-};
-
 window.addFriendToSquad = function (e) {
   e.preventDefault();
   const nameEl = document.getElementById('add-friend-name');
   const plateEl = document.getElementById('add-friend-plate');
-  const statusEl = document.getElementById('add-friend-status');
 
   const name = nameEl?.value.trim();
-  const plate = plateEl?.value.trim().toUpperCase() || 'SAN-8888';
-  const mode = statusEl?.value || 'parking';
+  const plate = plateEl?.value.trim().toUpperCase() || '好友座駕';
 
   if (!name) {
-    showToast('⚠️ 請輸入損友名字', '輸入後即可加入三寶監測網！', 'red');
+    showToast('⚠️ 請輸入真實好友名字', '輸入後即可加入好友監測清單！', 'red');
     return;
   }
 
   window.soundEngine.playPing();
-  const sc = SCENARIOS[mode];
   const randomAvatar = DRIVER_AVATARS[Math.floor(Math.random() * DRIVER_AVATARS.length)].src;
-  appState.squad.unshift({
+  const newFriend = {
     id: 'f_' + Date.now(),
     name,
     plate,
-    mode,
+    mode: 'roundabout',
     avatar: randomAvatar,
-    lat: sc.lat + (Math.random() - 0.5) * 0.008,
-    lng: sc.lng + (Math.random() - 0.5) * 0.008,
-    sosMsg: sc.osList[0].replace('💭', '')
-  });
-  saveSquadToStorage();
+    lat: appState.myUser.lat + (Math.random() - 0.5) * 0.004,
+    lng: appState.myUser.lng + (Math.random() - 0.5) * 0.004,
+    sosMsg: '📡 已加入關注（當同名好友登入網站時將自動同步真實 GPS）',
+    online: false,
+    confirmed: false,
+    updatedAt: Date.now()
+  };
+
+  appState.friends.unshift(newFriend);
+  saveFriendsToStorage();
   renderSquadFriendsList();
-  renderSquadMapMarkers();
+  renderOnlineFriendPills();
+  renderFriendMapMarkers();
 
   nameEl.value = '';
   plateEl.value = '';
-  showToast('➕ 損友已加入監測！', `點擊【${name}】卡片即可在地圖追蹤他！`, 'emerald');
+  promptIncomingFriendConfirmation(newFriend);
+};
+
+window.removeFriend = function (friendId) {
+  window.soundEngine.playClick(600);
+  appState.friends = appState.friends.filter((f) => f.id !== friendId);
+  if (appState.selectedFriendId === friendId) {
+    appState.selectedFriendId = appState.friends[0]?.id || null;
+  }
+  saveFriendsToStorage();
+  renderSquadFriendsList();
+  renderOnlineFriendPills();
+  refreshMainMarkers();
+  renderFriendMapMarkers();
+  updateRealMapOverlays();
+  syncUI();
+};
+
+window.clearAllFriends = function () {
+  window.soundEngine.playClick(520);
+  appState.friends = [];
+  appState.selectedFriendId = null;
+  saveFriendsToStorage();
+  renderSquadFriendsList();
+  renderOnlineFriendPills();
+  refreshMainMarkers();
+  renderFriendMapMarkers();
+  updateRealMapOverlays();
+  syncUI();
+  showToast('🗑️ 已清空好友清單', '可隨時重新新增好友或等待朋友登入！', 'amber');
 };
 
 window.broadcastDriverSOS = function (sosType) {
-  const myName = document.getElementById('my-driver-name')?.value.trim() || appState.profile.name;
-  const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.profile.plate;
+  const myName = document.getElementById('my-driver-name')?.value.trim() || appState.myUser.name;
+  const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.myUser.plate || '我的座駕';
 
-  appState.profile.name = myName;
-  appState.profile.plate = myPlate;
+  if (!myName) {
+    window.openLoginModal();
+    return;
+  }
+
+  appState.myUser.name = myName;
+  appState.myUser.plate = myPlate;
+  appState.myUser.loggedIn = true;
 
   const mapConfig = {
     parking: { mode: 'parking', msg: '🚨「我要開始倒車入庫了！方圓 3km 快移車！」' },
@@ -1393,105 +1825,48 @@ window.broadcastDriverSOS = function (sosType) {
   }[sosType];
 
   appState.scenario = mapConfig.mode;
+  appState.myUser.mode = mapConfig.mode;
+  appState.myUser.sosMsg = mapConfig.msg;
   appState.chaosIndex = SCENARIOS[mapConfig.mode].baseChaos;
 
-  const existing = appState.squad.find((f) => f.name === myName);
-  if (existing) {
-    existing.plate = myPlate;
-    existing.mode = mapConfig.mode;
-    existing.sosMsg = mapConfig.msg;
-    existing.lat = appState.sanbaoLatLng.lat;
-    existing.lng = appState.sanbaoLatLng.lng;
-  } else {
-    appState.squad.unshift({
-      id: 'me_' + Date.now(),
-      name: myName,
-      plate: myPlate,
-      mode: mapConfig.mode,
-      avatar: appState.profile.avatar,
-      lat: appState.sanbaoLatLng.lat,
-      lng: appState.sanbaoLatLng.lng,
-      sosMsg: mapConfig.msg
-    });
-  }
-
-  saveSquadToStorage();
+  saveMyUserToStorage();
+  publishMyPresence();
   refreshMainMarkers();
-  renderSquadFriendsList();
   updateRealMapOverlays();
   syncUI();
 
   if (sosType === 'safe') window.soundEngine.playPing();
   else window.soundEngine.playSiren();
 
-  document.getElementById('presidential-alert-title').textContent = `${myName} (${myPlate}) 發出全城警報！`;
+  document.getElementById('presidential-alert-title').textContent = `${myName} (${myPlate}) 向全體好友發出警報！`;
   document.getElementById('presidential-alert-desc').textContent = mapConfig.msg;
   document.getElementById('modal-presidential-alert')?.classList.remove('hidden');
-};
-
-window.toggleRealGpsBeacon = function () {
-  const btn = document.getElementById('btn-live-beacon');
-  const myName = document.getElementById('my-driver-name')?.value.trim() || appState.profile.name;
-  const myPlate = document.getElementById('my-driver-plate')?.value.trim().toUpperCase() || appState.profile.plate;
-
-  appState.profile.name = myName;
-  appState.profile.plate = myPlate;
-
-  if (appState.beaconWatchId) {
-    navigator.geolocation.clearWatch(appState.beaconWatchId);
-    appState.beaconWatchId = null;
-    if (btn) btn.textContent = '🚨 我已握住方向盤！開始分享真實位置';
-    showToast('⏹️ 已結束位置分享', '您已平安熄火下車！', 'emerald');
-    return;
-  }
-
-  window.soundEngine.playSiren();
-  if (btn) btn.textContent = '🔴 正在即時分享我的開車位置 (點擊結束)';
-
-  if (navigator.geolocation) {
-    appState.beaconWatchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        appState.sanbaoLatLng.lat = pos.coords.latitude;
-        appState.sanbaoLatLng.lng = pos.coords.longitude;
-        appState.userLatLng.accuracy = Math.round(pos.coords.accuracy || 8);
-        refreshMainMarkers();
-        updateRealMapOverlays();
-        syncUI();
-      },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 0 }
-    );
-  }
-  showToast('🚗 出車定位已開啟！', `正在雷達上即時廣播【${myName}】的精準位置！`, 'red');
 };
 
 // ============================================================================
 // UI SYNC & RESPONSIVE TABS
 // ============================================================================
 function syncUI() {
-  const sc = SCENARIOS[appState.scenario];
+  const sc = SCENARIOS[appState.scenario] || SCENARIOS.roundabout;
   const metrics = computeTacticalMetrics();
+  const target = getTrackedProfile();
 
-  const defconBadge = document.getElementById('header-defcon-badge');
-  if (defconBadge) {
-    defconBadge.textContent = sc.badge;
-    defconBadge.style.backgroundColor = sc.color;
-  }
-
-  document.getElementById('vip-name').textContent = appState.profile.name;
-  document.getElementById('vip-plate').textContent = appState.profile.plate;
-  document.getElementById('vip-os-bubble').textContent = sc.osList[appState.osIndex % sc.osList.length];
+  document.getElementById('vip-name').textContent = target.name;
+  document.getElementById('vip-plate').textContent = target.plate;
+  document.getElementById('vip-os-bubble').textContent = target.sosMsg || sc.osList[appState.osIndex % sc.osList.length];
+  const vipImg = document.getElementById('vip-avatar-img');
+  if (vipImg && target.avatar) vipImg.src = target.avatar;
 
   const bountyEl = document.getElementById('vip-bounty-badge');
   if (bountyEl) bountyEl.textContent = `懸賞 $${appState.bountyAmount.toLocaleString()}`;
 
   const coordEl = document.getElementById('gps-coord-readout');
   if (coordEl) {
-    coordEl.textContent = `🛰️ 座標: ${appState.sanbaoLatLng.lat.toFixed(5)}°N, ${appState.sanbaoLatLng.lng.toFixed(5)}°E`;
+    coordEl.textContent = `🛰️ 座標: ${target.lat.toFixed(5)}°N, ${target.lng.toFixed(5)}°E`;
   }
   const accEl = document.getElementById('gps-accuracy-badge');
   if (accEl) {
-    accEl.textContent = `±${appState.userLatLng.accuracy || 8}m 街角鎖定`;
+    accEl.textContent = `房號 #${appState.myUser.roomCode} (±${appState.myUser.accuracy || 8}m)`;
   }
 
   document.getElementById('metric-blast-radius').textContent = `${metrics.effectiveRadius} km`;
@@ -1539,9 +1914,11 @@ window.selectScenario = function (key) {
   const slider = document.getElementById('chaos-slider');
   if (slider) slider.value = sc.baseChaos;
 
-  appState.sanbaoLatLng.lat = sc.lat;
-  appState.sanbaoLatLng.lng = sc.lng;
-  if (leafletMap) leafletMap.flyTo([sc.lat, sc.lng], 16, { duration: 0.8 });
+  if (appState.myUser.loggedIn) {
+    appState.myUser.mode = key;
+    appState.myUser.sosMsg = sc.osList[0].replace('💭', '');
+    publishMyPresence();
+  }
 
   if (key === 'parking') window.soundEngine.playSiren();
   else window.soundEngine.playPing();
@@ -1594,19 +1971,6 @@ window.triggerWiperParadox = function () {
     appState.wiperBoostActive = false;
     syncUI();
   }, 3500);
-};
-
-window.setRadarClickMode = function (mode) {
-  window.soundEngine.playClick(700);
-  appState.clickMode = mode;
-  document.getElementById('mode-btn-sanbao').className =
-    mode === 'sanbao'
-      ? 'px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-600 text-white'
-      : 'px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-amber-100 border border-amber-300/30';
-  document.getElementById('mode-btn-user').className =
-    mode === 'user'
-      ? 'px-2.5 py-1 rounded-xl text-[11px] font-black bg-teal-400 text-slate-950'
-      : 'px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-amber-100 border border-amber-300/30';
 };
 
 // Route & Share
@@ -1669,16 +2033,16 @@ function updateSharePreviewText() {
   if (!box) return;
   const sc = SCENARIOS[appState.scenario];
   const metrics = computeTacticalMetrics();
-  const { name, plate } = appState.profile;
-  const { lat, lng } = appState.sanbaoLatLng;
-  const shareUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?name=${encodeURIComponent(name)}&plate=${encodeURIComponent(plate)}&mode=${appState.scenario}&lat=${lat.toFixed(5)}&lng=${lng.toFixed(5)}`;
+  const target = getTrackedProfile();
+  const room = appState.myUser.roomCode || '8888';
+  const shareUrl = `https://seanko31415.github.io/aegis-sanbao-radar/?room=${encodeURIComponent(room)}&name=${encodeURIComponent(target.name)}&plate=${encodeURIComponent(target.plate)}&mode=${appState.scenario}&lat=${target.lat.toFixed(5)}&lng=${target.lng.toFixed(5)}`;
 
   if (appState.shareStyle === 'defense') {
-    box.value = `🚨【損友三寶出車警報】「${name}」(${plate}) 已經拿著雞腿駕照握住方向盤了！目前【${sc.level}】暴風圈 ${metrics.effectiveRadius}km！\n📡 即時防空雷達：${shareUrl}`;
+    box.value = `🚨【損友三寶出車警報】「${target.name}」(${target.plate}) 目前【${sc.level}】警戒半徑 ${metrics.effectiveRadius}km！\n📡 點開查看即時定位（房號 #${room}）：${shareUrl}`;
   } else if (appState.shareStyle === 'elder') {
-    box.value = `🌸平安喜樂🌸 損友【${name}】開車出門囉 (${plate}) 🚗 看到他大晴天刷雨刷代表想轉彎，方圓 ${metrics.effectiveRadius}km 請多禮讓🙏\n📡 定位：${shareUrl}`;
+    box.value = `🌸平安喜樂🌸 好友【${target.name}】開車出門囉 (${target.plate}) 🚗 看到他大晴天刷雨刷代表想轉彎，方圓 ${metrics.effectiveRadius}km 請多禮讓🙏\n📡 定位：${shareUrl}`;
   } else {
-    box.value = `📺【快訊】馬路傳奇「${name}」(${plate}) 現蹤街頭！左轉燈連閃 3.8km + 晴天雨刷全開，請保持 3 個紅綠燈車距！\n📡 雷達：${shareUrl}`;
+    box.value = `📺【快訊】馬路傳奇「${target.name}」(${target.plate}) 現蹤街頭！左轉燈連閃 3.8km + 晴天雨刷全開，請保持安全車距！\n📡 雷達：${shareUrl}`;
   }
 }
 
@@ -1829,14 +2193,21 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPersistedData();
   renderVipStamps();
   renderSquadFriendsList();
+  renderOnlineFriendPills();
   renderSightingsList();
   initRealGoogleMap();
+  initRealtimeCloudSync();
   renderParkingMiniGame();
   requestAnimationFrame(updateParkingGameLoop);
   calculateRouteSafety(false);
   syncUI();
 
-  // Continuous Keyboard Arrow & WASD Support for 3D Costco Parking Simulator!
+  // If user was already logged in previously, resume their session automatically
+  if (appState.myUser.loggedIn && appState.myUser.name) {
+    window.loginAndStartRealGpsBroadcast();
+  }
+
+  // Continuous Keyboard Arrow Support for 3D Costco Parking Simulator!
   window.addEventListener('keydown', (e) => {
     if (appState.activeTab !== 'radar') return;
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;

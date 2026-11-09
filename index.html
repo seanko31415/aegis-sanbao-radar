@@ -6,10 +6,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>損友三寶監測局 // 雞腿駕照防空雷達 v11.0</title>
+  <title>損友三寶監測局 // 真人即時連線防空雷達 v12.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Real-Time Cloud Sync Engine (MQTT over WSS Port 443 & 8084) -->
+  <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=JetBrains+Mono:wght@700;800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
@@ -46,7 +48,6 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Ultra-Luxury Royal Tarot Frame */
     .royal-card {
       position: relative;
       background: linear-gradient(160deg, rgba(14, 23, 50, 0.88) 0%, rgba(7, 11, 26, 0.96) 100%);
@@ -76,7 +77,6 @@
     .royal-card::before { top: 6px; left: 10px; }
     .royal-card::after { bottom: 6px; right: 10px; }
 
-    /* Interactive 3D Tarot Button */
     .tarot-btn {
       position: relative;
       background: linear-gradient(170deg, rgba(22, 38, 82, 0.92), rgba(8, 13, 30, 0.96));
@@ -96,7 +96,6 @@
       transform: translateY(0) scale(0.96);
     }
 
-    /* 2027 ACG Poster Ribbon */
     .ribbon-slash {
       background: linear-gradient(90deg, #1E40AF 0%, #2563EB 100%);
       transform: skewX(-16deg);
@@ -159,7 +158,7 @@
   <canvas id="stardust-canvas" class="fixed inset-0 pointer-events-none z-30"></canvas>
 
   <!-- =====================================================================
-       1. HILARIOUS ORNATE SANBAO HEADER (Preserves Luxury Serif Font!)
+       1. HILARIOUS ORNATE SANBAO HEADER
        ===================================================================== -->
   <header class="sticky top-0 z-50 bg-[#060A17]/90 backdrop-blur-2xl border-b border-amber-300/35">
     <div class="max-w-[1420px] mx-auto px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
@@ -172,8 +171,8 @@
           <h1 class="font-serif-title text-base sm:text-xl font-black tracking-wider gold-text">
             損友三寶監測局 // 馬路神主牌雷達
           </h1>
-          <span id="header-defcon-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.6)] shrink-0">
-            LV.4
+          <span id="cloud-sync-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-teal-400 text-slate-950 shadow-[0_0_12px_rgba(45,212,191,0.6)] shrink-0">
+            🟢 雲端連線中
           </span>
         </div>
       </div>
@@ -181,10 +180,10 @@
       <!-- Desktop 4 Mode Tabs -->
       <nav class="hidden lg:flex items-center gap-1.5 bg-[#090E22]/90 p-1 rounded-2xl border border-amber-300/30">
         <button id="tab-btn-radar" onclick="switchTab('radar')" class="px-4 py-1.5 rounded-xl font-black text-xs flex items-center gap-1.5 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,0.5)] transition-all">
-          📡 三寶雷達 & 3D好市多
+          📡 即時雷達 & 3D好市多
         </button>
         <button id="tab-btn-squad" onclick="switchTab('squad')" class="px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/75 hover:text-white transition-all">
-          🚗 損友出車共享
+          👥 真人好友連線 (<span id="nav-friend-count">0</span>)
         </button>
         <button id="tab-btn-route" onclick="switchTab('route')" class="px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-amber-100/75 hover:text-white transition-all">
           🃏 塔羅占卜 & LINE警報
@@ -194,19 +193,19 @@
         </button>
       </nav>
 
-      <!-- Quick Controls + Direct LINE Share -->
+      <!-- Quick Controls + Login + Direct LINE Invite -->
       <div class="flex items-center gap-1.5">
         <button id="sound-toggle-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-xs text-amber-200" title="音效開關">
           🔊
         </button>
-        <button onclick="openCopilotModal()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-amber-300/40 text-amber-200 text-xs font-black">
-          📿 副駕木魚
+        <button onclick="openLoginModal()" id="header-login-btn" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 text-slate-950 text-xs font-black shadow-[0_0_14px_rgba(45,212,191,0.5)]">
+          👤 登入我的定位
         </button>
-        <button onclick="shareDirectlyToLine()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#06C755] hover:brightness-110 text-white text-xs font-black shadow-[0_0_15px_rgba(6,199,85,0.5)] flex items-center gap-1">
-          💬 傳LINE警報
+        <button onclick="inviteFriendViaLine()" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#06C755] hover:brightness-110 text-white text-xs font-black shadow-[0_0_15px_rgba(6,199,85,0.5)] flex items-center gap-1">
+          💬 邀好友連線
         </button>
-        <button onclick="openPresidentialAlert()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600 text-white text-xs font-black shadow-[0_0_20px_rgba(244,63,94,0.55)] active:scale-95">
-          🚨 全城廣播
+        <button onclick="openCopilotModal()" class="hidden sm:inline-flex px-2.5 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-amber-300/40 text-amber-200 text-xs font-black">
+          📿 木魚
         </button>
       </div>
     </div>
@@ -218,7 +217,7 @@
       <span>📡 雷達&3D倒車</span>
     </button>
     <button id="mob-tab-squad" onclick="switchTab('squad')" class="py-2 rounded-xl font-bold text-[11px] flex flex-col items-center justify-center text-amber-100/80">
-      <span>🚗 損友共享</span>
+      <span>👥 好友連線</span>
     </button>
     <button id="mob-tab-route" onclick="switchTab('route')" class="py-2 rounded-xl font-bold text-[11px] flex flex-col items-center justify-center text-amber-100/80">
       <span>💬 LINE警報</span>
@@ -227,6 +226,31 @@
       <span>🎼 黑歷史牆</span>
     </button>
   </nav>
+
+  <!-- =====================================================================
+       🔔 INCOMING FRIEND LOGIN CONFIRMATION BANNER
+       (When a friend logs into the website, this pops up! Click "確定" to view their location!)
+       ===================================================================== -->
+  <div id="incoming-friend-banner" class="hidden fixed top-16 inset-x-0 mx-auto z-50 max-w-lg px-4">
+    <div class="royal-card p-4 border-2 border-teal-300 shadow-[0_0_40px_rgba(45,212,191,0.6)] flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <img id="incoming-friend-avatar" src="assets/sanbao_chicken_avatar.jpg" class="w-12 h-12 rounded-xl object-cover border-2 border-amber-300 shrink-0" />
+        <div class="min-w-0">
+          <div class="text-[10px] font-mono font-black text-teal-300">🔔 好友已登入網站並開啟定位！</div>
+          <div id="incoming-friend-title" class="text-sm font-black text-white truncate">好友【阿豪】上線了！</div>
+          <div id="incoming-friend-sub" class="text-xs text-amber-200 truncate">點擊「確定」立即在地圖上鎖定他的即時位置</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+        <button id="incoming-confirm-btn" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-gradient-to-r from-teal-300 to-emerald-400 text-slate-950 font-black text-xs shadow-lg active:scale-95">
+          ✅ 確定查看位置
+        </button>
+        <button onclick="dismissIncomingFriendBanner()" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+          稍後
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- ANIME CUT-IN POPUP -->
   <div id="anime-cutin-banner" class="hidden fixed top-16 right-4 z-50 pointer-events-none max-w-xs w-full">
@@ -242,14 +266,14 @@
   </div>
 
   <!-- =====================================================================
-       2. MAIN WORKSPACE (FULL-WIDTH BALANCED GRID FOR DESKTOP / TABLET / PHONE)
+       2. MAIN WORKSPACE
        ===================================================================== -->
   <main class="max-w-[1420px] w-full mx-auto px-3 sm:px-4 py-3 space-y-3 flex-1 relative z-40">
 
-    <!-- TOP DASHBOARD: SANBAO DRIVER AVATAR + 3 METRICS + 4 TAROT SCENARIO CARDS -->
+    <!-- TOP DASHBOARD: CURRENT TRACKED TARGET + 3 METRICS + 4 TAROT SCENARIO CARDS -->
     <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-stretch">
 
-      <!-- Hilarious Chicken-Leg Sanbao Driver Card (4 cols) -->
+      <!-- Target / Friend Card (4 cols) -->
       <div class="lg:col-span-4 royal-card p-3 flex items-center gap-3 relative overflow-hidden">
         <div class="relative shrink-0 cursor-pointer group" onclick="cycleDriverAvatar()" title="點擊切換三寶搞笑頭像">
           <img id="vip-avatar-img" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'" alt="Sanbao Driver" class="w-20 h-20 rounded-2xl object-cover border-2 border-amber-300 shadow-[0_0_25px_rgba(212,175,55,0.5)] group-hover:scale-105 transition-transform" />
@@ -264,24 +288,23 @@
         <div class="min-w-0 flex-1 space-y-1">
           <div class="flex items-center justify-between gap-1">
             <span id="vip-plate" class="px-2 py-0.5 rounded-md bg-blue-950 border border-amber-300/40 text-amber-200 font-mono text-xs font-black">
-              SBO-8888
+              尚未選取好友
             </span>
             <span id="vip-bounty-badge" class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono text-[10px] font-black">
               懸賞 $88,000
             </span>
           </div>
           <div class="flex items-center justify-between gap-1">
-            <h2 id="vip-name" class="font-serif-title text-lg font-black gold-text truncate">
-              林小葵 (Aoi)
+            <h2 id="vip-name" class="font-serif-title text-base sm:text-lg font-black gold-text truncate">
+              請登入或點「好友連線」
             </h2>
             <button onclick="speakCurrentSanbaoOS()" class="px-2 py-0.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/40 text-[10px] text-amber-200 font-black shrink-0">
-              🎙️ 聽崩潰語音
+              🎙️ 語音
             </button>
           </div>
           <div id="vip-os-bubble" class="px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/30 text-xs text-amber-100 font-bold truncate">
-            💭「救命！圓環怎麼出不去！」
+            💭 點右上「👤 登入我的定位」或邀朋友登入即可即時監測！
           </div>
-          <!-- Active Stamp Container -->
           <div id="vip-stamps-row" class="flex flex-wrap gap-1 pt-0.5">
             <span class="stamp-badge px-1.5 py-0.5 rounded bg-rose-600/90 border border-amber-200 text-[9px] font-black text-white">💮 雞腿換駕照認證</span>
             <span class="stamp-badge px-1.5 py-0.5 rounded bg-amber-500/90 border border-white text-[9px] font-black text-slate-950">💮 晴天雨刷大師</span>
@@ -293,30 +316,30 @@
       <div class="lg:col-span-4 royal-card p-3 flex flex-col justify-between gap-2">
         <div class="grid grid-cols-3 gap-2 text-center items-center flex-1">
           <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
-            <div class="text-[10px] text-amber-200/70 font-bold">✦ 三寶暴風圈</div>
+            <div class="text-[10px] text-amber-200/70 font-bold">✦ 警戒半徑</div>
             <div id="metric-blast-radius" class="text-base sm:text-lg font-mono font-black text-rose-400">1.5 km</div>
           </div>
           <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
             <div class="text-[10px] text-amber-200/70 font-bold">✦ 離你距離</div>
-            <div id="metric-user-dist" class="text-base sm:text-lg font-mono font-black text-teal-300">1.4 km</div>
+            <div id="metric-user-dist" class="text-base sm:text-lg font-mono font-black text-teal-300">0.0 km</div>
           </div>
           <div class="p-2 rounded-xl bg-[#060916]/85 border border-amber-300/25">
             <div class="text-[10px] text-amber-200/70 font-bold">✦ 路人生還率</div>
-            <div id="metric-survival-rate" class="text-base sm:text-lg font-mono font-black text-amber-300">54%</div>
+            <div id="metric-survival-rate" class="text-base sm:text-lg font-mono font-black text-amber-300">99%</div>
           </div>
         </div>
         <div class="flex items-center justify-between px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/20 text-[11px] font-mono">
-          <span id="gps-coord-readout" class="text-amber-200 truncate">🛰️ 座標: 24.16180°N, 120.64690°E</span>
-          <span id="gps-accuracy-badge" class="text-teal-300 font-black shrink-0">±8m 街角鎖定</span>
+          <span id="gps-coord-readout" class="text-amber-200 truncate">🛰️ 尚未開啟定位</span>
+          <span id="gps-accuracy-badge" class="text-teal-300 font-black shrink-0">連線房號 #8888</span>
         </div>
       </div>
 
-      <!-- 4 Tarot Scenario Cards (4 cols) -->
+      <!-- 4 Tarot Status Broadcast Buttons (4 cols) -->
       <div class="md:col-span-2 lg:col-span-4 grid grid-cols-4 gap-2">
         <button data-scenario-btn="home" onclick="selectScenario('home')" class="tarot-btn p-2 flex flex-col items-center justify-center">
           <span class="text-[9px] font-serif-title text-amber-300/70">I</span>
           <span class="text-xl my-0.5">🏠</span>
-          <span class="text-[11px] font-black text-teal-300">封印在家</span>
+          <span class="text-[11px] font-black text-teal-300">平安在家</span>
         </button>
         <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="tarot-btn p-2 flex flex-col items-center justify-center">
           <span class="text-[9px] font-serif-title text-amber-300/70">II</span>
@@ -331,84 +354,98 @@
         <button data-scenario-btn="parking" onclick="selectScenario('parking')" class="tarot-btn p-2 flex flex-col items-center justify-center">
           <span class="text-[9px] font-serif-title text-amber-300/70">IV</span>
           <span class="text-xl my-0.5">🅿️</span>
-          <span class="text-[11px] font-black text-rose-400">倒車魔王</span>
+          <span class="text-[11px] font-black text-rose-400">正在倒車</span>
         </button>
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 1: 📡 精準三寶雷達 + 違規蓋章機 + 3D 好市多倒車模擬器
-         (Left 7 Cols + Right 5 Cols — 100% Balanced Full Layout!)
+         TAB 1: 📡 真人即時定位雷達 + 真實 360° 街景 + 3D 好市多倒車模擬器
          =================================================================== -->
     <section id="tab-panel-radar" class="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
 
-      <!-- Left 7 Cols: High-Precision Real Google Map + Interactive Stamp Gun & Chicken Roulette -->
+      <!-- Left 7 Cols: Real-Time GPS Map + Real 360° Google Street View + Stamp Gun -->
       <div class="lg:col-span-7 flex flex-col justify-between gap-3.5">
 
-        <!-- Map Card -->
         <div class="royal-card p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
-          <!-- Map Top Bar: Styles + Precision GPS + Landmark Search -->
+          <!-- Map Top Bar: Map Modes + Real 360 Street View + Live Friend Selector -->
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-1">
+            <div class="flex flex-wrap items-center gap-1">
               <button onclick="setMapStyle('tactical')" id="mapstyle-tactical" class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950">
-                ✨ 星盤雷達
+                ✨ 星盤暗黑圖
               </button>
               <button onclick="setMapStyle('streets')" id="mapstyle-streets" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30">
-                🛣️ 真實街景
+                🗺️ 標準平面圖
               </button>
               <button onclick="setMapStyle('satellite')" id="mapstyle-satellite" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30">
-                🛰️ 衛星空拍
+                🛰️ 衛星空拍圖
+              </button>
+              <button onclick="toggleRealStreetViewPanorama()" id="mapstyle-streetview" class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-indigo-950 text-amber-200 border border-amber-300/50 hover:bg-indigo-900">
+                🏙️ 360° 真實街景
               </button>
             </div>
 
-            <div class="flex flex-wrap items-center gap-1">
-              <button id="mode-btn-sanbao" onclick="setRadarClickMode('sanbao')" class="px-2.5 py-1 rounded-xl text-[11px] font-black bg-rose-600 text-white">
-                🎯 點圖移三寶
-              </button>
-              <button id="mode-btn-user" onclick="setRadarClickMode('user')" class="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-slate-900 text-amber-100 border border-amber-300/30">
-                🛡️ 點圖移我
-              </button>
+            <div class="flex flex-wrap items-center gap-1.5">
               <button onclick="useRealBrowserGPS()" class="px-3 py-1 rounded-xl text-[11px] font-black bg-teal-400 hover:bg-teal-300 text-slate-950 shadow-[0_0_14px_rgba(45,212,191,0.5)]">
-                📍 精準定位我
+                📍 定位我的位置
+              </button>
+              <button onclick="switchTab('squad')" class="px-3 py-1 rounded-xl text-[11px] font-black bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950">
+                ➕ 加好友 / 看好友
               </button>
             </div>
           </div>
 
           <!-- Precision Address / Landmark Search Bar -->
           <form onsubmit="searchMapLocation(event)" class="flex gap-1.5">
-            <input id="map-search-input" type="text" placeholder="🔍 輸入台灣路名、地標或城市精準定位 (例：台北101、台中好市多、逢甲大學)..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/35 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300" />
+            <input id="map-search-input" type="text" placeholder="🔍 輸入台灣路名、地標或城市查看位置 (例：台北101、台中好市多、逢甲大學)..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/35 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300" />
             <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0">
-              🛰️ 街角鎖定
+              🛰️ 搜尋路名
             </button>
           </form>
 
-          <!-- REAL GOOGLE MAP CONTAINER -->
-          <div class="relative w-full h-[320px] sm:h-[390px] rounded-2xl overflow-hidden border-2 border-amber-300/45 z-10 shadow-2xl">
+          <!-- REAL GOOGLE MAP & REAL 360° GOOGLE STREET VIEW CONTAINER -->
+          <div class="relative w-full h-[330px] sm:h-[400px] rounded-2xl overflow-hidden border-2 border-amber-300/45 z-10 shadow-2xl bg-[#060916]">
+            <!-- 2D Leaflet Map -->
             <div id="real-google-map" class="w-full h-full"></div>
+
+            <!-- Real 360° Google Street View Panorama Overlay (Hidden until user clicks "🏙️ 360° 真實街景") -->
+            <div id="real-streetview-panel" class="hidden absolute inset-0 z-30 bg-[#060916] flex flex-col">
+              <div class="flex items-center justify-between px-3 py-1.5 bg-[#060A17]/95 border-b border-amber-300/35 text-xs">
+                <span id="streetview-coord-label" class="font-mono font-bold text-amber-300 truncate">
+                  🏙️ 360° 真實街景實況
+                </span>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <a id="streetview-external-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-teal-400 text-slate-950 font-black text-[11px]">
+                    ↗️ 全螢幕街景
+                  </a>
+                  <button onclick="closeRealStreetViewPanorama()" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-black text-[11px]">
+                    ✕ 返回雷達圖
+                  </button>
+                </div>
+              </div>
+              <iframe id="streetview-iframe" class="w-full flex-1 border-0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
           </div>
 
-          <!-- Hotspots + Chaos Slider -->
+          <!-- Online Friends Quick Bar (Replaces fake hotspots when friends are online!) -->
           <div class="flex flex-wrap items-center justify-between gap-2 bg-[#060916]/90 px-3 py-2 rounded-xl border border-amber-300/25 text-xs">
-            <div class="flex flex-wrap items-center gap-1">
-              <span class="text-amber-200/70 font-bold">✦ 瞬移熱點：</span>
-              <button onclick="flyToHotspot('costco')" class="px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-400/30 font-bold">好市多B2</button>
-              <button onclick="flyToHotspot('roundabout')" class="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-300/30 font-bold">台灣大道圓環</button>
-              <button onclick="flyToHotspot('fengjia')" class="px-2 py-0.5 rounded-lg bg-orange-500/20 text-orange-300 border border-orange-400/30 font-bold">逢甲夜市</button>
-              <button onclick="flyToHotspot('taipei101')" class="px-2 py-0.5 rounded-lg bg-teal-500/20 text-teal-300 border border-teal-400/30 font-bold">信義區101</button>
+            <div id="map-online-friends-pills" class="flex flex-wrap items-center gap-1.5">
+              <span class="text-amber-200/70 font-bold">👥 線上好友定位：</span>
+              <span class="text-slate-400 text-[11px]">尚無好友登入，點右上「💬 邀好友連線」或「➕ 加好友」</span>
             </div>
-            <div class="flex items-center gap-2 flex-1 min-w-[180px] max-w-xs">
-              <span class="font-black text-amber-300 shrink-0">🎼 三寶暴走度</span>
+            <div class="flex items-center gap-2 flex-1 min-w-[160px] max-w-[240px]">
+              <span class="font-black text-amber-300 shrink-0">🎼 警戒度</span>
               <input id="chaos-slider" type="range" min="0" max="100" value="76" class="w-full accent-amber-400 cursor-pointer" />
               <span id="chaos-slider-val" class="font-mono font-black text-rose-400 w-9 text-right">76%</span>
             </div>
           </div>
         </div>
 
-        <!-- NEW INTERACTIVE WIDGET BELOW MAP: 💮 三寶違規蓋章機 & 🎰 駕照雞腿鑑定轉盤 -->
+        <!-- INTERACTIVE WIDGET BELOW MAP: 💮 三寶違規蓋章機 & 🎰 駕照雞腿鑑定轉盤 -->
         <div class="royal-card p-3.5 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
           <div class="sm:col-span-7 space-y-2">
             <div class="flex items-center justify-between">
-              <h3 class="text-xs font-black gold-text">💮 損友違規認證蓋章機（點擊幫他蓋章加懸賞）</h3>
+              <h3 class="text-xs font-black gold-text">💮 損友違規認證蓋章機（幫目前鎖定的好友蓋章）</h3>
               <span class="text-[10px] text-amber-200/70 font-mono">STAMP GUN</span>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
@@ -462,7 +499,7 @@
           <div class="relative h-16 rounded-xl bg-gradient-to-b from-blue-950/80 to-[#060916] border border-amber-300/30 overflow-hidden flex flex-col items-center justify-end p-1.5">
             <div class="absolute top-1.5 inset-x-3 flex justify-between text-[10px] font-mono font-bold">
               <span class="text-amber-300" id="wiper-status-badge">☀️ 大晴天雨刷 MAX</span>
-              <span class="text-rose-300">🔊 支援真人語音吐槽</span>
+              <span class="text-rose-300">🔊 真人語音吐槽</span>
             </div>
             <div class="flex items-end justify-around w-3/4 h-11">
               <div id="wiper-arm-left" class="w-1 h-11 bg-gradient-to-t from-amber-500 to-yellow-200 rounded-full shadow-[0_0_12px_#FDE68A] wiper-rapid"></div>
@@ -489,7 +526,6 @@
 
         <!-- 2. UPGRADED 3D COSTCO B2 REVERSE PARKING SIMULATOR -->
         <div class="royal-card p-3.5 space-y-2.5 flex-1 flex flex-col justify-between">
-          <!-- Top Header & Level / View Controls -->
           <div class="flex flex-wrap items-center justify-between gap-1.5">
             <div class="flex items-center gap-1.5">
               <h3 class="text-xs sm:text-sm font-black gold-text">🎮 3D 好市多「左右相反」倒車考驗</h3>
@@ -508,7 +544,6 @@
             </div>
           </div>
 
-          <!-- Level Selector Row -->
           <div class="grid grid-cols-3 gap-1.5 text-[11px]">
             <button id="park-lvl-1" onclick="selectParkingLevel(1)" class="py-1 rounded-lg bg-amber-400 text-slate-950 font-black">
               Lv.1 新手雙柱
@@ -521,11 +556,9 @@
             </button>
           </div>
 
-          <!-- 3D / 2.5D Simulator Canvas + "開始挑戰" Start Overlay -->
           <div class="relative w-full rounded-2xl overflow-hidden border-2 border-amber-300/45 bg-[#060916] shadow-2xl">
             <canvas id="parking-game-canvas" width="460" height="250" class="w-full h-[215px] sm:h-[235px] block touch-none"></canvas>
 
-            <!-- Start / Result Overlay so user can click "開始挑戰" to lock keyboard arrows! -->
             <div id="parking-start-overlay" class="absolute inset-0 bg-[#060A17]/80 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center space-y-2.5 z-20">
               <div id="parking-overlay-badge" class="px-3 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/50 text-amber-300 font-mono text-[10px] font-black">
                 COSTCO B2 // 3D 倒車模擬器
@@ -534,7 +567,7 @@
                 準備好挑戰好市多 B2 魔王車位了嗎？
               </div>
               <p id="parking-overlay-desc" class="text-xs text-amber-100/90 max-w-xs">
-                支援電腦鍵盤 <span class="text-amber-300 font-mono font-black">↑ ↓ ← →</span> 連續操控，或手機/平板直接按下方方向盤與踏板！
+                支援電腦鍵盤 <span class="text-amber-300 font-mono font-black">↑ ↓ ← →</span> 連續操控，或手機/平板直接按住下方方向盤與踏板！
               </p>
               <button onclick="activateParkingChallenge()" class="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-[0_0_25px_rgba(251,191,36,0.6)] hover:scale-105 active:scale-95 transition-all">
                 ▶️ 點擊開始挑戰 (啟用鍵盤 & 觸控)
@@ -542,7 +575,6 @@
             </div>
           </div>
 
-          <!-- Touch & Mouse Holdable Controls (Works great on Phone, Tablet, and Desktop!) -->
           <div class="grid grid-cols-4 gap-1.5 select-none">
             <button
               onpointerdown="setParkingKey('left', true)"
@@ -591,79 +623,102 @@
     </section>
 
     <!-- ===================================================================
-         TAB 2: 🚗 損友出車共享 (FRIENDS SQUAD & WORKING LINE SHARE)
+         TAB 2: 👥 真人好友即時連線與定位共享 (ZERO FAKE PEOPLE!)
          =================================================================== -->
     <section id="tab-panel-squad" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
 
-      <!-- Left 5 Cols -->
+      <!-- Left 5 Cols: My Real-Time Login & GPS Broadcast -->
       <div class="lg:col-span-5 royal-card p-5 flex flex-col justify-between space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="font-serif-title text-lg font-black gold-text">🚗 我要開車！即時定位共享</h2>
-          <span class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-teal-300 font-mono text-[10px] font-black">GPS LIVE</span>
+          <h2 class="font-serif-title text-lg font-black gold-text">👤 1. 登入我的即時定位</h2>
+          <span id="my-login-status-pill" class="px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 font-mono text-[10px] font-black">
+            尚未登入
+          </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <input id="my-driver-name" type="text" value="林小葵 (Aoi)" placeholder="你的名字" class="rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs font-bold text-white" />
-          <input id="my-driver-plate" type="text" value="SBO-8888" placeholder="車牌" class="rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs font-mono font-bold text-amber-300" />
+        <p class="text-xs text-amber-100/85 leading-relaxed">
+          只要你跟朋友輸入相同的<span class="text-amber-300 font-black">「連線房號（預設 8888）」</span>並按下登入，朋友一登入網站，你的畫面就會跳出通知，按<span class="text-teal-300 font-black">「✅ 確定」</span>就能即時看到他的真實位置！
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div>
+            <label class="text-[10px] text-amber-200/80 font-bold block mb-1">你的暱稱 *</label>
+            <input id="my-driver-name" type="text" placeholder="輸入你的名字" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3 py-2 text-xs font-bold text-white" />
+          </div>
+          <div>
+            <label class="text-[10px] text-amber-200/80 font-bold block mb-1">車牌或座駕</label>
+            <input id="my-driver-plate" type="text" placeholder="例: ABC-8888" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3 py-2 text-xs font-mono font-bold text-amber-300" />
+          </div>
+          <div>
+            <label class="text-[10px] text-amber-200/80 font-bold block mb-1">好友連線房號</label>
+            <input id="my-room-code" type="text" value="8888" placeholder="8888" class="w-full rounded-xl bg-[#060916] border border-teal-300/50 px-3 py-2 text-xs font-mono font-black text-teal-300" />
+          </div>
         </div>
 
-        <button id="btn-live-beacon" onclick="toggleRealGpsBeacon()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:brightness-110 text-slate-950 font-black text-sm shadow-[0_0_28px_rgba(251,191,36,0.5)] active:scale-95 transition-all">
-          🚨 我已握住方向盤！開始分享真實位置
+        <button id="btn-live-beacon" onclick="loginAndStartRealGpsBroadcast()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 hover:brightness-110 text-slate-950 font-black text-sm shadow-[0_0_28px_rgba(45,212,191,0.5)] active:scale-95 transition-all">
+          ✅ 登入網站並開啟我的真實定位 (讓好友看到我)
         </button>
 
-        <div class="grid grid-cols-2 gap-2">
-          <button onclick="broadcastDriverSOS('parking')" class="tarot-btn p-3 text-left">
-            <div class="text-sm font-black text-rose-300">🅿️ 我要倒車了</div>
-            <div class="text-[10px] text-slate-300 mt-0.5">方圓3km快移車！</div>
-          </button>
-          <button onclick="broadcastDriverSOS('lost')" class="tarot-btn p-3 text-left">
-            <div class="text-sm font-black text-amber-300">🔄 卡在圓環</div>
-            <div class="text-[10px] text-slate-300 mt-0.5">繞第7圈出不去！</div>
-          </button>
-          <button onclick="broadcastDriverSOS('wiper')" class="tarot-btn p-3 text-left">
-            <div class="text-sm font-black text-teal-300">🌧️ 晴天刷雨刷</div>
-            <div class="text-[10px] text-slate-300 mt-0.5">別信我方向燈！</div>
-          </button>
-          <button onclick="broadcastDriverSOS('safe')" class="tarot-btn p-3 text-left">
-            <div class="text-sm font-black text-emerald-300">🏠 平安停好車</div>
-            <div class="text-[10px] text-slate-300 mt-0.5">解除全城警報！</div>
-          </button>
+        <div class="space-y-1.5">
+          <div class="text-xs font-black text-amber-200">🚨 登入後可一鍵向線上的好友發送即時狀態：</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="broadcastDriverSOS('parking')" class="tarot-btn p-2.5 text-left">
+              <div class="text-xs font-black text-rose-300">🅿️ 我要倒車了</div>
+              <div class="text-[10px] text-slate-300">方圓3km快移車！</div>
+            </button>
+            <button onclick="broadcastDriverSOS('lost')" class="tarot-btn p-2.5 text-left">
+              <div class="text-xs font-black text-amber-300">🔄 卡在圓環</div>
+              <div class="text-[10px] text-slate-300">繞第7圈出不去！</div>
+            </button>
+            <button onclick="broadcastDriverSOS('wiper')" class="tarot-btn p-2.5 text-left">
+              <div class="text-xs font-black text-teal-300">🌧️ 晴天刷雨刷</div>
+              <div class="text-[10px] text-slate-300">別信我方向燈！</div>
+            </button>
+            <button onclick="broadcastDriverSOS('safe')" class="tarot-btn p-2.5 text-left">
+              <div class="text-xs font-black text-emerald-300">🏠 平安停好車</div>
+              <div class="text-[10px] text-slate-300">解除全城警報！</div>
+            </button>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button onclick="shareMyDrivingLink(true)" class="w-full py-3 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow-lg flex items-center justify-center gap-1.5">
-            💬 直接傳送到 LINE 群組
+          <button onclick="inviteFriendViaLine()" class="w-full py-3 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow-lg flex items-center justify-center gap-1.5">
+            💬 傳 LINE 邀請好友登入連線
           </button>
-          <button onclick="shareMyDrivingLink(false)" class="w-full py-3 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-xs">
-            📋 複製我的即時定位連結
+          <button onclick="shareMyDrivingLink(false)" class="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs">
+            📋 複製邀請連線網址
           </button>
         </div>
       </div>
 
-      <!-- Right 7 Cols -->
+      <!-- Right 7 Cols: Real Connected Friends List + Manual Add Friend -->
       <div class="lg:col-span-7 royal-card p-5 flex flex-col justify-between space-y-3.5">
-        <h3 class="font-serif-title text-base font-black gold-text">👥 損友三寶車隊牆（點卡片直接在地圖鎖定他）</h3>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-serif-title text-base font-black gold-text">👥 2. 我的真人好友監測清單（無虛擬人）</h3>
+            <p class="text-[11px] text-slate-300 mt-0.5">當好友登入此網站時會自動出現在下方，你也可以先手動新增好友名字，按「確定查看位置」即可鎖定！</p>
+          </div>
+          <button onclick="clearAllFriends()" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/15 text-[11px] text-slate-400 hover:text-rose-300">
+            🗑️ 清空清單
+          </button>
+        </div>
 
+        <!-- Manual Add Real Friend Form -->
         <form onsubmit="addFriendToSquad(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2 bg-[#060916] p-2.5 rounded-xl border border-amber-300/30">
-          <input id="add-friend-name" type="text" placeholder="損友名字" class="sm:col-span-4 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-xs text-white" />
-          <input id="add-friend-plate" type="text" placeholder="車牌" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-1.5 text-xs font-mono text-amber-300" />
-          <select id="add-friend-status" class="sm:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-2 py-1.5 text-xs text-amber-200 font-bold">
-            <option value="parking">🅿️ 正在倒車</option>
-            <option value="roundabout">🔄 圓環迷航</option>
-            <option value="snack">🛵 買宵夜</option>
-            <option value="home">🏠 在家休息</option>
-          </select>
-          <button type="submit" class="sm:col-span-2 py-1.5 rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">
-            ➕ 加損友
+          <input id="add-friend-name" type="text" placeholder="輸入真實好友名字 (例: 阿豪)" class="sm:col-span-5 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs text-white" />
+          <input id="add-friend-plate" type="text" placeholder="車牌 (選填)" class="sm:col-span-4 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs font-mono text-amber-300" />
+          <button type="submit" class="sm:col-span-3 py-2 rounded-lg bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">
+            ➕ 新增好友關注
           </button>
         </form>
 
-        <div id="squad-friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto pr-1"></div>
+        <!-- Real Friends List Container -->
+        <div id="squad-friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto pr-1 flex-1"></div>
       </div>
     </section>
 
     <!-- ===================================================================
-         TAB 3: 🃏 塔羅占卜與 LINE 群組一鍵警報 (WORKING LINE SHARE!)
+         TAB 3: 🃏 塔羅占卜與 LINE 群組一鍵警報
          =================================================================== -->
     <section id="tab-panel-route" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
       <div class="lg:col-span-5 royal-card p-5 space-y-3.5">
@@ -724,8 +779,30 @@
   </main>
 
   <!-- =====================================================================
-       3. MODALS
+       3. MODALS (QUICK LOGIN MODAL + PRESIDENTIAL ALERT + COPILOT WOODFISH)
        ===================================================================== -->
+  <!-- Quick Login Modal -->
+  <div id="modal-login" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="max-w-sm w-full royal-card p-5 space-y-4 border-2 border-teal-300">
+      <div class="flex items-center justify-between">
+        <span class="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-mono text-[10px] font-black">REAL-TIME GPS LOGIN</span>
+        <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <h3 class="font-serif-title text-lg font-black gold-text">👤 登入網站並分享即時位置</h3>
+      <p class="text-xs text-amber-100/85">
+        輸入你的名字與連線房號（預設 <span class="text-teal-300 font-mono font-bold">8888</span>）。同房號的好友打開網站就能收到你的上線通知，按「確定」即可互相看到真實定位！
+      </p>
+      <div class="space-y-2.5">
+        <input id="modal-login-name" type="text" placeholder="你的名字 / 暱稱 *" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-bold text-white" />
+        <input id="modal-login-plate" type="text" placeholder="車牌號碼 (選填，例: ABC-8888)" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-mono font-bold text-amber-300" />
+        <input id="modal-login-room" type="text" value="8888" placeholder="好友連線房號 (預設 8888)" class="w-full rounded-xl bg-[#060916] border border-teal-300/50 px-3.5 py-2.5 text-xs font-mono font-black text-teal-300" />
+      </div>
+      <button onclick="submitModalLogin()" class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-sm shadow-lg active:scale-95">
+        ✅ 確定登入並開啟定位
+      </button>
+    </div>
+  </div>
+
   <div id="modal-presidential-alert" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="max-w-sm w-full royal-card p-5 space-y-4 text-center border-2 border-amber-300">
       <span class="px-3 py-1 rounded-full bg-rose-600 text-white font-mono text-xs font-black animate-pulse">🚨 國家級三寶出車警報</span>
@@ -766,7 +843,7 @@
 
   <div id="toast-container" class="fixed bottom-16 lg:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=11.0"></script>
-  <script src="app.js?v=11.0"></script>
+  <script src="sound_and_fx.js?v=12.0"></script>
+  <script src="app.js?v=12.0"></script>
 </body>
 </html>
