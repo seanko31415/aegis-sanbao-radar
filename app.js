@@ -890,8 +890,7 @@ window.loginFromQuickBar = function (e) {
   window.useRealBrowserGPS({ silent: false });
 };
 
-window.logoutToVisitorPreview = function () {
-  window.soundEngine.playClick(600);
+window.enterVisitorMode = function () {
   try { sessionStorage.removeItem('aegis_active_session_login'); } catch (e) {}
   appState.myUser.loggedIn = false;
   if (appState.beaconWatchId) {
@@ -902,7 +901,18 @@ window.logoutToVisitorPreview = function () {
   syncUI();
   refreshMainMarkers();
   updateRealMapOverlays();
-  showToast('👀 已切換為訪客預覽模式', '您可以自由檢視各項功能，隨時輸入名字即可重新登入！', 'slate');
+  if (leafletMap) {
+    leafletMap.invalidateSize();
+    if (leafletMap.setView && appState.myUser.lat && appState.myUser.lng) {
+      leafletMap.setView([appState.myUser.lat, appState.myUser.lng], 15);
+    }
+  }
+  showToast('👀 訪客即時預覽模式', '您現在是訪客身份，個人定位未開啟；可自由預覽雷達與所有功能！', 'teal');
+};
+
+window.logoutToVisitorPreview = function () {
+  window.soundEngine.playClick(600);
+  window.enterVisitorMode();
 };
 
 // ============================================================================

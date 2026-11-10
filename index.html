@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-TW" class="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>損友三寶監測局 // 真人即時連線防空雷達 v15.4 旗艦版</title>
+  <title>損友三寶監測局 // 真人即時連線防空雷達 v15.5 旗艦版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -14,7 +15,9 @@
   <script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=JetBrains+Mono:wght@700;800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=JetBrains+Mono:wght@700;800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@500;700;900&display=swap"
+    rel="stylesheet">
 
   <style>
     :root {
@@ -39,8 +42,13 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    .font-serif-title { font-family: 'Cinzel Decorative', 'Noto Serif TC', serif; }
-    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .font-serif-title {
+      font-family: 'Cinzel Decorative', 'Noto Serif TC', serif;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
 
     .gold-text {
       background: linear-gradient(135deg, #FFFFFF 0%, #FEF08A 48%, #D4AF37 100%);
@@ -62,6 +70,7 @@
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
       overflow: hidden;
     }
+
     .royal-card:hover {
       border-color: rgba(254, 240, 138, 0.65);
       box-shadow:
@@ -69,16 +78,15 @@
         0 0 24px rgba(212, 175, 55, 0.25),
         inset 0 1px 2px rgba(255, 255, 255, 0.12);
     }
+
     /* Dynamic Specular Reflection on all cards following cursor (moderate, non-glaring) */
     .royal-card::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(
-        circle 140px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgba(254, 240, 138, 0.07),
-        transparent 70%
-      );
+      background: radial-gradient(circle 140px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(254, 240, 138, 0.07),
+          transparent 70%);
       opacity: 0.85;
       pointer-events: none;
       transition: opacity 0.3s ease;
@@ -95,11 +103,13 @@
       touch-action: manipulation;
       user-select: none;
     }
+
     .tarot-btn:hover {
       transform: translateY(-2px);
       border-color: #FEF08A;
       box-shadow: 0 12px 24px rgba(212, 175, 55, 0.32), 0 0 18px rgba(59, 130, 246, 0.42);
     }
+
     .tarot-btn:active {
       transform: translateY(0) scale(0.96);
     }
@@ -123,40 +133,48 @@
       touch-action: manipulation;
       user-select: none;
     }
+
     /* Dynamic Specular Reflection following Mouse cursor */
     .glass-window::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(
-        circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgba(254, 240, 138, 0.10),
-        transparent 70%
-      );
+      background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(254, 240, 138, 0.10),
+          transparent 70%);
       opacity: 0.85;
       pointer-events: none;
       transition: opacity 0.3s ease;
     }
+
     /* Subtle, Moderate Animated Glass Sheen (Not too bright!) */
     .glass-window::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(
-        110deg,
-        transparent 38%,
-        rgba(254, 240, 138, 0.05) 48%,
-        rgba(45, 212, 191, 0.07) 52%,
-        transparent 64%
-      );
+      background: linear-gradient(110deg,
+          transparent 38%,
+          rgba(254, 240, 138, 0.05) 48%,
+          rgba(45, 212, 191, 0.07) 52%,
+          transparent 64%);
       transform: translateX(-120%);
       animation: glass-sheen-sweep 7.5s infinite ease-in-out;
       pointer-events: none;
     }
+
     @keyframes glass-sheen-sweep {
-      0%, 45% { transform: translateX(-120%); }
-      75%, 100% { transform: translateX(120%); }
+
+      0%,
+      45% {
+        transform: translateX(-120%);
+      }
+
+      75%,
+      100% {
+        transform: translateX(120%);
+      }
     }
+
     .glass-window:hover {
       transform: translateY(-2px) scale(1.02);
       border-color: rgba(254, 240, 138, 0.62);
@@ -165,6 +183,7 @@
         0 0 18px rgba(212, 175, 55, 0.25),
         inset 0 1px 2px rgba(255, 255, 255, 0.15);
     }
+
     .glass-window.glass-active {
       border-color: #FEF08A;
       background: linear-gradient(145deg, rgba(24, 40, 85, 0.85) 0%, rgba(10, 16, 38, 0.94) 100%);
@@ -192,9 +211,13 @@
       display: none;
       transform: translate3d(-100px, -100px, 0);
     }
+
     @media (pointer: fine) {
-      #mouse-reticle { display: block; }
+      #mouse-reticle {
+        display: block;
+      }
     }
+
     #mouse-reticle::before {
       content: '';
       position: absolute;
@@ -203,10 +226,17 @@
       border: 1px solid rgba(45, 212, 191, 0.45);
       animation: micro-spin 6s linear infinite;
     }
+
     @keyframes micro-spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
+
     #mouse-reticle.reticle-expand {
       width: 26px;
       height: 26px;
@@ -216,6 +246,7 @@
       border: 1.5px solid rgba(254, 240, 138, 0.85);
       box-shadow: 0 0 18px rgba(212, 175, 55, 0.45), inset 0 0 6px rgba(45, 212, 191, 0.3);
     }
+
     #mouse-reticle.reticle-expand::before {
       inset: -3px;
       border-color: rgba(254, 240, 138, 0.65);
@@ -232,27 +263,68 @@
     .tactical-gmap-tiles {
       filter: invert(90%) hue-rotate(192deg) brightness(95%) contrast(106%) saturate(145%);
     }
-    .leaflet-container { background: #060A17 !important; }
-    .leaflet-control-attribution { display: none !important; }
+
+    .leaflet-container {
+      background: #060A17 !important;
+    }
+
+    .leaflet-control-attribution {
+      display: none !important;
+    }
 
     @keyframes pulse-gold {
-      0% { transform: scale(0.85); opacity: 0.95; }
-      100% { transform: scale(2.35); opacity: 0; }
+      0% {
+        transform: scale(0.85);
+        opacity: 0.95;
+      }
+
+      100% {
+        transform: scale(2.35);
+        opacity: 0;
+      }
     }
-    .marker-pulse { animation: pulse-gold 1.4s infinite ease-out; }
+
+    .marker-pulse {
+      animation: pulse-gold 1.4s infinite ease-out;
+    }
 
     @keyframes wiper-swing {
-      0% { transform: rotate(-46deg); }
-      50% { transform: rotate(46deg); }
-      100% { transform: rotate(-46deg); }
+      0% {
+        transform: rotate(-46deg);
+      }
+
+      50% {
+        transform: rotate(46deg);
+      }
+
+      100% {
+        transform: rotate(-46deg);
+      }
     }
-    .wiper-rapid { transform-origin: bottom center; animation: wiper-swing 0.3s infinite ease-in-out; }
-    .wiper-idle { transform-origin: bottom center; animation: wiper-swing 1.8s infinite ease-in-out; }
+
+    .wiper-rapid {
+      transform-origin: bottom center;
+      animation: wiper-swing 0.3s infinite ease-in-out;
+    }
+
+    .wiper-idle {
+      transform-origin: bottom center;
+      animation: wiper-swing 1.8s infinite ease-in-out;
+    }
 
     @keyframes lamp-blink {
-      0%, 100% { opacity: 0.25; }
-      50% { opacity: 1; box-shadow: 0 0 18px #FEF08A; }
+
+      0%,
+      100% {
+        opacity: 0.25;
+      }
+
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 18px #FEF08A;
+      }
     }
+
     .signal-blink-active {
       animation: lamp-blink 0.45s infinite;
       background: rgba(212, 175, 55, 0.32) !important;
@@ -261,28 +333,66 @@
     }
 
     @keyframes stamp-slam {
-      0% { transform: scale(2.4) rotate(-22deg); opacity: 0; }
-      70% { transform: scale(0.92) rotate(-8deg); opacity: 1; }
-      100% { transform: scale(1) rotate(-10deg); opacity: 1; }
+      0% {
+        transform: scale(2.4) rotate(-22deg);
+        opacity: 0;
+      }
+
+      70% {
+        transform: scale(0.92) rotate(-8deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1) rotate(-10deg);
+        opacity: 1;
+      }
     }
+
     .stamp-badge {
       animation: stamp-slam 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes cutin-pop {
-      0% { opacity: 0; transform: translateX(40px) scale(0.9); }
-      15% { opacity: 1; transform: translateX(0) scale(1); }
-      85% { opacity: 1; transform: translateX(0) scale(1); }
-      100% { opacity: 0; transform: translateX(20px) scale(0.95); }
+      0% {
+        opacity: 0;
+        transform: translateX(40px) scale(0.9);
+      }
+
+      15% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+
+      85% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+
+      100% {
+        opacity: 0;
+        transform: translateX(20px) scale(0.95);
+      }
     }
-    .animate-cutin { animation: cutin-pop 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .animate-cutin {
+      animation: cutin-pop 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
     /* 3D HOLOGRAPHIC TAROT CARD FLIP SYSTEM */
     .tarot-card-3d-wrap {
       perspective: 1000px;
     }
+
     .tarot-card-3d-inner {
       position: relative;
       width: 100%;
@@ -291,9 +401,11 @@
       transform-style: preserve-3d;
       cursor: pointer;
     }
+
     .tarot-card-3d-inner.flipped {
       transform: rotateY(180deg);
     }
+
     .tarot-card-3d-front,
     .tarot-card-3d-back {
       position: absolute;
@@ -302,6 +414,7 @@
       backface-visibility: hidden;
       border-radius: 16px;
     }
+
     .tarot-card-3d-back {
       transform: rotateY(180deg);
     }
@@ -309,7 +422,10 @@
     /* =====================================================================
        🎴 CINEMATIC 3D TAROT CAROUSEL INTRO / LOGIN SPLASH
        ===================================================================== */
-    body.intro-lock { overflow: hidden; }
+    body.intro-lock {
+      overflow: hidden;
+    }
+
     #intro-splash {
       position: fixed;
       inset: 0;
@@ -317,172 +433,377 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       overflow: hidden;
+      padding: clamp(0.75rem, 2vh, 1.75rem) 1rem;
       background:
-        radial-gradient(ellipse at 50% 38%, rgba(37, 56, 120, 0.55) 0%, rgba(6, 10, 23, 0.0) 55%),
-        radial-gradient(ellipse at 50% 110%, rgba(212, 175, 55, 0.22) 0%, rgba(6, 10, 23, 0) 50%),
-        #03050d;
-      transition: opacity 0.9s ease, filter 0.9s ease, transform 0.9s cubic-bezier(0.7, 0, 0.3, 1);
+        radial-gradient(ellipse at 50% 50%, rgba(30, 48, 105, 0.65) 0%, rgba(6, 10, 23, 0.45) 50%, #03050d 88%);
+      transition: opacity 0.4s ease, transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: opacity, transform;
     }
+
     #intro-splash.intro-exit {
       opacity: 0;
-      filter: blur(12px) brightness(1.6);
-      transform: scale(1.12);
+      transform: scale(1.08);
       pointer-events: none;
     }
-    #intro-stars { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    #intro-stars {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
     .intro-vignette {
-      position: absolute; inset: 0; pointer-events: none;
-      background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
     }
+
     .intro-grid-floor {
-      position: absolute; left: -50%; right: -50%; bottom: -10%; height: 55%;
+      position: absolute;
+      left: -50%;
+      right: -50%;
+      bottom: -15%;
+      height: 50%;
       background-image:
-        linear-gradient(rgba(212, 175, 55, 0.16) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(45, 212, 191, 0.12) 1px, transparent 1px);
-      background-size: 60px 60px;
-      transform: perspective(500px) rotateX(70deg);
+        linear-gradient(rgba(212, 175, 55, 0.14) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 191, 0.10) 1px, transparent 1px);
+      background-size: 55px 55px;
+      transform: perspective(500px) rotateX(72deg);
       transform-origin: top center;
-      mask-image: linear-gradient(to top, rgba(0,0,0,0.9), transparent 85%);
-      -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.9), transparent 85%);
-      animation: intro-floor-scroll 6s linear infinite;
+      mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent 85%);
+      -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent 85%);
+      animation: intro-floor-scroll 7s linear infinite;
       pointer-events: none;
     }
-    @keyframes intro-floor-scroll { from { background-position: 0 0; } to { background-position: 0 60px; } }
+
+    @keyframes intro-floor-scroll {
+      from {
+        background-position: 0 0;
+      }
+
+      to {
+        background-position: 0 55px;
+      }
+    }
 
     .intro-stage {
-      --card-w: 108px;
+      --card-w: 114px;
       --card-h: 168px;
-      --ring-r: 205px;
+      --ring-r: 195px;
       position: relative;
       width: var(--card-w);
       height: var(--card-h);
-      perspective: 1100px;
-      margin-top: -4vh;
-      transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1), opacity 1s ease;
+      perspective: 1200px;
+      margin: auto 0;
+      transform-style: preserve-3d;
+      transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
+      will-change: transform;
     }
-    @media (min-width: 640px) { .intro-stage { --card-w: 132px; --card-h: 204px; --ring-r: 280px; } }
-    @media (min-width: 1024px) { .intro-stage { --card-w: 150px; --card-h: 232px; --ring-r: 360px; } }
-    @media (max-height: 700px) {
-      .intro-stage { --card-w: 92px; --card-h: 142px; --ring-r: 190px; }
-      .intro-panel { margin-top: 44px !important; }
+
+    @media (min-width: 640px) {
+      .intro-stage {
+        --card-w: 145px;
+        --card-h: 215px;
+        --ring-r: 270px;
+      }
     }
+
+    @media (min-width: 1024px) {
+      .intro-stage {
+        --card-w: 175px;
+        --card-h: 255px;
+        --ring-r: 345px;
+      }
+    }
+
+    @media (max-height: 680px) {
+      .intro-stage {
+        --card-w: 96px;
+        --card-h: 142px;
+        --ring-r: 170px;
+      }
+    }
+
     .intro-tilt {
-      position: absolute; inset: 0;
+      position: absolute;
+      inset: 0;
       transform-style: preserve-3d;
-      transform: rotateX(-10deg);
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: rotateX(-8deg);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
     }
+
     .intro-ring {
-      position: absolute; inset: 0;
+      position: absolute;
+      inset: 0;
       transform-style: preserve-3d;
-      animation: intro-ring-spin 26s linear infinite;
+      animation: intro-ring-spin 22s linear infinite;
+      will-change: transform;
     }
-    @keyframes intro-ring-spin { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
-    #intro-splash.intro-warp .intro-ring { animation-duration: 1.6s; }
-    #intro-splash.intro-warp .intro-stage { transform: scale(2.6) translateY(-6%); opacity: 0; }
 
-    .intro-card {
-      position: absolute; inset: 0;
-      border-radius: 14px;
-      transform: rotateY(calc(var(--i) * 45deg)) translateZ(var(--ring-r));
+    @keyframes intro-ring-spin {
+      from {
+        transform: rotateY(0deg);
+      }
+
+      to {
+        transform: rotateY(-360deg);
+      }
+    }
+
+    #intro-splash.intro-warp .intro-ring {
+      animation-duration: 0.8s;
+    }
+
+    #intro-splash.intro-warp .intro-stage {
+      transform: scale(2.0);
+      opacity: 0;
+    }
+
+    /* Holographic Floating Astrolabe / Radar Core */
+    .intro-compass-core {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 180px;
+      height: 180px;
+      margin: -90px 0 0 -90px;
       transform-style: preserve-3d;
-      background: linear-gradient(160deg, #18264e, #070b1c);
-      border: 1.5px solid rgba(254, 240, 138, 0.75);
-      box-shadow: 0 0 22px rgba(212, 175, 55, 0.35), inset 0 0 18px rgba(212, 175, 55, 0.2);
-      overflow: hidden;
-      -webkit-box-reflect: below 10px linear-gradient(transparent 62%, rgba(255, 255, 255, 0.22));
-    }
-    .intro-card img {
-      position: absolute; inset: 6px 6px 34px 6px;
-      width: calc(100% - 12px); height: calc(100% - 40px);
-      object-fit: cover; border-radius: 9px;
-      border: 1px solid rgba(254, 240, 138, 0.4);
-      filter: saturate(1.15) contrast(1.05);
-    }
-    .intro-card .intro-card-label {
-      position: absolute; left: 0; right: 0; bottom: 7px;
-      text-align: center; font-weight: 900; font-size: 10px; letter-spacing: 0.08em;
-      color: #FEF08A; text-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
-    }
-    .intro-card .intro-card-num {
-      position: absolute; top: 10px; left: 10px; z-index: 2;
-      font-family: 'Cinzel Decorative', serif; font-size: 10px; font-weight: 900;
-      color: #FEF08A; padding: 1px 6px; border-radius: 999px;
-      background: rgba(3, 5, 13, 0.75); border: 1px solid rgba(254, 240, 138, 0.5);
-    }
-    .intro-card::after {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 48%, transparent 62%);
-      background-size: 250% 100%;
-      animation: intro-card-sheen 4.5s ease-in-out infinite;
-      animation-delay: calc(var(--i) * 0.4s);
-    }
-    @keyframes intro-card-sheen { 0%, 60% { background-position: 150% 0; } 100% { background-position: -100% 0; } }
-
-    .intro-core-glow {
-      position: absolute; left: 50%; top: 50%;
-      width: 240px; height: 240px; margin: -120px 0 0 -120px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(254, 240, 138, 0.35) 0%, rgba(45, 212, 191, 0.12) 40%, transparent 70%);
-      filter: blur(6px);
-      animation: intro-core-pulse 3s ease-in-out infinite;
+      transform: translateZ(-15px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       pointer-events: none;
     }
-    @keyframes intro-core-pulse { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.15); opacity: 1; } }
 
-    .intro-panel {
-      position: relative; z-index: 5;
-      margin-top: clamp(64px, 11vh, 120px);
-      width: min(92vw, 460px);
-      text-align: center;
-      opacity: 0; transform: translateY(24px);
-      animation: intro-panel-in 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+    .compass-ring-outer {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(254, 240, 138, 0.55);
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.3), inset 0 0 25px rgba(212, 175, 55, 0.2);
+      animation: compass-spin 18s linear infinite;
     }
-    @keyframes intro-panel-in { to { opacity: 1; transform: translateY(0); } }
+
+    .compass-ring-mid {
+      position: absolute;
+      inset: 22px;
+      border-radius: 50%;
+      border: 1.2px solid rgba(45, 212, 191, 0.45);
+      animation: compass-spin-rev 12s linear infinite;
+    }
+
+    .compass-rune-center {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      animation: intro-core-pulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes compass-spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes compass-spin-rev {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(-360deg);
+      }
+    }
+
+    @keyframes intro-core-pulse {
+
+      0%,
+      100% {
+        transform: scale(0.92);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.12);
+        opacity: 1;
+      }
+    }
+
+    .intro-card {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      transform: rotateY(calc(var(--i) * 45deg)) translateZ(var(--ring-r));
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: linear-gradient(160deg, #15244d 0%, #060a18 100%);
+      border: 1.5px solid rgba(254, 240, 138, 0.85);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 25px rgba(212, 175, 55, 0.35);
+      overflow: hidden;
+      will-change: transform;
+    }
+
+    .intro-card img {
+      position: absolute;
+      inset: 6px 6px 36px 6px;
+      width: calc(100% - 12px);
+      height: calc(100% - 42px);
+      object-fit: cover;
+      border-radius: 11px;
+      border: 1px solid rgba(254, 240, 138, 0.45);
+      filter: saturate(1.18) contrast(1.08);
+    }
+
+    .intro-card .intro-card-label {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      bottom: 6px;
+      padding: 3px 0;
+      border-radius: 8px;
+      background: rgba(3, 6, 16, 0.85);
+      border: 1px solid rgba(254, 240, 138, 0.3);
+      text-align: center;
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      color: #FEF08A;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+    }
+
+    .intro-card .intro-card-num {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 11px;
+      font-weight: 900;
+      color: #FEF08A;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(3, 5, 14, 0.88);
+      border: 1.2px solid rgba(254, 240, 138, 0.65);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    }
+
     .intro-title {
-      font-family: 'Noto Serif TC', serif; font-weight: 900;
-      font-size: clamp(26px, 6vw, 44px); letter-spacing: 0.12em; line-height: 1.15;
+      font-family: 'Noto Serif TC', serif;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      line-height: 1.15;
       background: linear-gradient(100deg, #fff 0%, #FEF08A 30%, #D4AF37 50%, #FEF08A 70%, #fff 100%);
       background-size: 200% 100%;
-      -webkit-background-clip: text; background-clip: text;
+      -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       animation: intro-title-shimmer 4s linear infinite;
       filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.45));
     }
-    @keyframes intro-title-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
-    .intro-boot-line { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(45, 212, 191, 0.85); min-height: 14px; }
-    .intro-progress { height: 3px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
-    .intro-progress > div {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, #2DD4BF, #FEF08A, #D4AF37);
-      box-shadow: 0 0 12px #FEF08A;
-      transition: width 0.25s ease;
+
+    @keyframes intro-title-shimmer {
+      from {
+        background-position: 200% 0;
+      }
+
+      to {
+        background-position: -200% 0;
+      }
     }
-    .intro-actions { opacity: 0; transform: translateY(10px); pointer-events: none; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-    .intro-actions.ready { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
     .intro-flash {
-      position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: 10;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 10;
       background: radial-gradient(circle at center, rgba(255, 251, 235, 0.95), rgba(254, 240, 138, 0.5) 40%, transparent 75%);
     }
-    #intro-splash.intro-warp .intro-flash { animation: intro-flash-burst 1s ease-out forwards; }
-    @keyframes intro-flash-burst { 0% { opacity: 0; } 35% { opacity: 1; } 100% { opacity: 0; } }
 
-    main.main-enter, header.main-enter { animation: main-enter-rise 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
-    @keyframes main-enter-rise { from { opacity: 0; transform: translateY(28px) scale(0.985); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+    #intro-splash.intro-warp .intro-flash {
+      animation: intro-flash-burst 0.55s ease-out forwards;
+    }
+
+    @keyframes intro-flash-burst {
+      0% {
+        opacity: 0;
+      }
+
+      40% {
+        opacity: 0.85;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    main.main-enter,
+    header.main-enter {
+      animation: main-enter-rise 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes main-enter-rise {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.985);
+        filter: blur(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+        filter: none;
+      }
+    }
 
     @media (prefers-reduced-motion: reduce) {
-      .intro-ring, .intro-grid-floor, .intro-card::after, .intro-title { animation: none !important; }
+
+      .intro-ring,
+      .intro-grid-floor,
+      .intro-card::after,
+      .intro-title {
+        animation: none !important;
+      }
     }
 
     /* Live ticker feed for Tab 1 bottom-right card */
-    @keyframes feed-slide-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
-    .feed-item-new { animation: feed-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
-    .park-key-held { box-shadow: 0 0 0 2px #FEF08A, 0 0 16px rgba(254, 240, 138, 0.55) !important; transform: scale(0.96); }
+    @keyframes feed-slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .feed-item-new {
+      animation: feed-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .park-key-held {
+      box-shadow: 0 0 0 2px #FEF08A, 0 0 16px rgba(254, 240, 138, 0.55) !important;
+      transform: scale(0.96);
+    }
   </style>
 </head>
-<body class="intro-lock min-h-screen flex flex-col pb-20 md:pb-4 selection:bg-amber-300 selection:text-slate-950">
+
+<body class="intro-lock min-h-[100dvh] flex flex-col pb-20 md:pb-4 selection:bg-amber-300 selection:text-slate-950">
 
   <!-- =====================================================================
        0. 🎴 CINEMATIC 3D TAROT CAROUSEL INTRO / LOGIN SPLASH
@@ -493,46 +814,96 @@
     <div class="intro-vignette"></div>
     <div class="intro-flash"></div>
 
+    <!-- TOP HEADER -->
+    <div class="intro-header text-center z-10 select-none pt-1 sm:pt-2">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-400/15 border border-teal-300/40 text-[10px] sm:text-xs font-mono font-black text-teal-300 tracking-[0.2em] mb-1 shadow-[0_0_15px_rgba(45,212,191,0.25)]">
+        <span>✦</span> AEGIS SANBAO RADAR SYSTEM <span>✦</span>
+      </div>
+      <h1 class="intro-title text-2xl sm:text-4xl lg:text-5xl font-black">損友三寶監測局</h1>
+      <p class="text-[11px] sm:text-xs text-amber-100/75 font-bold tracking-widest mt-1">真人即時連線 // 全境防空雷達 // 命理塔羅星盤</p>
+    </div>
+
+    <!-- CENTER MAJESTIC 3D ASTROLABE CAROUSEL -->
     <div class="intro-stage" id="intro-stage">
-      <div class="intro-core-glow"></div>
       <div class="intro-tilt" id="intro-tilt">
+        <!-- Center Holographic Compass / Astrolabe Core -->
+        <div class="intro-compass-core">
+          <div class="compass-ring-outer"></div>
+          <div class="compass-ring-mid"></div>
+          <div class="compass-rune-center">
+            <span class="text-3xl filter drop-shadow-[0_0_15px_#FDE68A]">🔮</span>
+            <span class="text-[9px] font-mono tracking-widest text-amber-200 block font-black mt-0.5">SANBAO RADAR</span>
+          </div>
+        </div>
+
+        <!-- 8 Rotating 3D Tarot Cards -->
         <div class="intro-ring">
-          <div class="intro-card" style="--i:0"><span class="intro-card-num">I</span><img src="assets/sanbao_chicken_avatar.jpg" alt="" /><div class="intro-card-label">雞腿駕照</div></div>
-          <div class="intro-card" style="--i:1"><span class="intro-card-num">II</span><img src="assets/scenario_roundabout.jpg" alt="" /><div class="intro-card-label">圓環圓舞曲</div></div>
-          <div class="intro-card" style="--i:2"><span class="intro-card-num">III</span><img src="assets/scenario_parking.jpg" alt="" /><div class="intro-card-label">B2 柱子殺手</div></div>
-          <div class="intro-card" style="--i:3"><span class="intro-card-num">IV</span><img src="assets/nerv_commander_banner.jpg" alt="" /><div class="intro-card-label">戰情指揮官</div></div>
-          <div class="intro-card" style="--i:4"><span class="intro-card-num">V</span><img src="assets/royal_conductor.jpg" alt="" /><div class="intro-card-label">皇家指揮家</div></div>
-          <div class="intro-card" style="--i:5"><span class="intro-card-num">VI</span><img src="assets/sanbao_iot_dongle.jpg" alt="" /><div class="intro-card-label">三寶偵測器</div></div>
-          <div class="intro-card" style="--i:6"><span class="intro-card-num">VII</span><img src="assets/sanbao_avatar.jpg" alt="" /><div class="intro-card-label">損友本尊</div></div>
-          <div class="intro-card" style="--i:7"><span class="intro-card-num">VIII</span><img src="assets/fantasy_harbor_bg.jpg" alt="" /><div class="intro-card-label">夢幻港灣</div></div>
+          <div class="intro-card" style="--i:0">
+            <span class="intro-card-num">I</span>
+            <img src="assets/sanbao_chicken_avatar.jpg" alt="" />
+            <div class="intro-card-label">🍗 雞腿換駕照</div>
+          </div>
+          <div class="intro-card" style="--i:1">
+            <span class="intro-card-num">II</span>
+            <img src="assets/scenario_roundabout.jpg" alt="" />
+            <div class="intro-card-label">🔄 圓環神車</div>
+          </div>
+          <div class="intro-card" style="--i:2">
+            <span class="intro-card-num">III</span>
+            <img src="assets/scenario_parking.jpg" alt="" />
+            <div class="intro-card-label">🅿️ 柱子殺手</div>
+          </div>
+          <div class="intro-card" style="--i:3">
+            <span class="intro-card-num">IV</span>
+            <img src="assets/nerv_commander_banner.jpg" alt="" />
+            <div class="intro-card-label">🚨 戰情指揮</div>
+          </div>
+          <div class="intro-card" style="--i:4">
+            <span class="intro-card-num">V</span>
+            <img src="assets/royal_conductor.jpg" alt="" />
+            <div class="intro-card-label">🎼 皇家交響</div>
+          </div>
+          <div class="intro-card" style="--i:5">
+            <span class="intro-card-num">VI</span>
+            <img src="assets/sanbao_iot_dongle.jpg" alt="" />
+            <div class="intro-card-label">📡 三寶雷達</div>
+          </div>
+          <div class="intro-card" style="--i:6">
+            <span class="intro-card-num">VII</span>
+            <img src="assets/sanbao_avatar.jpg" alt="" />
+            <div class="intro-card-label">😈 損友本尊</div>
+          </div>
+          <div class="intro-card" style="--i:7">
+            <span class="intro-card-num">VIII</span>
+            <img src="assets/fantasy_harbor_bg.jpg" alt="" />
+            <div class="intro-card-label">🌊 夢幻港灣</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="intro-panel">
-      <div class="text-[10px] font-mono tracking-[0.4em] text-teal-300/80 mb-1">✦ AEGIS SANBAO RADAR ✦</div>
-      <h1 class="intro-title">損友三寶監測局</h1>
-      <div class="text-[11px] sm:text-xs text-amber-100/70 font-bold tracking-widest mt-1">真人即時連線・防空雷達・塔羅占卜</div>
-
-      <div class="mt-4 space-y-1.5">
-        <div id="intro-boot-line" class="intro-boot-line">&gt; INITIALIZING TAROT RADAR CORE...</div>
-        <div class="intro-progress"><div id="intro-progress-bar"></div></div>
-      </div>
-
-      <div id="intro-actions" class="intro-actions mt-4 space-y-2">
-        <form onsubmit="introEnter(event, 'login')" class="flex gap-1.5 p-1.5 rounded-2xl bg-black/50 border border-amber-300/40 backdrop-blur-md shadow-[0_0_30px_rgba(212,175,55,0.2)]">
-          <input id="intro-name-input" type="text" maxlength="16" autocomplete="nickname" placeholder="👤 輸入你的名字..." class="flex-1 min-w-0 rounded-xl bg-slate-950/80 border border-white/10 px-3 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-amber-300" />
-          <button type="submit" class="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-[0_0_20px_rgba(251,191,36,0.45)] active:scale-95 transition-all">
-            🚀 登入
-          </button>
-        </form>
-        <button id="intro-continue-btn" type="button" onclick="introEnter(event, 'continue')" class="hidden w-full py-2.5 rounded-2xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-sm active:scale-95 transition-all">
-          ▶ 繼續進入
+    <!-- BOTTOM ACTION DOCK -->
+    <div class="intro-dock w-full max-w-md mx-auto z-10 space-y-2 select-none pb-1 sm:pb-2">
+      <form onsubmit="introEnter(event, 'login')"
+        class="flex gap-1.5 p-1.5 rounded-2xl bg-[#060916]/90 border border-amber-300/50 backdrop-blur-xl shadow-[0_0_35px_rgba(212,175,55,0.25)]">
+        <input id="intro-name-input" type="text" maxlength="16" autocomplete="nickname" placeholder="👤 輸入你的名字 (例: 阿豪)..."
+          class="flex-1 min-w-0 rounded-xl bg-slate-950/80 border border-white/10 px-3 py-2.5 text-xs sm:text-sm text-white font-bold focus:outline-none focus:border-amber-300" />
+        <button type="submit"
+          class="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-[0_0_20px_rgba(251,191,36,0.5)] active:scale-95 transition-all cursor-pointer">
+          🚀 登入並定位
         </button>
-        <button type="button" onclick="introEnter(event, 'visitor')" class="w-full py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-teal-300/40 text-teal-200 font-black text-sm active:scale-95 transition-all">
-          👀 先以訪客預覽進入
-        </button>
-        <div class="text-[10px] text-slate-400">訪客模式不會定位你・登入後才會開啟 GPS 與好友連線</div>
+      </form>
+      <button id="intro-continue-btn" type="button" onclick="introEnter(event, 'continue')"
+        class="hidden w-full py-2.5 rounded-2xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow active:scale-95 transition-all cursor-pointer">
+        ▶ 繼續進入
+      </button>
+      <button type="button" onclick="introEnter(event, 'visitor')"
+        class="w-full py-2.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800/95 border-2 border-teal-400/60 text-teal-200 hover:text-white font-black text-xs sm:text-sm shadow-[0_0_20px_rgba(45,212,191,0.25)] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+        <span>👀</span> <span>先以訪客即時預覽進入</span> <span>➔</span>
+      </button>
+      <div class="flex items-center justify-between text-[10px] text-slate-400 px-2 font-mono">
+        <span class="flex items-center gap-1 text-teal-300/90"><span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping"></span> 衛星雷達就緒</span>
+        <span class="text-amber-200/70">訪客模式不開啟個人定位</span>
       </div>
     </div>
   </div>
@@ -551,19 +922,25 @@
 
       <div class="flex items-center gap-2 min-w-0">
         <div class="ribbon-slash px-2 py-0.5 shrink-0">
-          <span class="font-serif-title text-[9px] sm:text-xs font-black text-amber-200 tracking-widest block transform skew-x-12">🍗 雞腿駕照</span>
+          <span
+            class="font-serif-title text-[9px] sm:text-xs font-black text-amber-200 tracking-widest block transform skew-x-12">🍗
+            雞腿駕照</span>
         </div>
         <div class="flex items-center gap-1.5 min-w-0">
           <h1 class="font-serif-title text-xs sm:text-base lg:text-xl font-black tracking-wider gold-text truncate">
             損友三寶監測局 <span class="hidden sm:inline">// 馬路神主牌雷達</span>
           </h1>
-          <span id="cloud-sync-badge" class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black bg-teal-400 text-slate-950 shadow-[0_0_12px_rgba(45,212,191,0.6)] shrink-0">
+          <span id="cloud-sync-badge"
+            class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black bg-teal-400 text-slate-950 shadow-[0_0_12px_rgba(45,212,191,0.6)] shrink-0">
             🟢 雲端中
           </span>
-          <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow shrink-0">
-            v15.0 旗艦版
+          <span
+            class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow shrink-0">
+            v15.5 旗艦版
           </span>
-          <span id="storage-status-badge" class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-slate-900 border border-teal-300/40 text-teal-300 shrink-0" title="本地儲存與自訂標籤權限已就緒">
+          <span id="storage-status-badge"
+            class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-slate-900 border border-teal-300/40 text-teal-300 shrink-0"
+            title="本地儲存與自訂標籤權限已就緒">
             💾 儲存權限已就緒
           </span>
         </div>
@@ -571,43 +948,58 @@
 
       <!-- Tablet (md) & Desktop (lg) 4 Mode Tabs -->
       <nav class="hidden md:flex items-center gap-1 bg-[#090E22]/90 p-1 rounded-2xl border border-amber-300/30">
-        <button id="tab-btn-radar" onclick="switchTab('radar')" class="px-2.5 lg:px-4 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,0.5)] transition-all">
+        <button id="tab-btn-radar" onclick="switchTab('radar')"
+          class="px-2.5 lg:px-4 py-1.5 rounded-xl font-black text-xs flex items-center gap-1 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow-[0_0_18px_rgba(251,191,36,0.5)] transition-all">
           <span class="lg:hidden">📡 即時雷達</span><span class="hidden lg:inline">📡 即時雷達 & 3D好市多</span>
         </button>
-        <button id="tab-btn-squad" onclick="switchTab('squad')" class="px-2.5 lg:px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 text-amber-100/75 hover:text-white transition-all">
-          <span class="lg:hidden">👥 好友 (<span id="nav-friend-count-sm">0</span>)</span><span class="hidden lg:inline">👥 真人好友連線 (<span id="nav-friend-count">0</span>)</span>
+        <button id="tab-btn-squad" onclick="switchTab('squad')"
+          class="px-2.5 lg:px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 text-amber-100/75 hover:text-white transition-all">
+          <span class="lg:hidden">👥 好友 (<span id="nav-friend-count-sm">0</span>)</span><span
+            class="hidden lg:inline">👥 真人好友連線 (<span id="nav-friend-count">0</span>)</span>
         </button>
-        <button id="tab-btn-route" onclick="switchTab('route')" class="px-2.5 lg:px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 text-amber-100/75 hover:text-white transition-all">
+        <button id="tab-btn-route" onclick="switchTab('route')"
+          class="px-2.5 lg:px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 text-amber-100/75 hover:text-white transition-all">
           <span class="lg:hidden">🃏 塔羅&LINE</span><span class="hidden lg:inline">🃏 塔羅占卜 & LINE警報</span>
         </button>
-        <button id="tab-btn-dossier" onclick="switchTab('dossier')" class="px-2.5 lg:px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 text-amber-100/75 hover:text-white transition-all">
+        <button id="tab-btn-dossier" onclick="switchTab('dossier')"
+          class="px-2.5 lg:px-4 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 text-amber-100/75 hover:text-white transition-all">
           <span class="lg:hidden">🎼 戰力黑歷史</span><span class="hidden lg:inline">🎼 戰績六維 & 黑歷史</span>
         </button>
       </nav>
 
       <!-- Quick Controls + Login + Direct LINE Invite -->
       <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-        <button id="sound-toggle-btn" onclick="toggleSFXMute()" class="px-2 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-[11px] sm:text-xs text-amber-200 font-bold active:scale-95" title="音效開關 (SFX)">
+        <button id="sound-toggle-btn" onclick="toggleSFXMute()"
+          class="px-2 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-[11px] sm:text-xs text-amber-200 font-bold active:scale-95"
+          title="音效開關 (SFX)">
           🔊 音效: 開
         </button>
         <!-- Playful Anime BGM Control + Volume Slider -->
         <div class="flex items-center gap-1 bg-slate-900/95 border border-teal-300/40 px-2 py-1 rounded-xl shadow">
-          <button id="bgm-toggle-btn" onclick="toggleMusicBGM()" class="text-[11px] sm:text-xs text-teal-300 font-black animate-pulse active:scale-95 px-1.5 py-0.5 rounded-lg bg-teal-400/20 border border-teal-300/40" title="點擊開/關背景音樂 (BGM)">
+          <button id="bgm-toggle-btn" onclick="toggleMusicBGM()"
+            class="text-[11px] sm:text-xs text-teal-300 font-black animate-pulse active:scale-95 px-1.5 py-0.5 rounded-lg bg-teal-400/20 border border-teal-300/40"
+            title="點擊開/關背景音樂 (BGM)">
             🎵 點我播BGM: 關
           </button>
           <div class="flex items-center gap-1 pl-1 border-l border-white/15">
             <span class="text-[9px] text-slate-400 select-none">🔊</span>
-            <input id="bgm-volume-slider" type="range" min="0" max="100" value="35" oninput="changeBGMVolume(this.value)" class="w-10 sm:w-16 h-1 accent-teal-400 cursor-pointer" title="自訂搞笑背景音樂音量" />
-            <span id="bgm-volume-label" class="text-[9px] font-mono font-bold text-teal-300 w-5 text-right select-none">35%</span>
+            <input id="bgm-volume-slider" type="range" min="0" max="100" value="35"
+              oninput="changeBGMVolume(this.value)" class="w-10 sm:w-16 h-1 accent-teal-400 cursor-pointer"
+              title="自訂搞笑背景音樂音量" />
+            <span id="bgm-volume-label"
+              class="text-[9px] font-mono font-bold text-teal-300 w-5 text-right select-none">35%</span>
           </div>
         </div>
-        <button onclick="openLoginModal()" id="header-login-btn" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 text-slate-950 text-[11px] sm:text-xs font-black shadow-[0_0_14px_rgba(45,212,191,0.5)] animate-pulse">
+        <button onclick="openLoginModal()" id="header-login-btn"
+          class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 text-slate-950 text-[11px] sm:text-xs font-black shadow-[0_0_14px_rgba(45,212,191,0.5)] animate-pulse">
           👤 <span class="hidden sm:inline">手動輸入名字登入</span><span class="sm:hidden">登入/改名</span>
         </button>
-        <button onclick="inviteFriendViaLine()" class="px-2 sm:px-3 py-1.5 rounded-xl bg-[#06C755] hover:brightness-110 text-white text-[11px] sm:text-xs font-black shadow-[0_0_15px_rgba(6,199,85,0.5)] flex items-center gap-1">
+        <button onclick="inviteFriendViaLine()"
+          class="px-2 sm:px-3 py-1.5 rounded-xl bg-[#06C755] hover:brightness-110 text-white text-[11px] sm:text-xs font-black shadow-[0_0_15px_rgba(6,199,85,0.5)] flex items-center gap-1">
           💬 <span class="hidden sm:inline">LINE連線</span><span class="sm:hidden">邀好友</span>
         </button>
-        <button onclick="openCopilotModal()" class="hidden sm:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-amber-300/40 text-amber-200 text-xs font-black">
+        <button onclick="openCopilotModal()"
+          class="hidden sm:inline-flex px-2 sm:px-2.5 py-1.5 rounded-xl bg-blue-950/80 hover:bg-blue-900 border border-amber-300/40 text-amber-200 text-xs font-black">
           📿 木魚
         </button>
       </div>
@@ -615,17 +1007,22 @@
   </header>
 
   <!-- MOBILE ONLY BOTTOM NAVIGATION BAR (Tablets use top navigation!) -->
-  <nav class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-[#060A17]/95 backdrop-blur-2xl border-t border-amber-300/40 grid grid-cols-4 gap-1 p-1 pb-[max(0.4rem,env(safe-area-inset-bottom))]">
-    <button id="mob-tab-radar" onclick="switchTab('radar')" class="py-2 rounded-xl font-black text-[10px] flex flex-col items-center justify-center bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950">
+  <nav
+    class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-[#060A17]/95 backdrop-blur-2xl border-t border-amber-300/40 grid grid-cols-4 gap-1 p-1 pb-[max(0.4rem,env(safe-area-inset-bottom))]">
+    <button id="mob-tab-radar" onclick="switchTab('radar')"
+      class="py-2 rounded-xl font-black text-[10px] flex flex-col items-center justify-center bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950">
       <span>📡 雷達&3D</span>
     </button>
-    <button id="mob-tab-squad" onclick="switchTab('squad')" class="py-2 rounded-xl font-bold text-[10px] flex flex-col items-center justify-center text-amber-100/80">
+    <button id="mob-tab-squad" onclick="switchTab('squad')"
+      class="py-2 rounded-xl font-bold text-[10px] flex flex-col items-center justify-center text-amber-100/80">
       <span>👥 好友連線</span>
     </button>
-    <button id="mob-tab-route" onclick="switchTab('route')" class="py-2 rounded-xl font-bold text-[10px] flex flex-col items-center justify-center text-amber-100/80">
+    <button id="mob-tab-route" onclick="switchTab('route')"
+      class="py-2 rounded-xl font-bold text-[10px] flex flex-col items-center justify-center text-amber-100/80">
       <span>💬 LINE警報</span>
     </button>
-    <button id="mob-tab-dossier" onclick="switchTab('dossier')" class="py-2 rounded-xl font-bold text-[10px] flex flex-col items-center justify-center text-amber-100/80">
+    <button id="mob-tab-dossier" onclick="switchTab('dossier')"
+      class="py-2 rounded-xl font-bold text-[10px] flex flex-col items-center justify-center text-amber-100/80">
       <span>🎼 黑歷史</span>
     </button>
   </nav>
@@ -635,9 +1032,11 @@
        (When a friend logs into the website, this pops up! Click "確定" to view their location!)
        ===================================================================== -->
   <div id="incoming-friend-banner" class="hidden fixed top-16 inset-x-0 mx-auto z-50 max-w-lg px-4">
-    <div class="royal-card p-4 border-2 border-teal-300 shadow-[0_0_40px_rgba(45,212,191,0.6)] flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div
+      class="royal-card p-4 border-2 border-teal-300 shadow-[0_0_40px_rgba(45,212,191,0.6)] flex flex-col sm:flex-row items-center justify-between gap-3">
       <div class="flex items-center gap-3 min-w-0">
-        <img id="incoming-friend-avatar" src="assets/sanbao_chicken_avatar.jpg" class="w-12 h-12 rounded-xl object-cover border-2 border-amber-300 shrink-0" />
+        <img id="incoming-friend-avatar" src="assets/sanbao_chicken_avatar.jpg"
+          class="w-12 h-12 rounded-xl object-cover border-2 border-amber-300 shrink-0" />
         <div class="min-w-0">
           <div class="text-[10px] font-mono font-black text-teal-300">🔔 好友已登入網站並開啟定位！</div>
           <div id="incoming-friend-title" class="text-sm font-black text-white truncate">好友【阿豪】上線了！</div>
@@ -645,10 +1044,12 @@
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-        <button id="incoming-confirm-btn" class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-gradient-to-r from-teal-300 to-emerald-400 text-slate-950 font-black text-xs shadow-lg active:scale-95">
+        <button id="incoming-confirm-btn"
+          class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-gradient-to-r from-teal-300 to-emerald-400 text-slate-950 font-black text-xs shadow-lg active:scale-95">
           ✅ 確定查看位置
         </button>
-        <button onclick="dismissIncomingFriendBanner()" class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
+        <button onclick="dismissIncomingFriendBanner()"
+          class="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">
           稍後
         </button>
       </div>
@@ -659,7 +1060,8 @@
   <div id="anime-cutin-banner" class="hidden fixed top-16 right-4 z-50 pointer-events-none max-w-xs w-full">
     <div class="royal-card flex items-center px-3.5 py-2.5 gap-3 border-2 border-amber-300">
       <div id="anime-cutin-svg" class="absolute inset-0 opacity-50 rounded-2xl overflow-hidden"></div>
-      <img id="cutin-avatar-img" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'" alt="Cut-In" class="relative z-10 w-14 h-14 rounded-xl object-cover border-2 border-amber-300 shrink-0" />
+      <img id="cutin-avatar-img" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'"
+        alt="Cut-In" class="relative z-10 w-14 h-14 rounded-xl object-cover border-2 border-amber-300 shrink-0" />
       <div class="relative z-10 min-w-0">
         <div class="text-[9px] font-serif-title tracking-widest text-amber-300">✦ SANBAO TAROT ALERT ✦</div>
         <div id="anime-cutin-title" class="text-sm font-black text-amber-200 truncate">🔄 圓環圓舞曲</div>
@@ -680,44 +1082,60 @@
       <div class="lg:col-span-4 royal-card p-3 flex flex-col justify-between relative overflow-hidden">
         <div class="flex items-center gap-3">
           <div class="relative shrink-0 cursor-pointer group" onclick="cycleDriverAvatar()" title="點擊切換三寶搞笑頭像">
-            <img id="vip-avatar-img" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'" alt="Sanbao Driver" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-300 shadow-[0_0_25px_rgba(212,175,55,0.5)] group-hover:scale-105 transition-transform" />
-            <span id="vip-avatar-badge" class="absolute -top-1.5 -left-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-mono text-[9px] font-black shadow">
+            <img id="vip-avatar-img" src="assets/sanbao_chicken_avatar.jpg"
+              onerror="this.src='assets/sanbao_avatar.jpg'" alt="Sanbao Driver"
+              class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-amber-300 shadow-[0_0_25px_rgba(212,175,55,0.5)] group-hover:scale-105 transition-transform" />
+            <span id="vip-avatar-badge"
+              class="absolute -top-1.5 -left-1.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-mono text-[9px] font-black shadow">
               👀 訪客預覽
             </span>
-            <span class="absolute -bottom-1 inset-x-1 text-center rounded bg-black/80 text-[8px] sm:text-[9px] text-amber-200 font-bold py-0.5">
+            <span
+              class="absolute -bottom-1 inset-x-1 text-center rounded bg-black/80 text-[8px] sm:text-[9px] text-amber-200 font-bold py-0.5">
               🔄 換頭像
             </span>
           </div>
 
           <div class="min-w-0 flex-1 space-y-1">
             <div class="flex items-center justify-between gap-1">
-              <span id="vip-plate" class="px-2 py-0.5 rounded-md bg-blue-950 border border-amber-300/40 text-amber-200 font-mono text-[10px] sm:text-xs font-black truncate">
+              <span id="vip-plate"
+                class="px-2 py-0.5 rounded-md bg-blue-950 border border-amber-300/40 text-amber-200 font-mono text-[10px] sm:text-xs font-black truncate">
                 👀 訪客預覽
               </span>
-              <span id="vip-bounty-badge" class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono text-[9px] sm:text-[10px] font-black shrink-0">
+              <span id="vip-bounty-badge"
+                class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono text-[9px] sm:text-[10px] font-black shrink-0">
                 懸賞 $88,000
               </span>
             </div>
             <div class="flex items-center justify-between gap-1">
-              <h2 id="vip-name" onclick="openEditMyNameDialog()" class="font-serif-title text-sm sm:text-base lg:text-lg font-black gold-text truncate cursor-pointer hover:underline" title="點擊手動輸入或修改暱稱">
+              <h2 id="vip-name" onclick="openEditMyNameDialog()"
+                class="font-serif-title text-sm sm:text-base lg:text-lg font-black gold-text truncate cursor-pointer hover:underline"
+                title="點擊手動輸入或修改暱稱">
                 訪客即時預覽中
               </h2>
               <div id="logged-in-actions" class="hidden flex items-center gap-1 shrink-0">
-                <button onclick="openEditMyNameDialog()" class="px-2 py-0.5 rounded-lg bg-teal-400/25 hover:bg-teal-400/40 border border-teal-300/40 text-[10px] text-teal-300 font-black cursor-pointer shadow-sm active:scale-95" title="更改我的名字與車牌">
+                <button onclick="openEditMyNameDialog()"
+                  class="px-2 py-0.5 rounded-lg bg-teal-400/25 hover:bg-teal-400/40 border border-teal-300/40 text-[10px] text-teal-300 font-black cursor-pointer shadow-sm active:scale-95"
+                  title="更改我的名字與車牌">
                   ✏️ 改名
                 </button>
-                <button id="vip-switch-self-btn" onclick="switchTrackingToSelf()" class="hidden px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] text-amber-200 font-bold cursor-pointer" title="切換回看我自己的定位">
+                <button id="vip-switch-self-btn" onclick="switchTrackingToSelf()"
+                  class="hidden px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] text-amber-200 font-bold cursor-pointer"
+                  title="切換回看我自己的定位">
                   🔄 看我自己
                 </button>
-                <button onclick="logoutToVisitorPreview()" class="px-2 py-0.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-400/40 text-[10px] text-rose-300 font-bold cursor-pointer" title="切換回訪客預覽">
+                <button onclick="logoutToVisitorPreview()"
+                  class="px-2 py-0.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-400/40 text-[10px] text-rose-300 font-bold cursor-pointer"
+                  title="切換回訪客預覽">
                   🚪 訪客
                 </button>
-                <button onclick="speakCurrentSanbaoOS()" class="px-2 py-0.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/40 text-[10px] text-amber-200 font-black shrink-0">
+                <button onclick="speakCurrentSanbaoOS()"
+                  class="px-2 py-0.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/35 border border-amber-300/40 text-[10px] text-amber-200 font-black shrink-0">
                   🎙️ 語音
                 </button>
               </div>
             </div>
-            <div id="vip-os-bubble" class="px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/30 text-[10px] sm:text-xs text-amber-100 font-bold truncate">
+            <div id="vip-os-bubble"
+              class="px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/30 text-[10px] sm:text-xs text-amber-100 font-bold truncate">
               💭 自由預覽中・輸入暱稱可加入雷達
             </div>
             <!-- Active Stamp Container with Real-Time Add & Delete -->
@@ -726,12 +1144,15 @@
         </div>
 
         <!-- Embedded Visitor Quick Login Form (Visible before user logs in) -->
-        <form id="visitor-quick-form" onsubmit="loginFromQuickBar(event)" class="mt-2 p-2 rounded-xl bg-[#060916]/95 border border-teal-300/40 flex flex-col sm:flex-row gap-1.5 items-center">
+        <form id="visitor-quick-form" onsubmit="loginFromQuickBar(event)"
+          class="mt-2 p-2 rounded-xl bg-[#060916]/95 border border-teal-300/40 flex flex-col sm:flex-row gap-1.5 items-center">
           <div class="flex items-center gap-1.5 w-full sm:flex-1">
             <span class="text-xs shrink-0">👤</span>
-            <input id="quick-login-name" type="text" placeholder="輸入名字 (例: 阿豪)..." class="w-full rounded-lg bg-slate-900 border border-white/20 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300 font-bold" />
+            <input id="quick-login-name" type="text" placeholder="輸入名字 (例: 阿豪)..."
+              class="w-full rounded-lg bg-slate-900 border border-white/20 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300 font-bold" />
           </div>
-          <button type="submit" class="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-xs shrink-0 shadow active:scale-95">
+          <button type="submit"
+            class="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-xs shrink-0 shadow active:scale-95">
             🚀 登入並開始定位
           </button>
         </form>
@@ -753,7 +1174,8 @@
             <div id="metric-survival-rate" class="text-sm sm:text-lg font-mono font-black text-amber-300">99%</div>
           </div>
         </div>
-        <div class="flex items-center justify-between px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/20 text-[10px] sm:text-[11px] font-mono">
+        <div
+          class="flex items-center justify-between px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/20 text-[10px] sm:text-[11px] font-mono">
           <span id="gps-coord-readout" class="text-amber-200 truncate">🛰️ 尚未開啟定位</span>
           <span id="gps-accuracy-badge" class="text-teal-300 font-black shrink-0">連線房號 #8888</span>
         </div>
@@ -761,7 +1183,9 @@
 
       <!-- 4 Tarot Status Broadcast Glass Windows (4 cols on tablet/desktop, 2x2 on mobile) -->
       <div id="scenario-grid-windows" class="md:col-span-2 lg:col-span-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <button data-scenario-btn="home" onclick="selectScenario('home')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：平安在家">
+        <button data-scenario-btn="home" onclick="selectScenario('home')"
+          class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center"
+          title="切換至情境：平安在家">
           <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-teal-300/80 mb-0.5">
             <span class="font-bold">#01</span>
             <span class="w-1.5 h-1.5 rounded-full bg-teal-400 group-hover:scale-125 transition-transform"></span>
@@ -769,7 +1193,9 @@
           <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🏠</span>
           <span class="text-[11px] font-black text-teal-300">平安在家</span>
         </button>
-        <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：買東西">
+        <button data-scenario-btn="snack" onclick="selectScenario('snack')"
+          class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center"
+          title="切換至情境：買東西">
           <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-amber-300/80 mb-0.5">
             <span class="font-bold">#02</span>
             <span class="w-1.5 h-1.5 rounded-full bg-amber-400 group-hover:scale-125 transition-transform"></span>
@@ -777,7 +1203,9 @@
           <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🛵</span>
           <span class="text-[11px] font-black text-amber-300">買東西</span>
         </button>
-        <button data-scenario-btn="roundabout" onclick="selectScenario('roundabout')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：圓環迷航">
+        <button data-scenario-btn="roundabout" onclick="selectScenario('roundabout')"
+          class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center"
+          title="切換至情境：圓環迷航">
           <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-orange-300/80 mb-0.5">
             <span class="font-bold">#03</span>
             <span class="w-1.5 h-1.5 rounded-full bg-orange-400 group-hover:scale-125 transition-transform"></span>
@@ -785,7 +1213,9 @@
           <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🔄</span>
           <span class="text-[11px] font-black text-orange-300">圓環迷航</span>
         </button>
-        <button data-scenario-btn="parking" onclick="selectScenario('parking')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：正在倒車">
+        <button data-scenario-btn="parking" onclick="selectScenario('parking')"
+          class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center"
+          title="切換至情境：正在倒車">
           <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-rose-300/80 mb-0.5">
             <span class="font-bold">#04</span>
             <span class="w-1.5 h-1.5 rounded-full bg-rose-400 group-hover:scale-125 transition-transform"></span>
@@ -808,31 +1238,42 @@
           <!-- Map Top Bar: Map Modes + Actions (Tablet & Mobile Optimized) -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1">
-              <button onclick="setMapStyle('tactical')" id="mapstyle-tactical" class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950 text-center shadow-sm">
+              <button onclick="setMapStyle('tactical')" id="mapstyle-tactical"
+                class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-gradient-to-r from-amber-300 to-amber-500 text-slate-950 text-center shadow-sm">
                 ✨ 星盤暗黑
               </button>
-              <button onclick="setMapStyle('streets')" id="mapstyle-streets" class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30 text-center">
+              <button onclick="setMapStyle('streets')" id="mapstyle-streets"
+                class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30 text-center">
                 🗺️ 標準平面
               </button>
-              <button onclick="setMapStyle('satellite')" id="mapstyle-satellite" class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30 text-center">
+              <button onclick="setMapStyle('satellite')" id="mapstyle-satellite"
+                class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-bold bg-slate-900/90 text-amber-100 border border-amber-300/30 text-center">
                 🛰️ 衛星空拍
               </button>
-              <button onclick="toggleRealStreetViewPanorama()" id="mapstyle-streetview" class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-indigo-950 text-amber-200 border border-amber-300/50 hover:bg-indigo-900 text-center">
+              <button onclick="toggleRealStreetViewPanorama()" id="mapstyle-streetview"
+                class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-indigo-950 text-amber-200 border border-amber-300/50 hover:bg-indigo-900 text-center">
                 🏙️ 360° 街景
               </button>
             </div>
 
             <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5">
-              <button onclick="useRealBrowserGPS()" class="px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-teal-400 hover:bg-teal-300 text-slate-950 shadow-[0_0_14px_rgba(45,212,191,0.5)] active:scale-95 transition-all text-center" title="重新抓取最高精度衛星 GPS 定位">
+              <button onclick="useRealBrowserGPS()"
+                class="px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-teal-400 hover:bg-teal-300 text-slate-950 shadow-[0_0_14px_rgba(45,212,191,0.5)] active:scale-95 transition-all text-center"
+                title="重新抓取最高精度衛星 GPS 定位">
                 🛰️ GPS校準
               </button>
-              <button id="btn-pinpoint-mode" onclick="togglePinpointMode()" class="px-2 sm:px-3 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-slate-900 border border-amber-300/40 text-amber-200 hover:bg-slate-800 active:scale-95 transition-all text-center" title="點擊後可直接在 Google 地圖上點選確切位置">
+              <button id="btn-pinpoint-mode" onclick="togglePinpointMode()"
+                class="px-2 sm:px-3 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-slate-900 border border-amber-300/40 text-amber-200 hover:bg-slate-800 active:scale-95 transition-all text-center"
+                title="點擊後可直接在 Google 地圖上點選確切位置">
                 📍 地圖釘選
               </button>
-              <button onclick="fitMapToAllPeople()" class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-bold bg-blue-950 border border-blue-400/40 text-cyan-200 hover:bg-blue-900 active:scale-95 transition-all text-center" title="自動縮放以同時顯示我和所有在線好友">
+              <button onclick="fitMapToAllPeople()"
+                class="px-2 sm:px-2.5 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-bold bg-blue-950 border border-blue-400/40 text-cyan-200 hover:bg-blue-900 active:scale-95 transition-all text-center"
+                title="自動縮放以同時顯示我和所有在線好友">
                 🎯 縮放全員
               </button>
-              <button onclick="switchTab('squad')" class="px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 active:scale-95 transition-all text-center">
+              <button onclick="switchTab('squad')"
+                class="px-2.5 sm:px-3 py-1.5 sm:py-1 rounded-xl text-[10px] sm:text-[11px] font-black bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 active:scale-95 transition-all text-center">
                 ➕ 好友連線
               </button>
             </div>
@@ -841,63 +1282,82 @@
           <!-- Taiwan Major Cities Quick Jump Selector (Mobile Horizontal Swipe) -->
           <div class="overflow-x-auto whitespace-nowrap flex items-center gap-1.5 py-1 text-[11px] no-scrollbar">
             <span class="text-amber-200/80 font-bold shrink-0">📍 快速跳轉：</span>
-            <button type="button" onclick="quickJumpToCity(25.0478, 121.5170, '台北車站')" class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">台北車站</button>
-            <button type="button" onclick="quickJumpToCity(25.0142, 121.4637, '新北板橋')" class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">新北板橋</button>
-            <button type="button" onclick="quickJumpToCity(24.9892, 121.3135, '桃園車站')" class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">桃園車站</button>
-            <button type="button" onclick="quickJumpToCity(24.8085, 120.9715, '新竹巨城')" class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">新竹巨城</button>
-            <button type="button" onclick="quickJumpToCity(24.1618, 120.6469, '台中市政府')" class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">台中市政府</button>
-            <button type="button" onclick="quickJumpToCity(22.9908, 120.2037, '台南孔廟')" class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">台南孔廟</button>
-            <button type="button" onclick="quickJumpToCity(22.6698, 120.3022, '高雄巨蛋')" class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">高雄巨蛋</button>
+            <button type="button" onclick="quickJumpToCity(25.0478, 121.5170, '台北車站')"
+              class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">台北車站</button>
+            <button type="button" onclick="quickJumpToCity(25.0142, 121.4637, '新北板橋')"
+              class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">新北板橋</button>
+            <button type="button" onclick="quickJumpToCity(24.9892, 121.3135, '桃園車站')"
+              class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">桃園車站</button>
+            <button type="button" onclick="quickJumpToCity(24.8085, 120.9715, '新竹巨城')"
+              class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">新竹巨城</button>
+            <button type="button" onclick="quickJumpToCity(24.1618, 120.6469, '台中市政府')"
+              class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">台中市政府</button>
+            <button type="button" onclick="quickJumpToCity(22.9908, 120.2037, '台南孔廟')"
+              class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">台南孔廟</button>
+            <button type="button" onclick="quickJumpToCity(22.6698, 120.3022, '高雄巨蛋')"
+              class="shrink-0 px-2 py-0.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-100 font-bold active:scale-95 transition-all">高雄巨蛋</button>
           </div>
 
           <!-- Precision Address / Landmark Search Bar -->
           <form onsubmit="searchMapLocation(event)" class="flex gap-1.5">
-            <input id="map-search-input" type="text" placeholder="🔍 輸入台灣路名、地標 (例：逢甲夜市、台北101、高雄巨蛋)..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/35 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300 font-bold" />
-            <button type="submit" class="px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0 active:scale-95">
+            <input id="map-search-input" type="text" placeholder="🔍 輸入台灣路名、地標 (例：逢甲夜市、台北101、高雄巨蛋)..."
+              class="flex-1 rounded-xl bg-[#060916] border border-amber-300/35 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300 font-bold" />
+            <button type="submit"
+              class="px-3 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0 active:scale-95">
               🛰️ 搜尋路名
             </button>
           </form>
 
           <!-- REAL GOOGLE MAP & REAL 360° GOOGLE STREET VIEW CONTAINER -->
-          <div class="relative w-full h-[290px] sm:h-[370px] md:h-[420px] lg:h-[480px] rounded-2xl overflow-hidden border-2 border-amber-300/45 z-10 shadow-2xl bg-[#060916]">
+          <div
+            class="relative w-full h-[290px] sm:h-[370px] md:h-[420px] lg:h-[480px] rounded-2xl overflow-hidden border-2 border-amber-300/45 z-10 shadow-2xl bg-[#060916]">
             <!-- 2D Leaflet Map -->
             <div id="real-google-map" class="w-full h-full"></div>
 
             <!-- Floating Visitor Preview Privacy HUD Pill (Visible only in visitor preview mode) -->
-            <div id="map-preview-floating-pill" class="absolute top-2 inset-x-2 sm:inset-x-auto sm:left-3 z-20 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#060A17]/95 border border-teal-300/60 shadow-[0_0_20px_rgba(45,212,191,0.35)] backdrop-blur-md flex items-center justify-between gap-1.5 sm:gap-2 text-xs">
+            <div id="map-preview-floating-pill"
+              class="absolute top-2 inset-x-2 sm:inset-x-auto sm:left-3 z-20 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#060A17]/95 border border-teal-300/60 shadow-[0_0_20px_rgba(45,212,191,0.35)] backdrop-blur-md flex items-center justify-between gap-1.5 sm:gap-2 text-xs">
               <div class="flex items-center gap-1.5 min-w-0">
                 <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse shrink-0"></span>
                 <span class="font-bold text-teal-200 truncate text-[11px] sm:text-xs">👀 訪客預覽・未開啟個人定位</span>
               </div>
-              <button onclick="document.getElementById('quick-login-name')?.focus()" class="shrink-0 px-2 py-0.5 rounded-lg bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-[10px] sm:text-[11px] shadow active:scale-95">
+              <button onclick="document.getElementById('quick-login-name')?.focus()"
+                class="shrink-0 px-2 py-0.5 rounded-lg bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-[10px] sm:text-[11px] shadow active:scale-95">
                 <span class="hidden sm:inline">輸入名字加入 ➔</span><span class="sm:hidden">登入 ➔</span>
               </button>
             </div>
 
             <!-- Real 360° Google Street View Panorama Overlay (Hidden until user clicks "🏙️ 360° 真實街景") -->
             <div id="real-streetview-panel" class="hidden absolute inset-0 z-30 bg-[#060916] flex flex-col">
-              <div class="flex items-center justify-between px-3 py-1.5 bg-[#060A17]/95 border-b border-amber-300/35 text-xs">
+              <div
+                class="flex items-center justify-between px-3 py-1.5 bg-[#060A17]/95 border-b border-amber-300/35 text-xs">
                 <span id="streetview-coord-label" class="font-mono font-bold text-amber-300 truncate">
                   🏙️ 360° 真實街景實況
                 </span>
                 <div class="flex items-center gap-1.5 shrink-0">
-                  <a id="streetview-external-link" href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-teal-400 text-slate-950 font-black text-[11px]">
+                  <a id="streetview-external-link" href="https://www.google.com/maps" target="_blank"
+                    rel="noopener noreferrer"
+                    class="px-2.5 py-1 rounded-lg bg-teal-400 text-slate-950 font-black text-[11px]">
                     ↗️ 全螢幕街景
                   </a>
-                  <button onclick="closeRealStreetViewPanorama()" class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-black text-[11px]">
+                  <button onclick="closeRealStreetViewPanorama()"
+                    class="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-black text-[11px]">
                     ✕ 返回雷達圖
                   </button>
                 </div>
               </div>
-              <iframe id="streetview-iframe" class="w-full flex-1 border-0" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              <iframe id="streetview-iframe" class="w-full flex-1 border-0" allowfullscreen loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
           </div>
 
           <!-- Live Precision Geocoding Address & Coordinate Bar -->
-          <div id="map-live-status-bar" class="px-3 py-2 rounded-xl bg-[#060916]/95 border border-amber-300/35 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div id="map-live-status-bar"
+            class="px-3 py-2 rounded-xl bg-[#060916]/95 border border-amber-300/35 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div class="flex items-center gap-1.5 min-w-0">
               <span class="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse shrink-0"></span>
-              <span id="live-location-address" class="font-mono text-amber-200 truncate font-bold">📍 正在獲取精確門牌地址...</span>
+              <span id="live-location-address" class="font-mono text-amber-200 truncate font-bold">📍
+                正在獲取精確門牌地址...</span>
             </div>
             <div class="flex items-center gap-2 shrink-0 font-mono text-[11px]">
               <span id="live-coord-display" class="text-teal-300 font-bold">24.1618, 120.6469 (±5m)</span>
@@ -907,14 +1367,16 @@
           </div>
 
           <!-- Online Friends Quick Bar (Replaces fake hotspots when friends are online!) -->
-          <div class="flex flex-wrap items-center justify-between gap-2 bg-[#060916]/90 px-3 py-2 rounded-xl border border-amber-300/25 text-xs">
+          <div
+            class="flex flex-wrap items-center justify-between gap-2 bg-[#060916]/90 px-3 py-2 rounded-xl border border-amber-300/25 text-xs">
             <div id="map-online-friends-pills" class="flex flex-wrap items-center gap-1.5">
               <span class="text-amber-200/70 font-bold">👥 線上好友定位：</span>
               <span class="text-slate-400 text-[11px]">尚無好友登入，點右上「💬 邀好友連線」或「➕ 加好友」</span>
             </div>
             <div class="flex items-center gap-2 flex-1 min-w-[160px] max-w-[240px]">
               <span class="font-black text-amber-300 shrink-0">🎼 警戒度</span>
-              <input id="chaos-slider" type="range" min="0" max="100" value="76" class="w-full accent-amber-400 cursor-pointer" />
+              <input id="chaos-slider" type="range" min="0" max="100" value="76"
+                class="w-full accent-amber-400 cursor-pointer" />
               <span id="chaos-slider-val" class="font-mono font-black text-rose-400 w-9 text-right">76%</span>
             </div>
           </div>
@@ -929,44 +1391,57 @@
             </div>
             <!-- Preset Quick Stamps -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              <button onclick="slapSanbaoStamp('🍗 雞腿換駕照')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-amber-200">
+              <button onclick="slapSanbaoStamp('🍗 雞腿換駕照')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-amber-200">
                 + 🍗 雞腿換駕照
               </button>
-              <button onclick="slapSanbaoStamp('🌧️ 晴天刷雨刷')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-teal-300">
+              <button onclick="slapSanbaoStamp('🌧️ 晴天刷雨刷')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-teal-300">
                 + 🌧️ 晴天刷雨刷
               </button>
-              <button onclick="slapSanbaoStamp('🅿️ 雙格停車王')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-rose-300">
+              <button onclick="slapSanbaoStamp('🅿️ 雙格停車王')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-rose-300">
                 + 🅿️ 雙格停車王
               </button>
-              <button onclick="slapSanbaoStamp('🔄 圓環釘子戶')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-orange-300">
+              <button onclick="slapSanbaoStamp('🔄 圓環釘子戶')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-orange-300">
                 + 🔄 圓環釘子戶
               </button>
-              <button onclick="slapSanbaoStamp('💡 方向燈裝飾品')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-yellow-200">
+              <button onclick="slapSanbaoStamp('💡 方向燈裝飾品')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-yellow-200">
                 + 💡 方向燈裝飾品
               </button>
-              <button onclick="slapSanbaoStamp('🐢 綠燈發呆王')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-emerald-300">
+              <button onclick="slapSanbaoStamp('🐢 綠燈發呆王')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-emerald-300">
                 + 🐢 綠燈發呆王
               </button>
-              <button onclick="slapSanbaoStamp('🌀 導航迷路仙')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-indigo-300">
+              <button onclick="slapSanbaoStamp('🌀 導航迷路仙')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-indigo-300">
                 + 🌀 導航迷路仙
               </button>
-              <button onclick="slapSanbaoStamp('🚦 黃燈衝刺手')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-pink-300">
+              <button onclick="slapSanbaoStamp('🚦 黃燈衝刺手')"
+                class="tarot-btn py-2 px-1.5 text-[11px] font-black text-pink-300">
                 + 🚦 黃燈衝刺手
               </button>
             </div>
             <!-- Custom Tag Input Form -->
             <form onsubmit="addCustomSanbaoStamp(event)" class="flex gap-1.5 pt-1">
-              <input id="custom-stamp-input" type="text" placeholder="自訂標籤 (例: 永遠不打方向燈、壓雙黃線)..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/35 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300" />
-              <button type="submit" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-300 to-emerald-400 text-slate-950 font-black text-xs shrink-0 shadow active:scale-95">
+              <input id="custom-stamp-input" type="text" placeholder="自訂標籤 (例: 永遠不打方向燈、壓雙黃線)..."
+                class="flex-1 rounded-xl bg-[#060916] border border-amber-300/35 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300" />
+              <button type="submit"
+                class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-300 to-emerald-400 text-slate-950 font-black text-xs shrink-0 shadow active:scale-95">
                 🏷️ 貼上標籤
               </button>
             </form>
           </div>
 
-          <div class="sm:col-span-5 bg-[#060916]/90 p-2.5 rounded-xl border border-amber-300/30 flex flex-col justify-between gap-2">
+          <div
+            class="sm:col-span-5 bg-[#060916]/90 p-2.5 rounded-xl border border-amber-300/30 flex flex-col justify-between gap-2">
             <div class="flex items-center justify-between gap-2">
               <div class="text-[11px] text-amber-300 font-black">🎰 駕照含雞腿量鑑定</div>
-              <span id="roulette-count-badge" class="px-1.5 py-0.5 rounded bg-amber-400/15 border border-amber-300/30 text-[9px] font-mono font-black text-amber-200">已鑑定 0 次</span>
+              <span id="roulette-count-badge"
+                class="px-1.5 py-0.5 rounded bg-amber-400/15 border border-amber-300/30 text-[9px] font-mono font-black text-amber-200">已鑑定
+                0 次</span>
             </div>
             <div id="roulette-result-text" class="text-xs font-black text-white truncate">🍗 黃金脆皮雞腿 x 88 支</div>
             <div>
@@ -974,17 +1449,21 @@
                 <span>雞腿含量</span><span id="roulette-meter-val" class="text-amber-300 font-black">88%</span>
               </div>
               <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                <div id="roulette-meter-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-500 transition-all duration-500" style="width:88%"></div>
+                <div id="roulette-meter-bar"
+                  class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-500 transition-all duration-500"
+                  style="width:88%"></div>
               </div>
             </div>
             <div id="roulette-history" class="flex flex-wrap gap-1 min-h-[18px]">
               <span class="text-[9px] text-slate-500">鑑定紀錄會顯示在這裡</span>
             </div>
             <div class="grid grid-cols-2 gap-1.5">
-              <button onclick="spinChickenLicenseRoulette()" class="py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shadow active:scale-95">
+              <button onclick="spinChickenLicenseRoulette()"
+                class="py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shadow active:scale-95">
                 🎲 鑑定損友
               </button>
-              <button onclick="shareRouletteResult()" class="py-2 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow active:scale-95">
+              <button onclick="shareRouletteResult()"
+                class="py-2 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow active:scale-95">
                 💬 炫耀結果
               </button>
             </div>
@@ -1001,61 +1480,78 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-black gold-text">🛡️ 三寶防禦反制塔台</span>
-              <span id="defense-status-badge" class="px-2 py-0.5 rounded-full bg-slate-900 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
+              <span id="defense-status-badge"
+                class="px-2 py-0.5 rounded-full bg-slate-900 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
                 🟢 待命中
               </span>
             </div>
             <div class="flex items-center gap-2 text-[10px] font-mono">
-              <span class="text-slate-300">護盾生命：<span id="defense-lives-display" class="font-black text-rose-400">❤️❤️❤️</span></span>
-              <span class="text-amber-200">化解：<span id="shield-deflect-score" class="font-black text-amber-300 text-xs">0</span> 次</span>
+              <span class="text-slate-300">護盾生命：<span id="defense-lives-display"
+                  class="font-black text-rose-400">❤️❤️❤️</span></span>
+              <span class="text-amber-200">化解：<span id="shield-deflect-score"
+                  class="font-black text-amber-300 text-xs">0</span> 次</span>
             </div>
           </div>
 
           <!-- Radar Dome Canvas with Start & Game Over Overlays -->
           <div class="relative rounded-xl overflow-hidden border border-teal-400/40 bg-[#040818] shadow-inner">
-            <canvas id="defense-radar-canvas" width="460" height="130" class="w-full h-[125px] block select-none"></canvas>
+            <canvas id="defense-radar-canvas" width="460" height="130"
+              class="w-full h-[125px] block select-none"></canvas>
             <div class="absolute top-1 left-2 text-[9px] font-mono text-teal-300/80 pointer-events-none">
               RADAR // 1.5KM 基地防禦圈
             </div>
 
             <!-- Start Game Overlay -->
-            <div id="defense-start-overlay" class="absolute inset-0 z-20 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-2 text-center">
+            <div id="defense-start-overlay"
+              class="absolute inset-0 z-20 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-2 text-center">
               <div class="text-xs font-black text-amber-300 mb-0.5">🛡️ 三寶全境防禦反制作戰</div>
               <div class="text-[9px] text-slate-300 mb-2">擁有 3 條護盾生命 ❤️❤️❤️・敵車觸及中心基地即扣血！</div>
-              <button onclick="startDefenseGame()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(45,212,191,0.5)] active:scale-95 transition-all">
+              <button onclick="startDefenseGame()"
+                class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(45,212,191,0.5)] active:scale-95 transition-all">
                 🚀 啟動防禦塔台 (START GAME)
               </button>
             </div>
 
             <!-- Game Over Overlay -->
-            <div id="defense-gameover-overlay" class="hidden absolute inset-0 z-20 bg-rose-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-2 text-center border-2 border-rose-500">
+            <div id="defense-gameover-overlay"
+              class="hidden absolute inset-0 z-20 bg-rose-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-2 text-center border-2 border-rose-500">
               <div class="text-xs font-black text-rose-300 mb-0.5">💥 護盾歸零 // 基地失守！</div>
               <div id="defense-final-score-text" class="text-[10px] text-amber-200 font-mono mb-2">最終成功化解三寶：0 次</div>
-              <button onclick="startDefenseGame()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition-all">
+              <button onclick="startDefenseGame()"
+                class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition-all">
                 🔄 重新充能再戰 (RETRY)
               </button>
             </div>
 
-            <div id="shield-combat-log" class="absolute bottom-1 inset-x-2 text-center text-[10px] font-mono font-bold text-amber-200 truncate bg-black/70 rounded px-1.5 py-0.5 pointer-events-none">
+            <div id="shield-combat-log"
+              class="absolute bottom-1 inset-x-2 text-center text-[10px] font-mono font-bold text-amber-200 truncate bg-black/70 rounded px-1.5 py-0.5 pointer-events-none">
               ⚡ 點擊【🚀 啟動防禦塔台】進入防禦作戰！
             </div>
           </div>
 
           <!-- 4 Interactive Tactical Decoy Projectiles -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-            <button onclick="launchInteractiveCountermeasure('chicken')" class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-amber-200 flex flex-col items-center gap-0.5" title="投擲黃金脆皮雞腿收買三寶">
+            <button onclick="launchInteractiveCountermeasure('chicken')"
+              class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-amber-200 flex flex-col items-center gap-0.5"
+              title="投擲黃金脆皮雞腿收買三寶">
               <span class="text-base">🍗</span>
               <span>脆皮雞腿彈</span>
             </button>
-            <button onclick="launchInteractiveCountermeasure('wiper')" class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-cyan-200 flex flex-col items-center gap-0.5" title="發射雙雷射雨刷擦除敵影">
+            <button onclick="launchInteractiveCountermeasure('wiper')"
+              class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-cyan-200 flex flex-col items-center gap-0.5"
+              title="發射雙雷射雨刷擦除敵影">
               <span class="text-base">🌧️</span>
               <span>暴雨雨刷彈</span>
             </button>
-            <button onclick="launchInteractiveCountermeasure('horn')" class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-rose-300 flex flex-col items-center gap-0.5" title="發射超音波大聲公震退三寶">
+            <button onclick="launchInteractiveCountermeasure('horn')"
+              class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-rose-300 flex flex-col items-center gap-0.5"
+              title="發射超音波大聲公震退三寶">
               <span class="text-base">📢</span>
               <span>震退聲波彈</span>
             </button>
-            <button onclick="launchInteractiveCountermeasure('parking')" class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-yellow-300 flex flex-col items-center gap-0.5" title="路邊生成雙格車位吸引三寶自動倒車">
+            <button onclick="launchInteractiveCountermeasure('parking')"
+              class="glass-window tarot-btn py-1.5 px-1 text-[11px] font-black text-yellow-300 flex flex-col items-center gap-0.5"
+              title="路邊生成雙格車位吸引三寶自動倒車">
               <span class="text-base">🧲</span>
               <span>車位吸入陷阱</span>
             </button>
@@ -1067,90 +1563,85 @@
           <div class="flex flex-wrap items-center justify-between gap-1">
             <div class="flex items-center gap-1.5">
               <h3 class="text-xs font-black gold-text">🎮 3D 好市多「左右相反」倒車考驗</h3>
-              <span id="parking-progress-badge" class="px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 font-mono text-[9px] font-black text-amber-300">
+              <span id="parking-progress-badge"
+                class="px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 font-mono text-[9px] font-black text-amber-300">
                 入庫 0%
               </span>
             </div>
 
             <div class="flex items-center gap-1">
-              <button id="btn-parking-cam" onclick="toggleParkingCameraMode()" class="px-2 py-0.5 rounded-lg bg-blue-950 border border-amber-300/40 text-[9px] font-black text-amber-200">
+              <button id="btn-parking-cam" onclick="toggleParkingCameraMode()"
+                class="px-2 py-0.5 rounded-lg bg-blue-950 border border-amber-300/40 text-[9px] font-black text-amber-200">
                 🎥 3D透視
               </button>
-              <button id="btn-parking-invert" onclick="toggleParkingInvertMode()" class="px-2 py-0.5 rounded-lg bg-rose-600/30 border border-rose-400/50 text-[9px] font-black text-rose-200">
+              <button id="btn-parking-invert" onclick="toggleParkingInvertMode()"
+                class="px-2 py-0.5 rounded-lg bg-rose-600/30 border border-rose-400/50 text-[9px] font-black text-rose-200">
                 🔀 相反: ON
               </button>
             </div>
           </div>
 
           <div class="grid grid-cols-3 gap-1 text-[10px]">
-            <button id="park-lvl-1" onclick="selectParkingLevel(1)" class="py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black">
+            <button id="park-lvl-1" onclick="selectParkingLevel(1)"
+              class="py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black">
               Lv.1 新手雙柱
             </button>
-            <button id="park-lvl-2" onclick="selectParkingLevel(2)" class="py-0.5 rounded-lg bg-slate-900 text-amber-200 border border-amber-300/30 font-bold">
+            <button id="park-lvl-2" onclick="selectParkingLevel(2)"
+              class="py-0.5 rounded-lg bg-slate-900 text-amber-200 border border-amber-300/30 font-bold">
               Lv.2 推車大媽
             </button>
-            <button id="park-lvl-3" onclick="selectParkingLevel(3)" class="py-0.5 rounded-lg bg-slate-900 text-amber-200 border border-amber-300/30 font-bold">
+            <button id="park-lvl-3" onclick="selectParkingLevel(3)"
+              class="py-0.5 rounded-lg bg-slate-900 text-amber-200 border border-amber-300/30 font-bold">
               Lv.3 地獄夾縫
             </button>
           </div>
 
           <div class="relative w-full rounded-xl overflow-hidden border border-amber-300/40 bg-[#060916] shadow-xl">
-            <canvas id="parking-game-canvas" width="460" height="210" class="w-full h-[150px] sm:h-[165px] block touch-none"></canvas>
+            <canvas id="parking-game-canvas" width="460" height="210"
+              class="w-full h-[150px] sm:h-[165px] block touch-none"></canvas>
 
-            <div id="parking-start-overlay" class="absolute inset-0 bg-[#060A17]/85 backdrop-blur-sm flex flex-col items-center justify-center p-2.5 text-center space-y-1.5 z-20">
-              <div id="parking-overlay-badge" class="px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/50 text-amber-300 font-mono text-[9px] font-black">
+            <div id="parking-start-overlay"
+              class="absolute inset-0 bg-[#060A17]/85 backdrop-blur-sm flex flex-col items-center justify-center p-2.5 text-center space-y-1.5 z-20">
+              <div id="parking-overlay-badge"
+                class="px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/50 text-amber-300 font-mono text-[9px] font-black">
                 COSTCO B2 // 左右相反倒車
               </div>
               <div id="parking-overlay-title" class="font-serif-title text-sm font-black gold-text">
                 挑戰好市多 B2 倒車入庫！
               </div>
               <p id="parking-overlay-desc" class="text-[10px] text-amber-100/90 max-w-xs">
-                方向盤左右相反！按鍵盤 <span class="text-amber-300 font-mono font-black">↑ ↓ ← →</span> / <span class="text-amber-300 font-mono font-black">WASD</span> 直接開始，或按住下方按鈕！
+                方向盤左右相反！按鍵盤 <span class="text-amber-300 font-mono font-black">↑ ↓ ← →</span> / <span
+                  class="text-amber-300 font-mono font-black">WASD</span> 直接開始，或按住下方按鈕！
               </p>
-              <button onclick="activateParkingChallenge()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow hover:scale-105 active:scale-95 transition-all">
+              <button onclick="activateParkingChallenge()"
+                class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow hover:scale-105 active:scale-95 transition-all">
                 ▶️ 點擊開始倒車挑戰
               </button>
             </div>
           </div>
 
           <div class="grid grid-cols-4 gap-1.5 select-none">
-            <button
-              data-park-key="left"
-              onpointerdown="setParkingKey('left', true)"
-              onpointerup="setParkingKey('left', false)"
-              onpointerleave="setParkingKey('left', false)"
-              onpointercancel="setParkingKey('left', false)"
-              onclick="stepParkingCar('LEFT')"
+            <button data-park-key="left" onpointerdown="setParkingKey('left', true)"
+              onpointerup="setParkingKey('left', false)" onpointerleave="setParkingKey('left', false)"
+              onpointercancel="setParkingKey('left', false)" onclick="stepParkingCar('LEFT')"
               class="tarot-btn py-2 text-[11px] font-black text-amber-100 flex flex-col items-center justify-center active:scale-95">
               <span>⬅️ 左打</span>
             </button>
-            <button
-              data-park-key="right"
-              onpointerdown="setParkingKey('right', true)"
-              onpointerup="setParkingKey('right', false)"
-              onpointerleave="setParkingKey('right', false)"
-              onpointercancel="setParkingKey('right', false)"
-              onclick="stepParkingCar('RIGHT')"
+            <button data-park-key="right" onpointerdown="setParkingKey('right', true)"
+              onpointerup="setParkingKey('right', false)" onpointerleave="setParkingKey('right', false)"
+              onpointercancel="setParkingKey('right', false)" onclick="stepParkingCar('RIGHT')"
               class="tarot-btn py-2 text-[11px] font-black text-amber-100 flex flex-col items-center justify-center active:scale-95">
               <span>➡️ 右打</span>
             </button>
-            <button
-              data-park-key="down"
-              onpointerdown="setParkingKey('down', true)"
-              onpointerup="setParkingKey('down', false)"
-              onpointerleave="setParkingKey('down', false)"
-              onpointercancel="setParkingKey('down', false)"
-              onclick="stepParkingCar('REV')"
+            <button data-park-key="down" onpointerdown="setParkingKey('down', true)"
+              onpointerup="setParkingKey('down', false)" onpointerleave="setParkingKey('down', false)"
+              onpointercancel="setParkingKey('down', false)" onclick="stepParkingCar('REV')"
               class="py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-500 text-[11px] font-black text-white shadow active:scale-95 flex flex-col items-center justify-center">
               <span>⏪ 倒車 R</span>
             </button>
-            <button
-              data-park-key="up"
-              onpointerdown="setParkingKey('up', true)"
-              onpointerup="setParkingKey('up', false)"
-              onpointerleave="setParkingKey('up', false)"
-              onpointercancel="setParkingKey('up', false)"
-              onclick="stepParkingCar('FWD')"
+            <button data-park-key="up" onpointerdown="setParkingKey('up', true)"
+              onpointerup="setParkingKey('up', false)" onpointerleave="setParkingKey('up', false)"
+              onpointercancel="setParkingKey('up', false)" onclick="stepParkingCar('FWD')"
               class="py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-[11px] font-black text-slate-950 shadow active:scale-95 flex flex-col items-center justify-center">
               <span>⏩ 前進 D</span>
             </button>
@@ -1162,7 +1653,8 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-black gold-text">⚡ 全境三寶避災戰術速報</span>
-              <span class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
+              <span
+                class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
                 🟢 LIVE
               </span>
             </div>
@@ -1187,26 +1679,40 @@
           </div>
 
           <!-- Live auto-updating sighting ticker: grows to fill all remaining height -->
-          <div class="relative flex-1 min-h-[96px] rounded-xl bg-[#060916]/90 border border-amber-300/25 overflow-hidden">
-            <div class="absolute top-0 inset-x-0 z-10 flex items-center justify-between px-2.5 py-1 bg-[#060916] border-b border-amber-300/20">
+          <div
+            class="relative flex-1 min-h-[96px] rounded-xl bg-[#060916]/90 border border-amber-300/25 overflow-hidden">
+            <div
+              class="absolute top-0 inset-x-0 z-10 flex items-center justify-between px-2.5 py-1 bg-[#060916] border-b border-amber-300/20">
               <span class="text-[10px] font-black text-amber-200">📡 即時三寶目擊動態</span>
-              <span class="flex items-center gap-1 text-[9px] font-mono text-rose-300"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>REC</span>
+              <span class="flex items-center gap-1 text-[9px] font-mono text-rose-300"><span
+                  class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>REC</span>
             </div>
-            <div id="tactical-live-feed" class="absolute inset-0 top-[26px] overflow-hidden px-2 py-1.5 space-y-1"></div>
-            <div class="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-[#060916] to-transparent pointer-events-none"></div>
+            <div id="tactical-live-feed" class="absolute inset-0 top-[26px] overflow-hidden px-2 py-1.5 space-y-1">
+            </div>
+            <div
+              class="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-[#060916] to-transparent pointer-events-none">
+            </div>
           </div>
 
           <div class="grid grid-cols-4 gap-1.5">
-            <button onclick="openPresidentialAlert()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-rose-300 flex flex-col items-center justify-center active:scale-95" title="發送全境避難警報">
+            <button onclick="openPresidentialAlert()"
+              class="tarot-btn py-1.5 px-1 text-[11px] font-black text-rose-300 flex flex-col items-center justify-center active:scale-95"
+              title="發送全境避難警報">
               <span>🚨</span><span>全境廣播</span>
             </button>
-            <button onclick="knockCopilotWoodfish()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-amber-300 flex flex-col items-center justify-center active:scale-95" title="快速敲擊木魚積累功德">
+            <button onclick="knockCopilotWoodfish()"
+              class="tarot-btn py-1.5 px-1 text-[11px] font-black text-amber-300 flex flex-col items-center justify-center active:scale-95"
+              title="快速敲擊木魚積累功德">
               <span>📿</span><span>積累功德</span>
             </button>
-            <button onclick="reportLiveSighting()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-sky-300 flex flex-col items-center justify-center active:scale-95" title="回報一筆三寶目擊">
+            <button onclick="reportLiveSighting()"
+              class="tarot-btn py-1.5 px-1 text-[11px] font-black text-sky-300 flex flex-col items-center justify-center active:scale-95"
+              title="回報一筆三寶目擊">
               <span>📸</span><span>回報目擊</span>
             </button>
-            <button onclick="switchTab('squad')" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-teal-300 flex flex-col items-center justify-center active:scale-95" title="切換至好友連線名冊">
+            <button onclick="switchTab('squad')"
+              class="tarot-btn py-1.5 px-1 text-[11px] font-black text-teal-300 flex flex-col items-center justify-center active:scale-95"
+              title="切換至好友連線名冊">
               <span>👥</span><span>好友名冊</span>
             </button>
           </div>
@@ -1224,31 +1730,37 @@
       <div class="lg:col-span-5 royal-card p-5 flex flex-col justify-between space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="font-serif-title text-lg font-black gold-text">👤 1. 登入我的即時定位</h2>
-          <span id="my-login-status-pill" class="px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 font-mono text-[10px] font-black">
+          <span id="my-login-status-pill"
+            class="px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 font-mono text-[10px] font-black">
             尚未登入
           </span>
         </div>
 
         <p class="text-xs text-amber-100/85 leading-relaxed">
-          只要你跟朋友輸入相同的<span class="text-amber-300 font-black">「連線房號（預設 8888）」</span>並按下登入，朋友一登入網站，你的畫面就會跳出通知，按<span class="text-teal-300 font-black">「✅ 確定」</span>就能即時看到他的真實位置！
+          只要你跟朋友輸入相同的<span class="text-amber-300 font-black">「連線房號（預設 8888）」</span>並按下登入，朋友一登入網站，你的畫面就會跳出通知，按<span
+            class="text-teal-300 font-black">「✅ 確定」</span>就能即時看到他的真實位置！
         </p>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <div>
             <label class="text-[10px] text-amber-200/80 font-bold block mb-1">你的暱稱 *</label>
-            <input id="my-driver-name" type="text" oninput="syncDriverProfileFromTab2()" placeholder="輸入你的名字" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-amber-300" />
+            <input id="my-driver-name" type="text" oninput="syncDriverProfileFromTab2()" placeholder="輸入你的名字"
+              class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-amber-300" />
           </div>
           <div>
             <label class="text-[10px] text-amber-200/80 font-bold block mb-1">車牌或座駕</label>
-            <input id="my-driver-plate" type="text" oninput="syncDriverProfileFromTab2()" placeholder="例: ABC-8888" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3 py-2 text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-amber-300" />
+            <input id="my-driver-plate" type="text" oninput="syncDriverProfileFromTab2()" placeholder="例: ABC-8888"
+              class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3 py-2 text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-amber-300" />
           </div>
           <div>
             <label class="text-[10px] text-amber-200/80 font-bold block mb-1">好友連線房號</label>
-            <input id="my-room-code" type="text" oninput="syncDriverProfileFromTab2()" value="8888" placeholder="8888" class="w-full rounded-xl bg-[#060916] border border-teal-300/50 px-3 py-2 text-xs font-mono font-black text-teal-300 focus:outline-none focus:border-teal-300" />
+            <input id="my-room-code" type="text" oninput="syncDriverProfileFromTab2()" value="8888" placeholder="8888"
+              class="w-full rounded-xl bg-[#060916] border border-teal-300/50 px-3 py-2 text-xs font-mono font-black text-teal-300 focus:outline-none focus:border-teal-300" />
           </div>
         </div>
 
-        <button id="btn-live-beacon" onclick="loginAndStartRealGpsBroadcast()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 hover:brightness-110 text-slate-950 font-black text-sm shadow-[0_0_28px_rgba(45,212,191,0.5)] active:scale-95 transition-all">
+        <button id="btn-live-beacon" onclick="loginAndStartRealGpsBroadcast()"
+          class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 hover:brightness-110 text-slate-950 font-black text-sm shadow-[0_0_28px_rgba(45,212,191,0.5)] active:scale-95 transition-all">
           ✅ 登入網站並開啟我的真實定位 (讓好友看到我)
         </button>
 
@@ -1275,10 +1787,12 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button onclick="inviteFriendViaLine()" class="w-full py-3 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow-lg flex items-center justify-center gap-1.5">
+          <button onclick="inviteFriendViaLine()"
+            class="w-full py-3 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow-lg flex items-center justify-center gap-1.5">
             💬 傳 LINE 邀請好友登入連線
           </button>
-          <button onclick="shareMyDrivingLink(false)" class="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs">
+          <button onclick="shareMyDrivingLink(false)"
+            class="w-full py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs">
             📋 複製邀請連線網址
           </button>
         </div>
@@ -1291,36 +1805,52 @@
             <h3 class="font-serif-title text-base font-black gold-text">👥 2. 我的真人好友監測清單（無虛擬人）</h3>
             <p class="text-[11px] text-slate-300 mt-0.5">當好友登入此網站時會自動出現在下方，你也可以先手動新增好友名字，按「確定查看位置」即可鎖定！</p>
           </div>
-          <button onclick="clearAllFriends()" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/15 text-[11px] text-slate-400 hover:text-rose-300">
+          <button onclick="clearAllFriends()"
+            class="px-2.5 py-1 rounded-lg bg-slate-900 border border-white/15 text-[11px] text-slate-400 hover:text-rose-300">
             🗑️ 清空清單
           </button>
         </div>
 
         <!-- Manual Add Real Friend Form with Precise Address / Location -->
-        <form onsubmit="addFriendToSquad(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 bg-[#060916] p-2.5 rounded-xl border border-amber-300/30">
-          <input id="add-friend-name" type="text" placeholder="好友名字 (例: 阿豪) *" class="sm:col-span-1 lg:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs text-white font-bold" />
-          <input id="add-friend-plate" type="text" placeholder="車牌 (選填)" class="sm:col-span-1 lg:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs font-mono text-amber-300" />
-          <input id="add-friend-location" type="text" placeholder="好友所在路名/地標 (例: 逢甲夜市、台北101、高雄車站)" class="sm:col-span-2 lg:col-span-4 rounded-lg bg-slate-900 border border-teal-300/40 px-3 py-2 text-xs text-white font-bold" />
-          <button type="submit" class="sm:col-span-2 lg:col-span-2 py-2 rounded-lg bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 text-slate-950 font-black text-xs shadow active:scale-95">
+        <form onsubmit="addFriendToSquad(event)"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 bg-[#060916] p-2.5 rounded-xl border border-amber-300/30">
+          <input id="add-friend-name" type="text" placeholder="好友名字 (例: 阿豪) *"
+            class="sm:col-span-1 lg:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs text-white font-bold" />
+          <input id="add-friend-plate" type="text" placeholder="車牌 (選填)"
+            class="sm:col-span-1 lg:col-span-3 rounded-lg bg-slate-900 border border-white/10 px-3 py-2 text-xs font-mono text-amber-300" />
+          <input id="add-friend-location" type="text" placeholder="好友所在路名/地標 (例: 逢甲夜市、台北101、高雄車站)"
+            class="sm:col-span-2 lg:col-span-4 rounded-lg bg-slate-900 border border-teal-300/40 px-3 py-2 text-xs text-white font-bold" />
+          <button type="submit"
+            class="sm:col-span-2 lg:col-span-2 py-2 rounded-lg bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 text-slate-950 font-black text-xs shadow active:scale-95">
             ➕ 精準定位
           </button>
         </form>
 
         <!-- Quick Tactical Prank & Care Interactions to Friends -->
-        <div class="p-2.5 rounded-xl bg-[#060916]/95 border border-teal-300/40 flex flex-col sm:flex-row items-center justify-between gap-2 shadow">
+        <div
+          class="p-2.5 rounded-xl bg-[#060916]/95 border border-teal-300/40 flex flex-col sm:flex-row items-center justify-between gap-2 shadow">
           <div class="flex items-center gap-1.5 shrink-0">
             <span class="text-xs font-black text-amber-200">🎯 一鍵向在線好友整人發送：</span>
           </div>
           <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar">
-            <button onclick="prankFriendSquad('chicken')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/40 text-amber-200 shrink-0 text-xs font-bold active:scale-95">🍗 請吃雞腿</button>
-            <button onclick="prankFriendSquad('horn')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-rose-400/40 text-rose-300 shrink-0 text-xs font-bold active:scale-95">📢 奪命連環叭</button>
-            <button onclick="prankFriendSquad('parking')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-yellow-300/40 text-yellow-300 shrink-0 text-xs font-bold active:scale-95">🅿️ 幫找車位</button>
-            <button onclick="prankFriendSquad('wanted')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-teal-300/40 text-teal-300 shrink-0 text-xs font-bold active:scale-95">🚨 發通緝令</button>
+            <button onclick="prankFriendSquad('chicken')"
+              class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/40 text-amber-200 shrink-0 text-xs font-bold active:scale-95">🍗
+              請吃雞腿</button>
+            <button onclick="prankFriendSquad('horn')"
+              class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-rose-400/40 text-rose-300 shrink-0 text-xs font-bold active:scale-95">📢
+              奪命連環叭</button>
+            <button onclick="prankFriendSquad('parking')"
+              class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-yellow-300/40 text-yellow-300 shrink-0 text-xs font-bold active:scale-95">🅿️
+              幫找車位</button>
+            <button onclick="prankFriendSquad('wanted')"
+              class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-teal-300/40 text-teal-300 shrink-0 text-xs font-bold active:scale-95">🚨
+              發通緝令</button>
           </div>
         </div>
 
         <!-- Real Friends List Container -->
-        <div id="squad-friends-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto pr-1 flex-1"></div>
+        <div id="squad-friends-list"
+          class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto pr-1 flex-1"></div>
       </div>
     </section>
 
@@ -1338,7 +1868,8 @@
               點擊翻牌
             </span>
           </div>
-          <button onclick="resetAndShuffleTarot()" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/40 text-amber-200 text-xs font-bold active:scale-95">
+          <button onclick="resetAndShuffleTarot()"
+            class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/40 text-amber-200 text-xs font-bold active:scale-95">
             🔄 重新抽牌
           </button>
         </div>
@@ -1348,12 +1879,14 @@
           <!-- Card 1 -->
           <div class="tarot-card-3d-wrap h-40 sm:h-44" onclick="flipTarotCard(1)">
             <div id="tarot-card-inner-1" class="tarot-card-3d-inner">
-              <div class="tarot-card-3d-front royal-card border-2 border-amber-300/50 flex flex-col items-center justify-center p-2 text-center bg-gradient-to-b from-[#0e1733] to-[#060916] shadow-lg">
+              <div
+                class="tarot-card-3d-front royal-card border-2 border-amber-300/50 flex flex-col items-center justify-center p-2 text-center bg-gradient-to-b from-[#0e1733] to-[#060916] shadow-lg">
                 <span class="text-2xl sm:text-3xl mb-1">🎴</span>
                 <span class="text-[10px] sm:text-xs font-black text-amber-200">今日運勢</span>
                 <span class="text-[8px] font-mono text-teal-300 mt-1">點擊翻牌 ➔</span>
               </div>
-              <div class="tarot-card-3d-back royal-card border-2 border-amber-300 flex flex-col items-center justify-between p-2 text-center bg-gradient-to-b from-[#18264e] to-[#070b1c] shadow-2xl">
+              <div
+                class="tarot-card-3d-back royal-card border-2 border-amber-300 flex flex-col items-center justify-between p-2 text-center bg-gradient-to-b from-[#18264e] to-[#070b1c] shadow-2xl">
                 <span id="tarot-card-badge-1" class="text-[9px] font-mono text-amber-300 font-black">★ ★ ★ ★ ★</span>
                 <span id="tarot-card-icon-1" class="text-2xl">🔄</span>
                 <span id="tarot-card-title-1" class="text-[11px] font-black text-white leading-tight">莫比烏斯圓環</span>
@@ -1365,12 +1898,14 @@
           <!-- Card 2 -->
           <div class="tarot-card-3d-wrap h-40 sm:h-44" onclick="flipTarotCard(2)">
             <div id="tarot-card-inner-2" class="tarot-card-3d-inner">
-              <div class="tarot-card-3d-front royal-card border-2 border-amber-300/50 flex flex-col items-center justify-center p-2 text-center bg-gradient-to-b from-[#0e1733] to-[#060916] shadow-lg">
+              <div
+                class="tarot-card-3d-front royal-card border-2 border-amber-300/50 flex flex-col items-center justify-center p-2 text-center bg-gradient-to-b from-[#0e1733] to-[#060916] shadow-lg">
                 <span class="text-2xl sm:text-3xl mb-1">🎴</span>
                 <span class="text-[10px] sm:text-xs font-black text-amber-200">座駕吉凶</span>
                 <span class="text-[8px] font-mono text-teal-300 mt-1">點擊翻牌 ➔</span>
               </div>
-              <div class="tarot-card-3d-back royal-card border-2 border-amber-300 flex flex-col items-center justify-between p-2 text-center bg-gradient-to-b from-[#18264e] to-[#070b1c] shadow-2xl">
+              <div
+                class="tarot-card-3d-back royal-card border-2 border-amber-300 flex flex-col items-center justify-between p-2 text-center bg-gradient-to-b from-[#18264e] to-[#070b1c] shadow-2xl">
                 <span id="tarot-card-badge-2" class="text-[9px] font-mono text-rose-300 font-black">★ ★ ★ ☆ ☆</span>
                 <span id="tarot-card-icon-2" class="text-2xl">🌧️</span>
                 <span id="tarot-card-title-2" class="text-[11px] font-black text-white leading-tight">晴天雨刷神</span>
@@ -1382,12 +1917,14 @@
           <!-- Card 3 -->
           <div class="tarot-card-3d-wrap h-40 sm:h-44" onclick="flipTarotCard(3)">
             <div id="tarot-card-inner-3" class="tarot-card-3d-inner">
-              <div class="tarot-card-3d-front royal-card border-2 border-amber-300/50 flex flex-col items-center justify-center p-2 text-center bg-gradient-to-b from-[#0e1733] to-[#060916] shadow-lg">
+              <div
+                class="tarot-card-3d-front royal-card border-2 border-amber-300/50 flex flex-col items-center justify-center p-2 text-center bg-gradient-to-b from-[#0e1733] to-[#060916] shadow-lg">
                 <span class="text-2xl sm:text-3xl mb-1">🎴</span>
                 <span class="text-[10px] sm:text-xs font-black text-amber-200">生還錦囊</span>
                 <span class="text-[8px] font-mono text-teal-300 mt-1">點擊翻牌 ➔</span>
               </div>
-              <div class="tarot-card-3d-back royal-card border-2 border-amber-300 flex flex-col items-center justify-between p-2 text-center bg-gradient-to-b from-[#18264e] to-[#070b1c] shadow-2xl">
+              <div
+                class="tarot-card-3d-back royal-card border-2 border-amber-300 flex flex-col items-center justify-between p-2 text-center bg-gradient-to-b from-[#18264e] to-[#070b1c] shadow-2xl">
                 <span id="tarot-card-badge-3" class="text-[9px] font-mono text-teal-300 font-black">SSR 稀有</span>
                 <span id="tarot-card-icon-3" class="text-2xl">🍗</span>
                 <span id="tarot-card-title-3" class="text-[11px] font-black text-white leading-tight">脆皮雞腿王</span>
@@ -1398,12 +1935,14 @@
         </div>
 
         <!-- Interactive Detailed Tarot Divination & Lucky Charm Reading -->
-        <div id="tarot-divination-report" class="p-3 rounded-xl bg-[#060916]/95 border border-teal-300/40 space-y-1.5 shadow">
+        <div id="tarot-divination-report"
+          class="p-3 rounded-xl bg-[#060916]/95 border border-teal-300/40 space-y-1.5 shadow">
           <div class="flex items-center justify-between">
             <span class="text-xs font-black text-amber-300 flex items-center gap-1.5">
               <span>🔮</span> 今日三寶命理・即時占卜大師解盤
             </span>
-            <span id="tarot-card-count-badge" class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-teal-300 font-mono text-[9px] font-bold">
+            <span id="tarot-card-count-badge"
+              class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-teal-300 font-mono text-[9px] font-bold">
               3D 卡牌已就緒
             </span>
           </div>
@@ -1424,7 +1963,8 @@
               </div>
             </div>
           </div>
-          <button onclick="shakeBambooFortune()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0 active:scale-95 shadow">
+          <button onclick="shakeBambooFortune()"
+            class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0 active:scale-95 shadow">
             🎋 搖籤求籤
           </button>
         </div>
@@ -1435,13 +1975,18 @@
         <div>
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-serif-title text-sm font-black gold-text">🚗 今日出門交通方式生還評估</h3>
-            <span class="text-[10px] font-mono text-amber-300/80 px-2 py-0.5 rounded bg-slate-900 border border-amber-300/30">即時演算中</span>
+            <span
+              class="text-[10px] font-mono text-amber-300/80 px-2 py-0.5 rounded bg-slate-900 border border-amber-300/30">即時演算中</span>
           </div>
           <div class="grid grid-cols-4 gap-1.5 text-center">
-            <button data-transport-btn="walk" onclick="selectTransportMode('walk')" class="tarot-btn py-2 text-xs font-bold text-slate-200">🚶 走騎樓</button>
-            <button data-transport-btn="scooter" onclick="selectTransportMode('scooter')" class="tarot-btn py-2 text-xs font-black text-amber-300 border-amber-300">🛵 騎機車</button>
-            <button data-transport-btn="car" onclick="selectTransportMode('car')" class="tarot-btn py-2 text-xs font-bold text-slate-200">🚗 開汽車</button>
-            <button data-transport-btn="mrt" onclick="selectTransportMode('mrt')" class="tarot-btn py-2 text-xs font-bold text-slate-200">🚝 搭捷運</button>
+            <button data-transport-btn="walk" onclick="selectTransportMode('walk')"
+              class="tarot-btn py-2 text-xs font-bold text-slate-200">🚶 走騎樓</button>
+            <button data-transport-btn="scooter" onclick="selectTransportMode('scooter')"
+              class="tarot-btn py-2 text-xs font-black text-amber-300 border-amber-300">🛵 騎機車</button>
+            <button data-transport-btn="car" onclick="selectTransportMode('car')"
+              class="tarot-btn py-2 text-xs font-bold text-slate-200">🚗 開汽車</button>
+            <button data-transport-btn="mrt" onclick="selectTransportMode('mrt')"
+              class="tarot-btn py-2 text-xs font-bold text-slate-200">🚝 搭捷運</button>
           </div>
         </div>
 
@@ -1462,7 +2007,9 @@
             <span class="text-xs font-black text-teal-300 flex items-center gap-1.5">
               <span>🛡️</span> 今日防衛駕駛黃金戰術
             </span>
-            <span class="text-[9px] font-mono text-teal-400/70 px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-500/30">DEFENSE PROTOCOL</span>
+            <span
+              class="text-[9px] font-mono text-teal-400/70 px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-500/30">DEFENSE
+              PROTOCOL</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-medium text-slate-300">
             <div class="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-900/60 border border-white/5">
@@ -1488,17 +2035,25 @@
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-black text-amber-200">📢 LINE 群組三寶警報產生器</h4>
             <div class="flex gap-1">
-              <button data-share-style-btn="defense" onclick="selectShareStyle('defense')" class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950">🚨 國防風</button>
-              <button data-share-style-btn="elder" onclick="selectShareStyle('elder')" class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-900 text-slate-300 border border-white/10">🌺 長輩圖</button>
-              <button data-share-style-btn="news" onclick="selectShareStyle('news')" class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-900 text-slate-300 border border-white/10">📺 快訊風</button>
+              <button data-share-style-btn="defense" onclick="selectShareStyle('defense')"
+                class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-400 text-slate-950">🚨 國防風</button>
+              <button data-share-style-btn="elder" onclick="selectShareStyle('elder')"
+                class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-900 text-slate-300 border border-white/10">🌺
+                長輩圖</button>
+              <button data-share-style-btn="news" onclick="selectShareStyle('news')"
+                class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-900 text-slate-300 border border-white/10">📺
+                快訊風</button>
             </div>
           </div>
-          <textarea id="share-copy-textarea" rows="2" class="w-full rounded-xl bg-[#060916] border border-amber-300/30 p-2.5 text-xs text-amber-100 font-mono focus:outline-none"></textarea>
+          <textarea id="share-copy-textarea" rows="2"
+            class="w-full rounded-xl bg-[#060916] border border-amber-300/30 p-2.5 text-xs text-amber-100 font-mono focus:outline-none"></textarea>
           <div class="grid grid-cols-2 gap-2">
-            <button onclick="shareDirectlyToLine()" class="py-2.5 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow flex items-center justify-center gap-1">
+            <button onclick="shareDirectlyToLine()"
+              class="py-2.5 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow flex items-center justify-center gap-1">
               💬 LINE 傳送好友
             </button>
-            <button onclick="copyShareText()" class="py-2.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">
+            <button onclick="copyShareText()"
+              class="py-2.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">
               📋 複製警報文字
             </button>
           </div>
@@ -1515,28 +2070,43 @@
       <div class="lg:col-span-5 royal-card p-4 flex flex-col items-center justify-between space-y-2">
         <div class="w-full flex items-center justify-between">
           <h3 class="font-serif-title text-sm font-black gold-text">🎼 損友三寶六維戰力星盤</h3>
-          <span class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono text-[9px] font-black">
+          <span
+            class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono text-[9px] font-black">
             SSS+ 級神主牌
           </span>
         </div>
 
         <!-- High-End Retina Radar Canvas -->
         <div class="relative flex items-center justify-center my-1">
-          <canvas id="hexagon-chart-canvas" width="320" height="320" class="w-[280px] h-[280px] block select-none"></canvas>
+          <canvas id="hexagon-chart-canvas" width="320" height="320"
+            class="w-[280px] h-[280px] block select-none"></canvas>
         </div>
 
         <!-- Interactive Stat Breakdown Pills (Click any to inspect detailed dossier) -->
         <div class="w-full space-y-1.5">
           <div class="text-[10px] font-bold text-amber-200/80 text-center">點擊六維指標查看戰術檔案：</div>
           <div class="grid grid-cols-3 gap-1 select-none text-[10px] font-bold">
-            <button onclick="inspectStatDossier(0)" class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-sky-300 text-center truncate">雨刷誤觸 98</button>
-            <button onclick="inspectStatDossier(1)" class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-300 text-center truncate">謎之自信 100</button>
-            <button onclick="inspectStatDossier(2)" class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-rose-300 text-center truncate">倒車耗時 96</button>
-            <button onclick="inspectStatDossier(3)" class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-emerald-300 text-center truncate">方向燈誠信 12</button>
-            <button onclick="inspectStatDossier(4)" class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-indigo-300 text-center truncate">方向感 15</button>
-            <button onclick="inspectStatDossier(5)" class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-pink-300 text-center truncate">副駕驚嚇 99</button>
+            <button onclick="inspectStatDossier(0)"
+              class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-sky-300 text-center truncate">雨刷誤觸
+              98</button>
+            <button onclick="inspectStatDossier(1)"
+              class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-amber-300 text-center truncate">謎之自信
+              100</button>
+            <button onclick="inspectStatDossier(2)"
+              class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-rose-300 text-center truncate">倒車耗時
+              96</button>
+            <button onclick="inspectStatDossier(3)"
+              class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-emerald-300 text-center truncate">方向燈誠信
+              12</button>
+            <button onclick="inspectStatDossier(4)"
+              class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-indigo-300 text-center truncate">方向感
+              15</button>
+            <button onclick="inspectStatDossier(5)"
+              class="py-1 px-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-pink-300 text-center truncate">副駕驚嚇
+              99</button>
           </div>
-          <div id="stat-dossier-box" class="p-2 rounded-xl bg-[#060916] border border-amber-300/40 text-[11px] text-amber-200 text-center leading-relaxed min-h-[38px] flex items-center justify-center">
+          <div id="stat-dossier-box"
+            class="p-2 rounded-xl bg-[#060916] border border-amber-300/40 text-[11px] text-amber-200 text-center leading-relaxed min-h-[38px] flex items-center justify-center">
             👑 總體評價：SSS+ 級特等神主牌，方圓 1.5km 人車主動避難！
           </div>
         </div>
@@ -1546,9 +2116,13 @@
       <div class="lg:col-span-7 royal-card p-4 space-y-3">
         <h3 class="font-serif-title text-sm font-black gold-text">📸 損友三寶黑歷史目擊爆料牆</h3>
         <form onsubmit="submitNewSighting(event)" class="flex flex-col sm:flex-row gap-2">
-          <input id="new-sighting-location" type="text" placeholder="地點 (例：好市多B2)" class="sm:w-1/3 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
-          <input id="new-sighting-content" type="text" placeholder="輸入損友的爆笑三寶事蹟..." class="flex-1 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
-          <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0">🚀 爆料</button>
+          <input id="new-sighting-location" type="text" placeholder="地點 (例：好市多B2)"
+            class="sm:w-1/3 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
+          <input id="new-sighting-content" type="text" placeholder="輸入損友的爆笑三寶事蹟..."
+            class="flex-1 rounded-xl bg-[#060916] border border-amber-300/30 px-3 py-2 text-xs text-white" />
+          <button type="submit"
+            class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0">🚀
+            爆料</button>
         </form>
         <div id="sightings-wall-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-1"></div>
       </div>
@@ -1560,81 +2134,109 @@
        3. MODALS (QUICK LOGIN MODAL + PRESIDENTIAL ALERT + COPILOT WOODFISH)
        ===================================================================== -->
   <!-- Quick Login Modal -->
-  <div id="modal-login" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+  <div id="modal-login"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="max-w-sm w-full max-h-[88vh] overflow-y-auto royal-card p-5 space-y-4 border-2 border-teal-300">
       <div class="flex items-center justify-between">
-        <span class="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-mono text-[10px] font-black">REAL-TIME GPS LOGIN</span>
+        <span class="px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-mono text-[10px] font-black">REAL-TIME
+          GPS LOGIN</span>
         <button onclick="closeLoginModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <h3 class="font-serif-title text-lg font-black gold-text">👤 登入網站並分享即時位置</h3>
       <p class="text-xs text-amber-100/85">
-        輸入你的名字與連線房號（預設 <span class="text-teal-300 font-mono font-bold">8888</span>）。同房號的好友打開網站就能收到你的上線通知，按「確定」即可互相看到真實定位！
+        輸入你的名字與連線房號（預設 <span
+          class="text-teal-300 font-mono font-bold">8888</span>）。同房號的好友打開網站就能收到你的上線通知，按「確定」即可互相看到真實定位！
       </p>
       <div class="space-y-2.5">
-        <input id="modal-login-name" type="text" placeholder="你的名字 / 暱稱 *" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-amber-300" />
-        <input id="modal-login-plate" type="text" placeholder="車牌號碼 (選填，例: ABC-8888)" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-amber-300" />
-        <input id="modal-login-room" type="text" value="8888" placeholder="好友連線房號 (預設 8888)" class="w-full rounded-xl bg-[#060916] border border-teal-300/50 px-3.5 py-2.5 text-xs font-mono font-black text-teal-300 focus:outline-none focus:border-teal-300" />
+        <input id="modal-login-name" type="text" placeholder="你的名字 / 暱稱 *"
+          class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-amber-300" />
+        <input id="modal-login-plate" type="text" placeholder="車牌號碼 (選填，例: ABC-8888)"
+          class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-amber-300" />
+        <input id="modal-login-room" type="text" value="8888" placeholder="好友連線房號 (預設 8888)"
+          class="w-full rounded-xl bg-[#060916] border border-teal-300/50 px-3.5 py-2.5 text-xs font-mono font-black text-teal-300 focus:outline-none focus:border-teal-300" />
       </div>
-      <button onclick="submitModalLogin()" class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-sm shadow-lg active:scale-95">
+      <button onclick="submitModalLogin()"
+        class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-sm shadow-lg active:scale-95">
         ✅ 確定登入並開啟定位
       </button>
     </div>
   </div>
 
   <!-- Dedicated Quick Name & Plate Edit Modal -->
-  <div id="modal-edit-name" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-    <div class="max-w-sm w-full max-h-[88vh] overflow-y-auto royal-card p-5 space-y-4 border-2 border-amber-300 shadow-[0_0_40px_rgba(212,175,55,0.45)]">
+  <div id="modal-edit-name"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div
+      class="max-w-sm w-full max-h-[88vh] overflow-y-auto royal-card p-5 space-y-4 border-2 border-amber-300 shadow-[0_0_40px_rgba(212,175,55,0.45)]">
       <div class="flex items-center justify-between">
-        <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-mono text-[10px] font-black">EDIT DRIVER PROFILE</span>
+        <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-mono text-[10px] font-black">EDIT
+          DRIVER PROFILE</span>
         <button onclick="closeEditMyNameDialog()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <h3 class="font-serif-title text-lg font-black gold-text">✏️ 更改我的駕駛名字與座駕</h3>
       <div class="space-y-3">
         <div>
           <label class="text-[11px] text-amber-200/90 font-bold block mb-1">我的暱稱 / 姓名 *</label>
-          <input id="edit-dialog-name" type="text" placeholder="例如：阿豪、車神、小明" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-amber-300" />
+          <input id="edit-dialog-name" type="text" placeholder="例如：阿豪、車神、小明"
+            class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-amber-300" />
         </div>
         <div>
           <label class="text-[11px] text-amber-200/90 font-bold block mb-1">車牌或座駕型號</label>
-          <input id="edit-dialog-plate" type="text" placeholder="例如：ABC-8888、勁戰五代、特斯拉" class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-amber-300" />
+          <input id="edit-dialog-plate" type="text" placeholder="例如：ABC-8888、勁戰五代、特斯拉"
+            class="w-full rounded-xl bg-[#060916] border border-amber-300/40 px-3.5 py-2.5 text-xs font-mono font-bold text-amber-300 focus:outline-none focus:border-amber-300" />
         </div>
       </div>
       <div class="flex gap-2">
-        <button onclick="saveEditedDriverName()" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow-lg active:scale-95">
+        <button onclick="saveEditedDriverName()"
+          class="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow-lg active:scale-95">
           💾 儲存並同步給好友
         </button>
-        <button onclick="closeEditMyNameDialog()" class="px-4 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">
+        <button onclick="closeEditMyNameDialog()"
+          class="px-4 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">
           取消
         </button>
       </div>
     </div>
   </div>
 
-  <div id="modal-presidential-alert" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-    <div class="max-w-sm w-full max-h-[88vh] overflow-y-auto royal-card p-5 space-y-4 text-center border-2 border-amber-300">
-      <span class="px-3 py-1 rounded-full bg-rose-600 text-white font-mono text-xs font-black animate-pulse">🚨 國家級三寶出車警報</span>
-      <img id="alert-modal-avatar" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'" alt="Alert" class="w-24 h-24 rounded-2xl mx-auto object-cover border-2 border-amber-300 shadow-[0_0_25px_#D4AF37]" />
+  <div id="modal-presidential-alert"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div
+      class="max-w-sm w-full max-h-[88vh] overflow-y-auto royal-card p-5 space-y-4 text-center border-2 border-amber-300">
+      <span class="px-3 py-1 rounded-full bg-rose-600 text-white font-mono text-xs font-black animate-pulse">🚨
+        國家級三寶出車警報</span>
+      <img id="alert-modal-avatar" src="assets/sanbao_chicken_avatar.jpg" onerror="this.src='assets/sanbao_avatar.jpg'"
+        alt="Alert"
+        class="w-24 h-24 rounded-2xl mx-auto object-cover border-2 border-amber-300 shadow-[0_0_25px_#D4AF37]" />
       <div class="font-serif-title text-base font-black gold-text" id="presidential-alert-title">目標已拿著雞腿駕照握住方向盤！</div>
       <p class="text-xs text-amber-100" id="presidential-alert-desc">晴天雨刷全開 + 左轉燈常駐，方圓 3km 人車請立即避難！</p>
       <div class="flex flex-col sm:flex-row gap-2">
-        <button onclick="shareDirectlyToLine(); closePresidentialAlert();" class="flex-1 py-2.5 rounded-xl bg-[#06C755] text-white font-black text-xs shadow">💬 直接傳到 LINE</button>
-        <button onclick="copyShareText(); closePresidentialAlert();" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">📋 複製警報</button>
-        <button onclick="closePresidentialAlert()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 font-bold text-xs">關閉</button>
+        <button onclick="shareDirectlyToLine(); closePresidentialAlert();"
+          class="flex-1 py-2.5 rounded-xl bg-[#06C755] text-white font-black text-xs shadow">💬 直接傳到 LINE</button>
+        <button onclick="copyShareText(); closePresidentialAlert();"
+          class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs">📋
+          複製警報</button>
+        <button onclick="closePresidentialAlert()"
+          class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 font-bold text-xs">關閉</button>
       </div>
     </div>
   </div>
 
-  <div id="modal-copilot-sos" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-    <div class="max-w-xs w-full max-h-[88vh] overflow-y-auto royal-card p-5 text-center space-y-3.5 border-2 border-amber-300">
+  <div id="modal-copilot-sos"
+    class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div
+      class="max-w-xs w-full max-h-[88vh] overflow-y-auto royal-card p-5 text-center space-y-3.5 border-2 border-amber-300">
       <div class="flex items-center justify-between">
-        <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-mono text-[10px] font-black">ZEN WOODFISH</span>
+        <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-mono text-[10px] font-black">ZEN
+          WOODFISH</span>
         <button onclick="closeCopilotModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
       <h3 class="font-serif-title text-base font-black gold-text">📿 清心療癒・功德木魚</h3>
       <p class="text-[11px] text-amber-100/80">心平氣和・積累功德・祈願行車一路平安</p>
 
       <!-- Authentic Woodfish Tapping Visual -->
-      <div id="woodfish-btn" onclick="knockCopilotWoodfish()" class="cursor-pointer select-none py-5 px-4 rounded-2xl bg-gradient-to-b from-amber-950/50 to-[#070b19] border-2 border-amber-300/40 hover:border-amber-300 active:scale-90 transition-all flex flex-col items-center justify-center gap-1.5 shadow-[inset_0_0_20px_rgba(212,175,55,0.15)] group" title="點擊敲木魚">
+      <div id="woodfish-btn" onclick="knockCopilotWoodfish()"
+        class="cursor-pointer select-none py-5 px-4 rounded-2xl bg-gradient-to-b from-amber-950/50 to-[#070b19] border-2 border-amber-300/40 hover:border-amber-300 active:scale-90 transition-all flex flex-col items-center justify-center gap-1.5 shadow-[inset_0_0_20px_rgba(212,175,55,0.15)] group"
+        title="點擊敲木魚">
         <span id="woodfish-icon" class="text-5xl group-hover:scale-110 transition-transform">🪵</span>
         <span class="text-[10px] font-bold text-amber-300/80">敲擊積累功德</span>
       </div>
@@ -1646,16 +2248,21 @@
 
       <div id="woodfish-float-zone" class="h-6 flex items-center justify-center"></div>
 
-      <button onclick="knockCopilotWoodfish()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(251,191,36,0.4)] active:scale-95 transition-all">
+      <button onclick="knockCopilotWoodfish()"
+        class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(251,191,36,0.4)] active:scale-95 transition-all">
         📿 敲擊木魚 (功德 +1)
       </button>
     </div>
   </div>
 
-  <div id="toast-container" class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
+  <div id="toast-container"
+    class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0">
+  </div>
 
-  <script src="intro.js?v=15.4"></script>
-  <script src="sound_and_fx.js?v=15.4"></script>
-  <script src="app.js?v=15.4"></script>
+  <script src="intro.js?v=15.5"></script>
+  <script src="sound_and_fx.js?v=15.5"></script>
+  <script src="app.js?v=15.5"></script>
 </body>
+
 </html>
+1
