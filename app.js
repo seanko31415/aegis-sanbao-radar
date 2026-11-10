@@ -268,12 +268,15 @@ function loadPersistedData() {
                     SafeStorage.getItem('aegis_sanbao_my_user');
     if (savedMe) {
       const parsed = JSON.parse(savedMe);
-      // If user had previously logged in with a name, RESTORE their loggedIn state!
-      // This ensures closing/refreshing the browser retains their login!
-      const wasLoggedIn = !!(parsed.name && parsed.loggedIn);
-      appState.myUser = { ...appState.myUser, ...parsed, loggedIn: wasLoggedIn };
+      // Requirement: When visitor enters website, start in Visitor Preview mode
+      // User must manually submit name to log in and start GPS tracking!
+      const sessionActive = sessionStorage.getItem('aegis_active_session_login') === '1';
+      appState.myUser = {
+        ...appState.myUser,
+        ...parsed,
+        loggedIn: sessionActive && !!parsed.name
+      };
     } else {
-      // First-time stranger: starts in visitor preview mode
       appState.myUser.loggedIn = false;
       appState.myUser.name = '';
     }
@@ -686,6 +689,7 @@ window.submitModalLogin = function () {
   appState.myUser.plate = plate;
   appState.myUser.roomCode = room;
   appState.myUser.loggedIn = true;
+  try { sessionStorage.setItem('aegis_active_session_login', '1'); } catch (e) {}
   saveMyUserToStorage();
 
   const nameIn = document.getElementById('my-driver-name');
@@ -825,6 +829,7 @@ window.loginAndStartRealGpsBroadcast = function () {
   appState.myUser.plate = plate;
   appState.myUser.roomCode = room;
   appState.myUser.loggedIn = true;
+  try { sessionStorage.setItem('aegis_active_session_login', '1'); } catch (e) {}
   saveMyUserToStorage();
 
   if (roomChanged) {
@@ -867,6 +872,7 @@ window.loginFromQuickBar = function (e) {
 
   appState.myUser.name = name;
   appState.myUser.loggedIn = true;
+  try { sessionStorage.setItem('aegis_active_session_login', '1'); } catch (e) {}
   saveMyUserToStorage();
 
   const nameIn = document.getElementById('my-driver-name');
@@ -885,6 +891,7 @@ window.loginFromQuickBar = function (e) {
 
 window.logoutToVisitorPreview = function () {
   window.soundEngine.playClick(600);
+  try { sessionStorage.removeItem('aegis_active_session_login'); } catch (e) {}
   appState.myUser.loggedIn = false;
   if (appState.beaconWatchId) {
     navigator.geolocation.clearWatch(appState.beaconWatchId);
@@ -1706,6 +1713,41 @@ window.drawRandomTarotCard = function () {
 };
 
 // 3D Holographic Tarot Cards Flip & Random Re-Shuffle
+const TAROT_WISDOMS = [
+  {
+    luckyDir: '避開台灣大道慢車道與各大圓環，遠離前擋乾淨卻狂刷雨刷的車輛',
+    luckyItem: '🍗 酥脆黃金大雞腿（必要時請對方吃，換取免按喇叭生還）',
+    warning: '⚠️ 今日大凶：遇見方向盤向左轉、車尾卻猛向右擺的好市多神車',
+    advice: '行車心法：別相信前車的方向燈，他閃左燈很可能是因為剛才右轉忘記撥回來！'
+  },
+  {
+    luckyDir: '遠離地下二樓機械式狹小車位，直奔平面寬敞大車位',
+    luckyItem: '🍵 副駕駛座專用降血壓茶 + 降噪耳塞',
+    warning: '⚠️ 今日煞星：大晴天烈日下閃亮亮的常駐遠光燈神聖使徒',
+    advice: '行車心法：遇到三寶不可急躁，默念三聲「雞腿換駕照，人人有福報」即可安度難關！'
+  },
+  {
+    luckyDir: '避開賣場生鮮試吃走道，防止手推車無減速大迴轉',
+    luckyItem: '📿 本局認證避災木魚（上車前連敲五下，功德+5）',
+    warning: '⚠️ 今日凶兆：進入圓環繞滿 8 圈依然找不到出口的迷航神佛',
+    advice: '行車心法：保持 50 公尺以上車距，以宇宙玄學視角包容一切突發迴轉！'
+  }
+];
+
+function updateTarotDivinationReading() {
+  const report = document.getElementById('tarot-report-content');
+  if (!report) return;
+  const item = TAROT_WISDOMS[Math.floor(Math.random() * TAROT_WISDOMS.length)];
+  report.innerHTML = `
+    <div class="space-y-1">
+      <p><strong class="text-teal-300">🌟 今日避難開運方：</strong>${item.luckyDir}</p>
+      <p><strong class="text-amber-300">🍗 幸運避煞護身物：</strong>${item.luckyItem}</p>
+      <p><strong class="text-rose-400">🚨 最凶遇煞星相：</strong>${item.warning}</p>
+      <p><strong class="text-indigo-300">📜 交通大師解盤錦囊：</strong>${item.advice}</p>
+    </div>
+  `;
+}
+
 window.flipTarotCard = function (num) {
   const cardInner = document.getElementById(`tarot-card-inner-${num}`);
   if (!cardInner) return;
@@ -1716,6 +1758,7 @@ window.flipTarotCard = function (num) {
     const titleEl = document.getElementById(`tarot-card-title-${num}`);
     const name = titleEl ? titleEl.textContent : '三寶塔羅';
     showToast('🔮 翻開命運之牌！', `【${name}】揭曉你的交通宿命！`, 'amber');
+    updateTarotDivinationReading();
   }
 };
 
@@ -3013,6 +3056,24 @@ function drawHexagonChart() {
       }
     }
 
+    // Cardinal Points (N, E, S, W)
+    const cardinals = [
+      { label: 'N', deg: 0, color: '#F43F5E' },
+      { label: 'E', deg: 90, color: '#2DD4BF' },
+      { label: 'S', deg: 180, color: '#FEF08A' },
+      { label: 'W', deg: 270, color: '#38BDF8' }
+    ];
+    cardinals.forEach((c) => {
+      const rad = (c.deg * Math.PI) / 180 - Math.PI / 2;
+      const tx = cx + Math.cos(rad) * (outerRingR - 12);
+      const ty = cy + Math.sin(rad) * (outerRingR - 12);
+      ctx.font = 'bold 9px monospace';
+      ctx.fillStyle = c.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(c.label, tx, ty);
+    });
+
     // 2. Concentric Hexagonal Grids with Gradient Stroke
     [0.25, 0.5, 0.75, 1.0].forEach((step) => {
       ctx.beginPath();
@@ -3115,6 +3176,21 @@ function drawHexagonChart() {
       ctx.fillText(`${axis.label} ${axis.val}`, lx, ly);
     });
 
+    // 7. Orbiting Cyber Star Particles
+    for (let p = 0; p < 6; p++) {
+      const orbitAng = hexagonAngle * 1.5 + (p * Math.PI) / 3;
+      const orbitR = maxR * (0.4 + 0.5 * Math.sin(orbitAng + p));
+      const px = cx + Math.cos(orbitAng) * orbitR;
+      const py = cy + Math.sin(orbitAng) * orbitR;
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, Math.PI * 2);
+      ctx.fillStyle = p % 2 === 0 ? '#2DD4BF' : '#FEF08A';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
     hexagonAnimId = requestAnimationFrame(renderRadarFrame);
   }
 
@@ -3198,6 +3274,19 @@ window.changeBGMVolume = function (val) {
   }
 };
 
+window.toggleSFXMute = function () {
+  const muted = window.soundEngine.toggleMute();
+  const btn = document.getElementById('sound-toggle-btn');
+  if (btn) {
+    btn.innerHTML = muted ? '🔇 音效: 關' : '🔊 音效: 開';
+    btn.classList.toggle('text-rose-400', muted);
+    btn.classList.toggle('text-amber-200', !muted);
+    btn.classList.toggle('border-rose-400/50', muted);
+    btn.classList.toggle('border-amber-300/30', !muted);
+  }
+  showToast(muted ? '🔇 音效已靜音' : '🔊 音效已開啟', muted ? '所有按鍵與警報音已關閉' : '音效系統已就緒', muted ? 'slate' : 'teal');
+};
+
 window.toggleMusicBGM = function () {
   const active = window.soundEngine.toggleBGM();
   const btn = document.getElementById('bgm-toggle-btn');
@@ -3213,6 +3302,8 @@ window.toggleMusicBGM = function () {
 // Real-Time Mini Defense Radar Canvas & Interactive Countermeasure System
 let defenseRadarAnimId = null;
 let defenseScore = 0;
+let defenseLives = 3;
+let defenseGameState = 'IDLE'; // 'IDLE', 'PLAYING', 'GAMEOVER'
 let defenseSweepAngle = 0;
 const DEFENSE_BLIPS = [
   { id: 1, angle: 0.45, dist: 0.88, speed: 0.0032, emoji: '🛵', name: '盲鑽騎士' },
@@ -3222,6 +3313,65 @@ const DEFENSE_BLIPS = [
 ];
 let defenseProjectiles = [];
 let defenseRipples = [];
+
+window.startDefenseGame = function () {
+  defenseGameState = 'PLAYING';
+  defenseLives = 3;
+  defenseScore = 0;
+  DEFENSE_BLIPS[0].dist = 0.88;
+  DEFENSE_BLIPS[1].dist = 0.92;
+  DEFENSE_BLIPS[2].dist = 0.80;
+  DEFENSE_BLIPS[3].dist = 0.95;
+  defenseProjectiles = [];
+  defenseRipples = [];
+
+  const startOverlay = document.getElementById('defense-start-overlay');
+  const overOverlay = document.getElementById('defense-gameover-overlay');
+  const livesEl = document.getElementById('defense-lives-display');
+  const scoreEl = document.getElementById('shield-deflect-score');
+  const statusBadge = document.getElementById('defense-status-badge');
+  const logEl = document.getElementById('shield-combat-log');
+
+  if (startOverlay) startOverlay.classList.add('hidden');
+  if (overOverlay) overOverlay.classList.add('hidden');
+  if (livesEl) livesEl.textContent = '❤️❤️❤️';
+  if (scoreEl) scoreEl.textContent = '0';
+  if (statusBadge) {
+    statusBadge.textContent = '🔴 迎戰作戰中';
+    statusBadge.className = 'px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/50 text-[9px] font-mono font-black text-rose-300 animate-pulse';
+  }
+  if (logEl) logEl.textContent = '⚡ 基地護盾充能完畢！點擊下方戰術彈攔截逼近的三寶！';
+
+  if (window.soundEngine) {
+    window.soundEngine.init();
+    window.soundEngine.playLaserHit();
+  }
+  showToast('🚀 塔台防禦已啟動！', '三寶逼近中！擁有 3 條生命，觸及中心基地即扣血！', 'teal');
+  startDefenseRadarLoop();
+};
+
+window.endDefenseGame = function (reason) {
+  defenseGameState = 'GAMEOVER';
+  const overOverlay = document.getElementById('defense-gameover-overlay');
+  const livesEl = document.getElementById('defense-lives-display');
+  const statusBadge = document.getElementById('defense-status-badge');
+  const finalScore = document.getElementById('defense-final-score-text');
+  const logEl = document.getElementById('shield-combat-log');
+
+  if (overOverlay) overOverlay.classList.remove('hidden');
+  if (livesEl) livesEl.textContent = '💔 護盾歸零';
+  if (finalScore) finalScore.textContent = `最終成功化解三寶：${defenseScore} 次`;
+  if (statusBadge) {
+    statusBadge.textContent = '💥 基地失守';
+    statusBadge.className = 'px-2 py-0.5 rounded-full bg-rose-900 border border-rose-500 text-[9px] font-mono font-black text-rose-200';
+  }
+  if (logEl) logEl.textContent = `💥 塔台失守！全境三寶突破防線！最終得分：${defenseScore} 次！`;
+
+  if (window.soundEngine) {
+    window.soundEngine.playWiperSlap();
+  }
+  showToast('💥 基地護盾歸零！', `全境三寶突破防線！最終化解次數：${defenseScore} 次`, 'rose');
+};
 
 function startDefenseRadarLoop() {
   const canvas = document.getElementById('defense-radar-canvas');
@@ -3262,9 +3412,9 @@ function startDefenseRadarLoop() {
 
     // Center Shield Base
     ctx.beginPath();
-    ctx.arc(cx, cy, 7, 0, Math.PI * 2);
-    ctx.fillStyle = '#2DD4BF';
-    ctx.shadowColor = '#2DD4BF';
+    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = defenseGameState === 'PLAYING' ? '#2DD4BF' : (defenseGameState === 'GAMEOVER' ? '#F43F5E' : '#FBBF24');
+    ctx.shadowColor = ctx.fillStyle;
     ctx.shadowBlur = 12;
     ctx.fill();
     ctx.shadowBlur = 0;
@@ -3277,7 +3427,7 @@ function startDefenseRadarLoop() {
     ctx.ellipse(cx, cy, maxRx, maxRy, 0, defenseSweepAngle - 0.45, defenseSweepAngle);
     ctx.closePath();
     const sweepGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, maxRx);
-    sweepGrad.addColorStop(0, 'rgba(45, 212, 191, 0.28)');
+    sweepGrad.addColorStop(0, defenseGameState === 'PLAYING' ? 'rgba(45, 212, 191, 0.3)' : 'rgba(251, 191, 36, 0.15)');
     sweepGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = sweepGrad;
     ctx.fill();
@@ -3285,12 +3435,27 @@ function startDefenseRadarLoop() {
 
     // 3. Update & Draw Incoming Sanbao Blips
     DEFENSE_BLIPS.forEach((blip) => {
-      blip.dist -= blip.speed;
-      if (blip.dist <= 0.20) {
-        blip.dist = 0.95;
-        blip.angle = (blip.angle + Math.PI * 0.8) % (Math.PI * 2);
-        defenseRipples.push({ x: cx, y: cy, r: 8, maxR: 35, alpha: 1, color: '#F43F5E' });
-        if (window.soundEngine) window.soundEngine.playShieldOn();
+      if (defenseGameState === 'PLAYING') {
+        blip.dist -= blip.speed;
+        if (blip.dist <= 0.20) {
+          // Center base collision! Lose 1 life!
+          defenseLives -= 1;
+          const livesEl = document.getElementById('defense-lives-display');
+          if (livesEl) {
+            livesEl.textContent = defenseLives === 2 ? '❤️❤️🤍' : (defenseLives === 1 ? '❤️🤍🤍' : '💔 護盾歸零');
+          }
+          defenseRipples.push({ x: cx, y: cy, r: 8, maxR: 45, alpha: 1, color: '#F43F5E' });
+
+          if (defenseLives > 0) {
+            blip.dist = 0.95;
+            blip.angle = (blip.angle + Math.PI * 0.75) % (Math.PI * 2);
+            if (window.soundEngine) window.soundEngine.playSiren();
+            const logEl = document.getElementById('shield-combat-log');
+            if (logEl) logEl.textContent = `⚠️ 基地遭【${blip.name}】衝撞！損失 1 點護盾生命！剩餘 ${defenseLives} 命！`;
+          } else {
+            window.endDefenseGame('COLLISION');
+          }
+        }
       }
 
       const bx = cx + Math.cos(blip.angle) * blip.dist * maxRx;
@@ -3368,13 +3533,17 @@ function startDefenseRadarLoop() {
 }
 
 window.launchInteractiveCountermeasure = function (type) {
+  if (defenseGameState !== 'PLAYING') {
+    window.startDefenseGame();
+  }
+
   defenseScore += 1;
   const scoreEl = document.getElementById('shield-deflect-score');
   if (scoreEl) scoreEl.textContent = defenseScore;
 
   const canvas = document.getElementById('defense-radar-canvas');
   const w = canvas ? canvas.width : 460;
-  const h = canvas ? canvas.height : 120;
+  const h = canvas ? canvas.height : 130;
   const cx = w / 2;
   const cy = h / 2;
   const maxRx = w * 0.45;
@@ -3390,7 +3559,7 @@ window.launchInteractiveCountermeasure = function (type) {
       emoji: '🍗',
       color: '#FBBF24',
       sound: () => window.soundEngine.playBiteCrunch(),
-      log: `🍗 投擲黃金脆皮雞腿！收買【${target.name}】，爭取 30 秒避難時間！`
+      log: `🍗 投擲黃金脆皮雞腿！成功收買【${target.name}】，爭取 30 秒避難時間！`
     },
     wiper: {
       emoji: '🌧️',
@@ -3413,7 +3582,10 @@ window.launchInteractiveCountermeasure = function (type) {
   };
 
   const cfg = configs[type] || configs.chicken;
-  cfg.sound();
+  // Sound rule: Only plays sound when playing!
+  if (defenseGameState === 'PLAYING') {
+    cfg.sound();
+  }
 
   defenseProjectiles.push({
     x: cx,

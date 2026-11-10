@@ -359,8 +359,8 @@
 
       <!-- Quick Controls + Login + Direct LINE Invite -->
       <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-        <button id="sound-toggle-btn" class="px-2 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-xs text-amber-200" title="音效開關">
-          🔊
+        <button id="sound-toggle-btn" onclick="toggleSFXMute()" class="px-2 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-[11px] sm:text-xs text-amber-200 font-bold active:scale-95" title="音效開關 (SFX)">
+          🔊 音效: 開
         </button>
         <!-- Playful Anime BGM Control + Volume Slider -->
         <div class="flex items-center gap-1 bg-slate-900/95 border border-teal-300/40 px-2 py-1 rounded-xl shadow">
@@ -744,23 +744,43 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-black gold-text">🛡️ 三寶防禦反制塔台</span>
-              <span class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
-                即時攔截中
+              <span id="defense-status-badge" class="px-2 py-0.5 rounded-full bg-slate-900 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
+                🟢 待命中
               </span>
             </div>
-            <div class="text-[10px] font-mono text-amber-200">
-              化解三寶：<span id="shield-deflect-score" class="font-black text-amber-300 text-xs">0</span> 次
+            <div class="flex items-center gap-2 text-[10px] font-mono">
+              <span class="text-slate-300">護盾生命：<span id="defense-lives-display" class="font-black text-rose-400">❤️❤️❤️</span></span>
+              <span class="text-amber-200">化解：<span id="shield-deflect-score" class="font-black text-amber-300 text-xs">0</span> 次</span>
             </div>
           </div>
 
-          <!-- Mini Interactive Radar Dome Canvas showing live incoming Sanbao blips -->
+          <!-- Radar Dome Canvas with Start & Game Over Overlays -->
           <div class="relative rounded-xl overflow-hidden border border-teal-400/40 bg-[#040818] shadow-inner">
-            <canvas id="defense-radar-canvas" width="460" height="120" class="w-full h-[115px] block select-none"></canvas>
+            <canvas id="defense-radar-canvas" width="460" height="130" class="w-full h-[125px] block select-none"></canvas>
             <div class="absolute top-1 left-2 text-[9px] font-mono text-teal-300/80 pointer-events-none">
-              RADAR // 1.5KM 警戒圈
+              RADAR // 1.5KM 基地防禦圈
             </div>
-            <div id="shield-combat-log" class="absolute bottom-1 inset-x-2 text-center text-[10px] font-mono font-bold text-amber-200 truncate bg-black/60 rounded px-1.5 py-0.5 pointer-events-none">
-              ⚡ 發現 3 台三寶正接近中！點擊下方戰術彈進行攔截！
+
+            <!-- Start Game Overlay -->
+            <div id="defense-start-overlay" class="absolute inset-0 z-20 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-2 text-center">
+              <div class="text-xs font-black text-amber-300 mb-0.5">🛡️ 三寶全境防禦反制作戰</div>
+              <div class="text-[9px] text-slate-300 mb-2">擁有 3 條護盾生命 ❤️❤️❤️・敵車觸及中心基地即扣血！</div>
+              <button onclick="startDefenseGame()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(45,212,191,0.5)] active:scale-95 transition-all">
+                🚀 啟動防禦塔台 (START GAME)
+              </button>
+            </div>
+
+            <!-- Game Over Overlay -->
+            <div id="defense-gameover-overlay" class="hidden absolute inset-0 z-20 bg-rose-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-2 text-center border-2 border-rose-500">
+              <div class="text-xs font-black text-rose-300 mb-0.5">💥 護盾歸零 // 基地失守！</div>
+              <div id="defense-final-score-text" class="text-[10px] text-amber-200 font-mono mb-2">最終成功化解三寶：0 次</div>
+              <button onclick="startDefenseGame()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-lg active:scale-95 transition-all">
+                🔄 重新充能再戰 (RETRY)
+              </button>
+            </div>
+
+            <div id="shield-combat-log" class="absolute bottom-1 inset-x-2 text-center text-[10px] font-mono font-bold text-amber-200 truncate bg-black/70 rounded px-1.5 py-0.5 pointer-events-none">
+              ⚡ 點擊【🚀 啟動防禦塔台】進入防禦作戰！
             </div>
           </div>
 
@@ -1061,6 +1081,22 @@
           </div>
         </div>
 
+        <!-- Interactive Detailed Tarot Divination & Lucky Charm Reading -->
+        <div id="tarot-divination-report" class="p-3 rounded-xl bg-[#060916]/95 border border-teal-300/40 space-y-1.5 shadow">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-amber-300 flex items-center gap-1.5">
+              <span>🔮</span> 今日三寶命理・即時占卜大師解盤
+            </span>
+            <span id="tarot-card-count-badge" class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-teal-300 font-mono text-[9px] font-bold">
+              3D 卡牌已就緒
+            </span>
+          </div>
+          <div id="tarot-report-content" class="text-[11px] text-slate-200 leading-relaxed space-y-1">
+            <p><strong class="text-teal-300">🌟 今日避難開運方：</strong>請盡量避開快車道與圓環，遠離前擋玻璃乾淨無水卻在刷雨刷的車輛！</p>
+            <p><strong class="text-amber-300">🍗 幸運避煞護身物：</strong>酥脆黃金大雞腿（必要時可投擲化解路怒危機）。</p>
+          </div>
+        </div>
+
         <!-- Interactive Bamboo Fortune Shake -->
         <div class="p-3 rounded-xl bg-[#060916]/95 border border-amber-300/35 flex items-center justify-between gap-3">
           <div class="flex items-center gap-2.5 min-w-0">
@@ -1271,7 +1307,7 @@
 
   <div id="toast-container" class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=15.1_20261110"></script>
-  <script src="app.js?v=15.1_20261110"></script>
+  <script src="sound_and_fx.js?v=15.2"></script>
+  <script src="app.js?v=15.2"></script>
 </body>
 </html>

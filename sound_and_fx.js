@@ -19,10 +19,12 @@ class SoundEngine {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (AudioCtx) this.ctx = new AudioCtx();
     }
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
     if (this.ctx && !this.masterBGMGain) {
       this.masterBGMGain = this.ctx.createGain();
-      this.masterBGMGain.gain.setValueAtTime(this.bgmVolume * 0.15, this.ctx.currentTime);
+      this.masterBGMGain.gain.setValueAtTime(this.bgmVolume * 0.65, this.ctx.currentTime);
       this.masterBGMGain.connect(this.ctx.destination);
     }
   }
@@ -32,7 +34,7 @@ class SoundEngine {
     if (this.masterBGMGain && this.ctx) {
       const now = this.ctx.currentTime;
       this.masterBGMGain.gain.cancelScheduledValues(now);
-      this.masterBGMGain.gain.linearRampToValueAtTime(this.bgmVolume * 0.15, now + 0.05);
+      this.masterBGMGain.gain.linearRampToValueAtTime(this.bgmVolume * 0.65, now + 0.05);
     }
     return this.bgmVolume;
   }
@@ -45,7 +47,10 @@ class SoundEngine {
     if (this.muted && this.bgmActive) {
       this.stopBGM();
     }
-    if (!this.muted) this.playClick(880);
+    if (!this.muted) {
+      this.init();
+      this.playClick(880);
+    }
     return this.muted;
   }
 
@@ -64,10 +69,13 @@ class SoundEngine {
     if (this.muted) return false;
     try {
       this.init();
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
       this.bgmActive = true;
       this.bgmStep = 0;
       if (this.masterBGMGain && this.ctx) {
-        this.masterBGMGain.gain.setValueAtTime(this.bgmVolume * 0.15, this.ctx.currentTime);
+        this.masterBGMGain.gain.setValueAtTime(this.bgmVolume * 0.65, this.ctx.currentTime);
       }
       this._scheduleBGMNote();
       return true;
