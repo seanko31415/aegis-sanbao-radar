@@ -3202,11 +3202,12 @@ window.toggleMusicBGM = function () {
   const active = window.soundEngine.toggleBGM();
   const btn = document.getElementById('bgm-toggle-btn');
   if (btn) {
-    btn.textContent = active ? '🎵 BGM: 開' : '🎵 BGM: 關';
+    btn.textContent = active ? '🎵 BGM: 播放中' : '🎵 點我播BGM: 關';
     btn.classList.toggle('border-teal-300', active);
     btn.classList.toggle('text-teal-300', active);
+    btn.classList.toggle('bg-teal-400/30', active);
   }
-  showToast(active ? '🎵 背景音樂已開啟' : '🔇 背景音樂已關閉', '輕鬆搞笑動漫 Ragtime 旋律', 'teal');
+  showToast(active ? '🎵 背景音樂已開啟' : '🔇 背景音樂已關閉', '輕鬆搞笑動漫 Ragtime 旋律 (可調節音量)', 'teal');
 };
 
 // Real-Time Mini Defense Radar Canvas & Interactive Countermeasure System
@@ -3517,6 +3518,21 @@ document.addEventListener('DOMContentLoaded', () => {
   startDefenseRadarLoop();
   calculateRouteSafety(false);
   syncUI();
+
+  // Instant confirmation toast that the new v15.0 build is loaded!
+  setTimeout(() => {
+    showToast('🚀 已載入最新 v15.0 旗艦版！', '搞笑動漫 BGM、三寶反制塔台、3D 好市多優化已生效', 'teal');
+  }, 600);
+
+  // Global one-time touch / click listener to unlock Web Audio API on iOS / Android / Desktop
+  window.addEventListener('pointerdown', () => {
+    if (window.soundEngine) {
+      window.soundEngine.init();
+      if (window.soundEngine.ctx && window.soundEngine.ctx.state === 'suspended') {
+        window.soundEngine.ctx.resume();
+      }
+    }
+  }, { once: true });
 
   // Pre-fill input with last known name if available, for user's convenience
   const quickInput = document.getElementById('quick-login-name');
