@@ -154,6 +154,7 @@ const appState = {
 };
 
 let leafletMap = null;
+window.appState = appState; // shared with intro.js (cinematic login splash)
 let tileLayerGroup = null;
 let targetMarker = null;
 let userMarker = null;
@@ -1118,21 +1119,52 @@ window.spinChickenLicenseRoulette = function () {
   ];
   const el = document.getElementById('roulette-result-text');
   if (!el) return;
+  if (window.__rouletteSpinning) return;
+  window.__rouletteSpinning = true;
+  const meterBar = document.getElementById('roulette-meter-bar');
+  const meterVal = document.getElementById('roulette-meter-val');
 
   let ticks = 0;
   const timer = setInterval(() => {
     window.soundEngine.playClick(600 + ticks * 45);
     el.textContent = results[ticks % results.length].text;
+    const fake = 20 + Math.floor(Math.random() * 80);
+    if (meterBar) meterBar.style.width = fake + '%';
+    if (meterVal) meterVal.textContent = fake + '%';
     ticks++;
     if (ticks >= 10) {
       clearInterval(timer);
-      const finalPick = results[Math.floor(Math.random() * results.length)];
+      window.__rouletteSpinning = false;
+      const pickIdx = Math.floor(Math.random() * results.length);
+      const finalPick = results[pickIdx];
+      const pct = [99, 76, 58, 12][pickIdx] ?? 50;
       el.textContent = finalPick.text;
+      if (meterBar) meterBar.style.width = pct + '%';
+      if (meterVal) meterVal.textContent = pct + '%';
+      window.__lastRouletteResult = finalPick.text;
+
+      window.__rouletteHistory = [finalPick.text.split(' (')[0], ...(window.__rouletteHistory || [])].slice(0, 4);
+      const hist = document.getElementById('roulette-history');
+      if (hist) {
+        hist.innerHTML = window.__rouletteHistory
+          .map((t, i) => `<span class="px-1.5 py-0.5 rounded bg-slate-900 border ${i === 0 ? 'border-amber-300/60 text-amber-200' : 'border-white/10 text-slate-400'} text-[9px] font-bold truncate max-w-[48%]">${t}</span>`)
+          .join('');
+      }
+      window.__rouletteCount = (window.__rouletteCount || 0) + 1;
+      const badge = document.getElementById('roulette-count-badge');
+      if (badge) badge.textContent = `已鑑定 ${window.__rouletteCount} 次`;
+
       window.soundEngine.playWinFanfare();
       window.soundEngine.speak(finalPick.voice);
-      showToast('🎰 駕照雞腿鑑定完成！', finalPick.text, 'amber');
     }
   }, 65);
+};
+
+window.shareRouletteResult = function () {
+  const result = window.__lastRouletteResult || document.getElementById('roulette-result-text')?.textContent || '';
+  const text = `🎰【損友三寶監測局】駕照雞腿鑑定結果：${result.trim()} 😂 快來鑑定你的損友！ ${location.origin}${location.pathname}`;
+  window.soundEngine.playClick(880);
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(text)}`, '_blank', 'noopener');
 };
 
 // ============================================================================
@@ -1864,7 +1896,7 @@ window.activateParkingChallenge = function () {
 
   const overlay = document.getElementById('parking-start-overlay');
   if (overlay) overlay.classList.add('hidden');
-  showToast('🎮 3D 好市多倒車挑戰開始！', '請使用鍵盤 ↑↓←→ 或按住下方方向盤與踏板倒車入庫！', 'emerald');
+  // No toast here: it would cover the on-screen driving buttons in the bottom-right
   renderParkingMiniGame();
 };
 
@@ -2033,7 +2065,6 @@ function evaluateParkingCollision() {
     g.keys = { left: false, right: false, up: false, down: false };
     window.soundEngine.playWiperSlap();
     window.soundEngine.speak(res.msg.replace('💥', ''));
-    showToast('💥 擦撞警報！', res.msg, 'red');
     showParkingOverlay('💥 CRASH ALERT // 擦撞事故', res.msg, '別灰心！三寶就是在一次次擦撞中成長的！', '🔄 點擊重新倒車');
   }
 }
@@ -3755,10 +3786,7 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateRouteSafety(false);
   syncUI();
 
-  // Instant confirmation toast that the new v15.3 build is loaded!
-  setTimeout(() => {
-    showToast('🚀 已載入最新 v15.3 旗艦版！', '高音質動漫 BGM 自動播放、反制塔台、星盤字體優化已生效', 'teal');
-  }, 600);
+  // Version toast is shown after the cinematic intro closes (see introEnter)
 
   // High-Fidelity Anime Jazz BGM Autoplay Engine
   const startAutoplayBGM = () => {
@@ -3814,30 +3842,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 120);
   });
 
-  // Continuous Keyboard Arrow Support for 3D Costco Parking Simulator!
-  window.addEventListener('keydown', (e) => {
-    if (appState.activeTab !== 'radar') return;
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
-
-    const g = appState.parkingGame;
-    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
-      if (g.active && g.status === 'PLAYING') {
-        e.preventDefault();
-        if (e.key === 'ArrowLeft') g.keys.left = true;
-        if (e.key === 'ArrowRight') g.keys.right = true;
-        if (e.key === 'ArrowDown') g.keys.down = true;
-        if (e.key === 'ArrowUp') g.keys.up = true;
-      }
-    }
-  });
-
-  window.addEventListener('keyup', (e) => {
-    const g = appState.parkingGame;
-    if (e.key === 'ArrowLeft') g.keys.left = false;
-    if (e.key === 'ArrowRight') g.keys.right = false;
-    if (e.key === 'ArrowDown') g.keys.down = false;
-    if (e.key === 'ArrowUp') g.keys.up = false;
-  });
+  // Keyboard controls for the 3D Costco parking simulator are registered at the
+  // top level (see "PARKING KEYBOARD CONTROLS" at the end of this file) so they
+  // keep working even if any earlier init step throws.
 
   setInterval(() => {
     appState.osIndex = (appState.osIndex + 1) % 10;
@@ -3862,3 +3869,169 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+
+// ============================================================================
+// PARKING KEYBOARD CONTROLS (top-level so they always register)
+// Arrow keys + WASD. Pressing a key while the parking card is on screen
+// auto-starts the challenge; held keys light up the on-screen buttons.
+// ============================================================================
+(function initParkingKeyboardControls() {
+  const KEYMAP = {
+    ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+    a: 'left', A: 'left', d: 'right', D: 'right', w: 'up', W: 'up', s: 'down', S: 'down'
+  };
+  const CODEMAP = { KeyA: 'left', KeyD: 'right', KeyW: 'up', KeyS: 'down' };
+
+  function resolveDir(e) {
+    return KEYMAP[e.key] || CODEMAP[e.code] || null;
+  }
+
+  function isTypingTarget(el) {
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    const tag = el.tagName;
+    if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    if (tag === 'INPUT') {
+      const type = (el.type || 'text').toLowerCase();
+      return !['range', 'checkbox', 'radio', 'button', 'submit', 'reset'].includes(type);
+    }
+    return false;
+  }
+
+  function parkingCanvasOnScreen() {
+    const c = document.getElementById('parking-game-canvas');
+    if (!c) return false;
+    const r = c.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < window.innerHeight;
+  }
+
+  function highlight(dir, on) {
+    document.querySelectorAll(`[data-park-key="${dir}"]`).forEach((b) => b.classList.toggle('park-key-held', on));
+  }
+
+  function releaseAll() {
+    const g = appState.parkingGame;
+    if (g && g.keys) Object.keys(g.keys).forEach((k) => (g.keys[k] = false));
+    ['left', 'right', 'up', 'down'].forEach((d) => highlight(d, false));
+  }
+
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      const dir = resolveDir(e);
+      if (!dir) return;
+      if (document.getElementById('intro-splash')) return; // cinematic intro still open
+      if (appState.activeTab !== 'radar') return;
+      if (isTypingTarget(document.activeElement)) return;
+
+      const g = appState.parkingGame;
+      const playing = g.active && g.status === 'PLAYING';
+      if (!playing) {
+        // Only auto-start on a fresh press while the game is visible, so normal
+        // page scrolling with arrow keys still works elsewhere.
+        if (e.repeat || !parkingCanvasOnScreen()) return;
+        window.activateParkingChallenge();
+      }
+      e.preventDefault();
+      g.keys[dir] = true;
+      highlight(dir, true);
+    },
+    { capture: true }
+  );
+
+  window.addEventListener(
+    'keyup',
+    (e) => {
+      const dir = resolveDir(e);
+      if (!dir) return;
+      const g = appState.parkingGame;
+      if (g && g.keys) g.keys[dir] = false;
+      highlight(dir, false);
+    },
+    { capture: true }
+  );
+
+  window.addEventListener('blur', releaseAll);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) releaseAll();
+  });
+})();
+
+// ============================================================================
+// TAB 1 BOTTOM-RIGHT: LIVE SANBAO SIGHTING TICKER (fills remaining height)
+// ============================================================================
+const LIVE_FEED_SPOTS = ['逢甲夜市', '台北101', '高雄巨蛋', '新竹巨城', '台南孔廟', '板橋車站', '桃園機場', '台中七期', '好市多B2', '西門町'];
+const LIVE_FEED_EVENTS = [
+  { icon: '🌧️', text: '晴天狂刷雨刷 20 下', color: 'text-sky-300' },
+  { icon: '🔄', text: '圓環繞第 3 圈還在找出口', color: 'text-orange-300' },
+  { icon: '🅿️', text: '一台車霸佔兩格車位', color: 'text-rose-300' },
+  { icon: '💡', text: '打左燈但右轉', color: 'text-yellow-300' },
+  { icon: '🐢', text: '綠燈發呆 8 秒才起步', color: 'text-emerald-300' },
+  { icon: '🛵', text: '機車鑽縫連過 5 台車', color: 'text-amber-300' },
+  { icon: '🚦', text: '黃燈地板油衝刺', color: 'text-pink-300' },
+  { icon: '🛒', text: '推車大媽橫越車道', color: 'text-teal-300' },
+  { icon: '🌀', text: '跟著導航開進田裡', color: 'text-indigo-300' },
+  { icon: '📢', text: '喇叭按了 12 秒沒停', color: 'text-rose-300' }
+];
+let liveFeedTimer = null;
+
+function pushLiveFeedItem(item, animate = true) {
+  const box = document.getElementById('tactical-live-feed');
+  if (!box) return;
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2, '0');
+  const mm = String(t.getMinutes()).padStart(2, '0');
+  const row = document.createElement('div');
+  row.className = `flex items-center gap-1.5 px-2 py-1 rounded-lg ${item.mine ? 'bg-amber-400/15 border border-amber-300/40' : 'bg-slate-900/70 border border-white/5'} text-[11px] ${animate ? 'feed-item-new' : ''}`;
+  row.innerHTML = `
+    <span class="shrink-0">${item.icon}</span>
+    <span class="font-black text-amber-200 shrink-0">${item.spot}</span>
+    <span class="${item.color} font-bold truncate flex-1">${item.text}</span>
+    <span class="font-mono text-[9px] text-slate-500 shrink-0">${hh}:${mm}</span>`;
+  box.prepend(row);
+  while (box.children.length > 14) box.lastElementChild.remove();
+}
+
+function randomLiveFeedItem() {
+  const ev = LIVE_FEED_EVENTS[Math.floor(Math.random() * LIVE_FEED_EVENTS.length)];
+  const spot = LIVE_FEED_SPOTS[Math.floor(Math.random() * LIVE_FEED_SPOTS.length)];
+  return { ...ev, spot };
+}
+
+function jitterLiveFeedStats() {
+  const near = document.getElementById('feed-stat-near');
+  const wiper = document.getElementById('feed-stat-wiper');
+  const survive = document.getElementById('feed-stat-survive');
+  const level = document.getElementById('feed-threat-level');
+  const n = 12 + Math.floor(Math.random() * 14);
+  if (near) near.textContent = `${n} 輛`;
+  if (wiper) wiper.textContent = `${(90 + Math.random() * 9.5).toFixed(1)}%`;
+  if (survive) survive.textContent = `${(80 + Math.random() * 15).toFixed(1)}%`;
+  if (level) level.textContent = n > 20 ? 'SSS' : n > 16 ? 'SS' : 'S';
+}
+
+window.reportLiveSighting = function () {
+  const base = randomLiveFeedItem();
+  const who = (appState.myUser && appState.myUser.loggedIn && appState.myUser.name) || '訪客';
+  pushLiveFeedItem({ ...base, spot: `📸${who}`, mine: true });
+  jitterLiveFeedStats();
+  if (window.soundEngine) window.soundEngine.playPing();
+};
+
+function startLiveFeedTicker() {
+  const box = document.getElementById('tactical-live-feed');
+  if (!box || liveFeedTimer) return;
+  for (let i = 0; i < 8; i++) pushLiveFeedItem(randomLiveFeedItem(), false);
+  liveFeedTimer = setInterval(() => {
+    if (document.hidden || appState.activeTab !== 'radar') return;
+    pushLiveFeedItem(randomLiveFeedItem());
+    if (Math.random() < 0.5) jitterLiveFeedStats();
+  }, 4200);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startLiveFeedTicker);
+} else {
+  startLiveFeedTicker();
+}

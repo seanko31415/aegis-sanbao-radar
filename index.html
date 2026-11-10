@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>損友三寶監測局 // 真人即時連線防空雷達 v15.0 旗艦版</title>
+  <title>損友三寶監測局 // 真人即時連線防空雷達 v15.4 旗艦版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -305,9 +305,237 @@
     .tarot-card-3d-back {
       transform: rotateY(180deg);
     }
+
+    /* =====================================================================
+       🎴 CINEMATIC 3D TAROT CAROUSEL INTRO / LOGIN SPLASH
+       ===================================================================== */
+    body.intro-lock { overflow: hidden; }
+    #intro-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 38%, rgba(37, 56, 120, 0.55) 0%, rgba(6, 10, 23, 0.0) 55%),
+        radial-gradient(ellipse at 50% 110%, rgba(212, 175, 55, 0.22) 0%, rgba(6, 10, 23, 0) 50%),
+        #03050d;
+      transition: opacity 0.9s ease, filter 0.9s ease, transform 0.9s cubic-bezier(0.7, 0, 0.3, 1);
+    }
+    #intro-splash.intro-exit {
+      opacity: 0;
+      filter: blur(12px) brightness(1.6);
+      transform: scale(1.12);
+      pointer-events: none;
+    }
+    #intro-stars { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .intro-vignette {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.75) 100%);
+    }
+    .intro-grid-floor {
+      position: absolute; left: -50%; right: -50%; bottom: -10%; height: 55%;
+      background-image:
+        linear-gradient(rgba(212, 175, 55, 0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 191, 0.12) 1px, transparent 1px);
+      background-size: 60px 60px;
+      transform: perspective(500px) rotateX(70deg);
+      transform-origin: top center;
+      mask-image: linear-gradient(to top, rgba(0,0,0,0.9), transparent 85%);
+      -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.9), transparent 85%);
+      animation: intro-floor-scroll 6s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes intro-floor-scroll { from { background-position: 0 0; } to { background-position: 0 60px; } }
+
+    .intro-stage {
+      --card-w: 108px;
+      --card-h: 168px;
+      --ring-r: 205px;
+      position: relative;
+      width: var(--card-w);
+      height: var(--card-h);
+      perspective: 1100px;
+      margin-top: -4vh;
+      transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1), opacity 1s ease;
+    }
+    @media (min-width: 640px) { .intro-stage { --card-w: 132px; --card-h: 204px; --ring-r: 280px; } }
+    @media (min-width: 1024px) { .intro-stage { --card-w: 150px; --card-h: 232px; --ring-r: 360px; } }
+    @media (max-height: 700px) {
+      .intro-stage { --card-w: 92px; --card-h: 142px; --ring-r: 190px; }
+      .intro-panel { margin-top: 44px !important; }
+    }
+    .intro-tilt {
+      position: absolute; inset: 0;
+      transform-style: preserve-3d;
+      transform: rotateX(-10deg);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .intro-ring {
+      position: absolute; inset: 0;
+      transform-style: preserve-3d;
+      animation: intro-ring-spin 26s linear infinite;
+    }
+    @keyframes intro-ring-spin { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
+    #intro-splash.intro-warp .intro-ring { animation-duration: 1.6s; }
+    #intro-splash.intro-warp .intro-stage { transform: scale(2.6) translateY(-6%); opacity: 0; }
+
+    .intro-card {
+      position: absolute; inset: 0;
+      border-radius: 14px;
+      transform: rotateY(calc(var(--i) * 45deg)) translateZ(var(--ring-r));
+      transform-style: preserve-3d;
+      background: linear-gradient(160deg, #18264e, #070b1c);
+      border: 1.5px solid rgba(254, 240, 138, 0.75);
+      box-shadow: 0 0 22px rgba(212, 175, 55, 0.35), inset 0 0 18px rgba(212, 175, 55, 0.2);
+      overflow: hidden;
+      -webkit-box-reflect: below 10px linear-gradient(transparent 62%, rgba(255, 255, 255, 0.22));
+    }
+    .intro-card img {
+      position: absolute; inset: 6px 6px 34px 6px;
+      width: calc(100% - 12px); height: calc(100% - 40px);
+      object-fit: cover; border-radius: 9px;
+      border: 1px solid rgba(254, 240, 138, 0.4);
+      filter: saturate(1.15) contrast(1.05);
+    }
+    .intro-card .intro-card-label {
+      position: absolute; left: 0; right: 0; bottom: 7px;
+      text-align: center; font-weight: 900; font-size: 10px; letter-spacing: 0.08em;
+      color: #FEF08A; text-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+    }
+    .intro-card .intro-card-num {
+      position: absolute; top: 10px; left: 10px; z-index: 2;
+      font-family: 'Cinzel Decorative', serif; font-size: 10px; font-weight: 900;
+      color: #FEF08A; padding: 1px 6px; border-radius: 999px;
+      background: rgba(3, 5, 13, 0.75); border: 1px solid rgba(254, 240, 138, 0.5);
+    }
+    .intro-card::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 48%, transparent 62%);
+      background-size: 250% 100%;
+      animation: intro-card-sheen 4.5s ease-in-out infinite;
+      animation-delay: calc(var(--i) * 0.4s);
+    }
+    @keyframes intro-card-sheen { 0%, 60% { background-position: 150% 0; } 100% { background-position: -100% 0; } }
+
+    .intro-core-glow {
+      position: absolute; left: 50%; top: 50%;
+      width: 240px; height: 240px; margin: -120px 0 0 -120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(254, 240, 138, 0.35) 0%, rgba(45, 212, 191, 0.12) 40%, transparent 70%);
+      filter: blur(6px);
+      animation: intro-core-pulse 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes intro-core-pulse { 0%, 100% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.15); opacity: 1; } }
+
+    .intro-panel {
+      position: relative; z-index: 5;
+      margin-top: clamp(64px, 11vh, 120px);
+      width: min(92vw, 460px);
+      text-align: center;
+      opacity: 0; transform: translateY(24px);
+      animation: intro-panel-in 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+    }
+    @keyframes intro-panel-in { to { opacity: 1; transform: translateY(0); } }
+    .intro-title {
+      font-family: 'Noto Serif TC', serif; font-weight: 900;
+      font-size: clamp(26px, 6vw, 44px); letter-spacing: 0.12em; line-height: 1.15;
+      background: linear-gradient(100deg, #fff 0%, #FEF08A 30%, #D4AF37 50%, #FEF08A 70%, #fff 100%);
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: intro-title-shimmer 4s linear infinite;
+      filter: drop-shadow(0 0 18px rgba(212, 175, 55, 0.45));
+    }
+    @keyframes intro-title-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    .intro-boot-line { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(45, 212, 191, 0.85); min-height: 14px; }
+    .intro-progress { height: 3px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+    .intro-progress > div {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #2DD4BF, #FEF08A, #D4AF37);
+      box-shadow: 0 0 12px #FEF08A;
+      transition: width 0.25s ease;
+    }
+    .intro-actions { opacity: 0; transform: translateY(10px); pointer-events: none; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    .intro-actions.ready { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .intro-flash {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0; z-index: 10;
+      background: radial-gradient(circle at center, rgba(255, 251, 235, 0.95), rgba(254, 240, 138, 0.5) 40%, transparent 75%);
+    }
+    #intro-splash.intro-warp .intro-flash { animation: intro-flash-burst 1s ease-out forwards; }
+    @keyframes intro-flash-burst { 0% { opacity: 0; } 35% { opacity: 1; } 100% { opacity: 0; } }
+
+    main.main-enter, header.main-enter { animation: main-enter-rise 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    @keyframes main-enter-rise { from { opacity: 0; transform: translateY(28px) scale(0.985); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .intro-ring, .intro-grid-floor, .intro-card::after, .intro-title { animation: none !important; }
+    }
+
+    /* Live ticker feed for Tab 1 bottom-right card */
+    @keyframes feed-slide-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+    .feed-item-new { animation: feed-slide-in 0.45s cubic-bezier(0.16, 1, 0.3, 1); }
+    .park-key-held { box-shadow: 0 0 0 2px #FEF08A, 0 0 16px rgba(254, 240, 138, 0.55) !important; transform: scale(0.96); }
   </style>
 </head>
-<body class="min-h-screen flex flex-col pb-20 md:pb-4 selection:bg-amber-300 selection:text-slate-950">
+<body class="intro-lock min-h-screen flex flex-col pb-20 md:pb-4 selection:bg-amber-300 selection:text-slate-950">
+
+  <!-- =====================================================================
+       0. 🎴 CINEMATIC 3D TAROT CAROUSEL INTRO / LOGIN SPLASH
+       ===================================================================== -->
+  <div id="intro-splash" role="dialog" aria-label="損友三寶監測局 登入">
+    <canvas id="intro-stars"></canvas>
+    <div class="intro-grid-floor"></div>
+    <div class="intro-vignette"></div>
+    <div class="intro-flash"></div>
+
+    <div class="intro-stage" id="intro-stage">
+      <div class="intro-core-glow"></div>
+      <div class="intro-tilt" id="intro-tilt">
+        <div class="intro-ring">
+          <div class="intro-card" style="--i:0"><span class="intro-card-num">I</span><img src="assets/sanbao_chicken_avatar.jpg" alt="" /><div class="intro-card-label">雞腿駕照</div></div>
+          <div class="intro-card" style="--i:1"><span class="intro-card-num">II</span><img src="assets/scenario_roundabout.jpg" alt="" /><div class="intro-card-label">圓環圓舞曲</div></div>
+          <div class="intro-card" style="--i:2"><span class="intro-card-num">III</span><img src="assets/scenario_parking.jpg" alt="" /><div class="intro-card-label">B2 柱子殺手</div></div>
+          <div class="intro-card" style="--i:3"><span class="intro-card-num">IV</span><img src="assets/nerv_commander_banner.jpg" alt="" /><div class="intro-card-label">戰情指揮官</div></div>
+          <div class="intro-card" style="--i:4"><span class="intro-card-num">V</span><img src="assets/royal_conductor.jpg" alt="" /><div class="intro-card-label">皇家指揮家</div></div>
+          <div class="intro-card" style="--i:5"><span class="intro-card-num">VI</span><img src="assets/sanbao_iot_dongle.jpg" alt="" /><div class="intro-card-label">三寶偵測器</div></div>
+          <div class="intro-card" style="--i:6"><span class="intro-card-num">VII</span><img src="assets/sanbao_avatar.jpg" alt="" /><div class="intro-card-label">損友本尊</div></div>
+          <div class="intro-card" style="--i:7"><span class="intro-card-num">VIII</span><img src="assets/fantasy_harbor_bg.jpg" alt="" /><div class="intro-card-label">夢幻港灣</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="intro-panel">
+      <div class="text-[10px] font-mono tracking-[0.4em] text-teal-300/80 mb-1">✦ AEGIS SANBAO RADAR ✦</div>
+      <h1 class="intro-title">損友三寶監測局</h1>
+      <div class="text-[11px] sm:text-xs text-amber-100/70 font-bold tracking-widest mt-1">真人即時連線・防空雷達・塔羅占卜</div>
+
+      <div class="mt-4 space-y-1.5">
+        <div id="intro-boot-line" class="intro-boot-line">&gt; INITIALIZING TAROT RADAR CORE...</div>
+        <div class="intro-progress"><div id="intro-progress-bar"></div></div>
+      </div>
+
+      <div id="intro-actions" class="intro-actions mt-4 space-y-2">
+        <form onsubmit="introEnter(event, 'login')" class="flex gap-1.5 p-1.5 rounded-2xl bg-black/50 border border-amber-300/40 backdrop-blur-md shadow-[0_0_30px_rgba(212,175,55,0.2)]">
+          <input id="intro-name-input" type="text" maxlength="16" autocomplete="nickname" placeholder="👤 輸入你的名字..." class="flex-1 min-w-0 rounded-xl bg-slate-950/80 border border-white/10 px-3 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-amber-300" />
+          <button type="submit" class="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-[0_0_20px_rgba(251,191,36,0.45)] active:scale-95 transition-all">
+            🚀 登入
+          </button>
+        </form>
+        <button id="intro-continue-btn" type="button" onclick="introEnter(event, 'continue')" class="hidden w-full py-2.5 rounded-2xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-sm active:scale-95 transition-all">
+          ▶ 繼續進入
+        </button>
+        <button type="button" onclick="introEnter(event, 'visitor')" class="w-full py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-teal-300/40 text-teal-200 font-black text-sm active:scale-95 transition-all">
+          👀 先以訪客預覽進入
+        </button>
+        <div class="text-[10px] text-slate-400">訪客模式不會定位你・登入後才會開啟 GPS 與好友連線</div>
+      </div>
+    </div>
+  </div>
 
   <!-- STARLIGHT PARTICLE CANVAS OVERLAY -->
   <canvas id="stardust-canvas" class="fixed inset-0 pointer-events-none z-30"></canvas>
@@ -693,8 +921,8 @@
         </div>
 
         <!-- INTERACTIVE WIDGET BELOW MAP: 💮 三寶違規蓋章機 & 自訂標籤 & 🎰 駕照雞腿鑑定轉盤 -->
-        <div class="royal-card p-3.5 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-          <div class="sm:col-span-7 space-y-2">
+        <div class="royal-card p-3.5 grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
+          <div class="sm:col-span-7 flex flex-col justify-between gap-2">
             <div class="flex items-center justify-between">
               <h3 class="text-xs font-black gold-text">💮 違規認證標籤機（自己與好友都能標，點 ✕ 可隨時刪除）</h3>
               <span class="text-[10px] text-teal-300 font-mono">TAG MANAGER</span>
@@ -713,6 +941,18 @@
               <button onclick="slapSanbaoStamp('🔄 圓環釘子戶')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-orange-300">
                 + 🔄 圓環釘子戶
               </button>
+              <button onclick="slapSanbaoStamp('💡 方向燈裝飾品')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-yellow-200">
+                + 💡 方向燈裝飾品
+              </button>
+              <button onclick="slapSanbaoStamp('🐢 綠燈發呆王')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-emerald-300">
+                + 🐢 綠燈發呆王
+              </button>
+              <button onclick="slapSanbaoStamp('🌀 導航迷路仙')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-indigo-300">
+                + 🌀 導航迷路仙
+              </button>
+              <button onclick="slapSanbaoStamp('🚦 黃燈衝刺手')" class="tarot-btn py-2 px-1.5 text-[11px] font-black text-pink-300">
+                + 🚦 黃燈衝刺手
+              </button>
             </div>
             <!-- Custom Tag Input Form -->
             <form onsubmit="addCustomSanbaoStamp(event)" class="flex gap-1.5 pt-1">
@@ -723,14 +963,31 @@
             </form>
           </div>
 
-          <div class="sm:col-span-5 bg-[#060916]/90 p-2.5 rounded-xl border border-amber-300/30 flex items-center justify-between gap-2">
-            <div class="min-w-0">
-              <div class="text-[10px] text-amber-300 font-bold">🎰 駕照含雞腿量鑑定</div>
-              <div id="roulette-result-text" class="text-xs font-black text-white truncate mt-0.5">🍗 黃金脆皮雞腿 x 88 支</div>
+          <div class="sm:col-span-5 bg-[#060916]/90 p-2.5 rounded-xl border border-amber-300/30 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-[11px] text-amber-300 font-black">🎰 駕照含雞腿量鑑定</div>
+              <span id="roulette-count-badge" class="px-1.5 py-0.5 rounded bg-amber-400/15 border border-amber-300/30 text-[9px] font-mono font-black text-amber-200">已鑑定 0 次</span>
             </div>
-            <button onclick="spinChickenLicenseRoulette()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shrink-0 shadow active:scale-95">
-              🎲 鑑定損友
-            </button>
+            <div id="roulette-result-text" class="text-xs font-black text-white truncate">🍗 黃金脆皮雞腿 x 88 支</div>
+            <div>
+              <div class="flex items-center justify-between text-[9px] font-mono text-slate-400 mb-0.5">
+                <span>雞腿含量</span><span id="roulette-meter-val" class="text-amber-300 font-black">88%</span>
+              </div>
+              <div class="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                <div id="roulette-meter-bar" class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-300 to-rose-500 transition-all duration-500" style="width:88%"></div>
+              </div>
+            </div>
+            <div id="roulette-history" class="flex flex-wrap gap-1 min-h-[18px]">
+              <span class="text-[9px] text-slate-500">鑑定紀錄會顯示在這裡</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button onclick="spinChickenLicenseRoulette()" class="py-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black text-xs shadow active:scale-95">
+                🎲 鑑定損友
+              </button>
+              <button onclick="shareRouletteResult()" class="py-2 rounded-xl bg-[#06C755] hover:brightness-110 text-white font-black text-xs shadow active:scale-95">
+                💬 炫耀結果
+              </button>
+            </div>
           </div>
         </div>
 
@@ -848,7 +1105,7 @@
                 挑戰好市多 B2 倒車入庫！
               </div>
               <p id="parking-overlay-desc" class="text-[10px] text-amber-100/90 max-w-xs">
-                方向盤左右相反！鍵盤 <span class="text-amber-300 font-mono font-black">↑ ↓ ← →</span> 或點擊下方按鈕！
+                方向盤左右相反！按鍵盤 <span class="text-amber-300 font-mono font-black">↑ ↓ ← →</span> / <span class="text-amber-300 font-mono font-black">WASD</span> 直接開始，或按住下方按鈕！
               </p>
               <button onclick="activateParkingChallenge()" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow hover:scale-105 active:scale-95 transition-all">
                 ▶️ 點擊開始倒車挑戰
@@ -858,6 +1115,7 @@
 
           <div class="grid grid-cols-4 gap-1.5 select-none">
             <button
+              data-park-key="left"
               onpointerdown="setParkingKey('left', true)"
               onpointerup="setParkingKey('left', false)"
               onpointerleave="setParkingKey('left', false)"
@@ -867,6 +1125,7 @@
               <span>⬅️ 左打</span>
             </button>
             <button
+              data-park-key="right"
               onpointerdown="setParkingKey('right', true)"
               onpointerup="setParkingKey('right', false)"
               onpointerleave="setParkingKey('right', false)"
@@ -876,6 +1135,7 @@
               <span>➡️ 右打</span>
             </button>
             <button
+              data-park-key="down"
               onpointerdown="setParkingKey('down', true)"
               onpointerup="setParkingKey('down', false)"
               onpointerleave="setParkingKey('down', false)"
@@ -885,6 +1145,7 @@
               <span>⏪ 倒車 R</span>
             </button>
             <button
+              data-park-key="up"
               onpointerdown="setParkingKey('up', true)"
               onpointerup="setParkingKey('up', false)"
               onpointerleave="setParkingKey('up', false)"
@@ -896,47 +1157,57 @@
           </div>
         </div>
 
-        <!-- 3. TACTICAL CRISIS DISPATCH & INSTANT ESCAPE GUIDE (Fills bottom-right column) -->
-        <div class="royal-card p-3 space-y-2">
+        <!-- 3. TACTICAL CRISIS DISPATCH & INSTANT ESCAPE GUIDE (Stretches to fill bottom-right column) -->
+        <div class="royal-card p-3 flex-1 flex flex-col gap-2 min-h-[230px]">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-1.5">
               <span class="text-xs font-black gold-text">⚡ 全境三寶避災戰術速報</span>
               <span class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
-                🟢 戰情連線中
+                🟢 LIVE
               </span>
             </div>
             <span class="text-[10px] font-mono text-amber-200">
-              即時避難等級：<span class="font-black text-rose-400 text-xs">SSS 級特防</span>
+              避難等級 <span id="feed-threat-level" class="font-black text-rose-400 text-xs">SSS</span>
             </span>
           </div>
 
           <div class="grid grid-cols-3 gap-1.5 text-center">
             <div class="glass-window p-1.5 rounded-lg">
               <div class="text-[9px] text-slate-400">方圓三寶</div>
-              <div class="text-xs font-mono font-black text-rose-400">18 輛逼近</div>
+              <div id="feed-stat-near" class="text-xs font-mono font-black text-rose-400">18 輛</div>
             </div>
             <div class="glass-window p-1.5 rounded-lg">
               <div class="text-[9px] text-slate-400">雨刷誤觸率</div>
-              <div class="text-xs font-mono font-black text-sky-400">96.8% 高發</div>
+              <div id="feed-stat-wiper" class="text-xs font-mono font-black text-sky-400">96.8%</div>
             </div>
             <div class="glass-window p-1.5 rounded-lg">
               <div class="text-[9px] text-slate-400">生還通行率</div>
-              <div class="text-xs font-mono font-black text-emerald-400">88.5% 就緒</div>
+              <div id="feed-stat-survive" class="text-xs font-mono font-black text-emerald-400">88.5%</div>
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-1.5">
-            <button onclick="openPresidentialAlert()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-rose-300 flex items-center justify-center gap-1 active:scale-95" title="發送全境避難警報">
-              <span>🚨</span>
-              <span>全境廣播</span>
+          <!-- Live auto-updating sighting ticker: grows to fill all remaining height -->
+          <div class="relative flex-1 min-h-[96px] rounded-xl bg-[#060916]/90 border border-amber-300/25 overflow-hidden">
+            <div class="absolute top-0 inset-x-0 z-10 flex items-center justify-between px-2.5 py-1 bg-[#060916] border-b border-amber-300/20">
+              <span class="text-[10px] font-black text-amber-200">📡 即時三寶目擊動態</span>
+              <span class="flex items-center gap-1 text-[9px] font-mono text-rose-300"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>REC</span>
+            </div>
+            <div id="tactical-live-feed" class="absolute inset-0 top-[26px] overflow-hidden px-2 py-1.5 space-y-1"></div>
+            <div class="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-[#060916] to-transparent pointer-events-none"></div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-1.5">
+            <button onclick="openPresidentialAlert()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-rose-300 flex flex-col items-center justify-center active:scale-95" title="發送全境避難警報">
+              <span>🚨</span><span>全境廣播</span>
             </button>
-            <button onclick="knockCopilotWoodfish()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-amber-300 flex items-center justify-center gap-1 active:scale-95" title="快速敲擊木魚積累功德">
-              <span>📿</span>
-              <span>積累功德</span>
+            <button onclick="knockCopilotWoodfish()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-amber-300 flex flex-col items-center justify-center active:scale-95" title="快速敲擊木魚積累功德">
+              <span>📿</span><span>積累功德</span>
             </button>
-            <button onclick="switchTab('squad')" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-teal-300 flex items-center justify-center gap-1 active:scale-95" title="切換至好友連線名冊">
-              <span>👥</span>
-              <span>好友名冊</span>
+            <button onclick="reportLiveSighting()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-sky-300 flex flex-col items-center justify-center active:scale-95" title="回報一筆三寶目擊">
+              <span>📸</span><span>回報目擊</span>
+            </button>
+            <button onclick="switchTab('squad')" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-teal-300 flex flex-col items-center justify-center active:scale-95" title="切換至好友連線名冊">
+              <span>👥</span><span>好友名冊</span>
             </button>
           </div>
         </div>
@@ -1383,7 +1654,8 @@
 
   <div id="toast-container" class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=15.3"></script>
-  <script src="app.js?v=15.3"></script>
+  <script src="intro.js?v=15.4"></script>
+  <script src="sound_and_fx.js?v=15.4"></script>
+  <script src="app.js?v=15.4"></script>
 </body>
 </html>
