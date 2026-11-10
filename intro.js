@@ -149,6 +149,7 @@
     try {
       se.init && se.init();
       if (se.ctx && se.ctx.state === 'suspended') se.ctx.resume();
+      if (se.setBGMVolume) se.setBGMVolume(0.20);
       if (!se.bgmActive && se.startBGM) {
         se.startBGM();
         const btn = document.getElementById('bgm-toggle-btn');

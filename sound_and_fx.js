@@ -10,7 +10,7 @@ class SoundEngine {
     this.bgmActive = false;
     this.bgmTimer = null;
     this.bgmStep = 0;
-    this.bgmVolume = 0.35;
+    this.bgmVolume = 0.20; // Default 20% volume per user request
     this.masterBGMGain = null;
   }
 

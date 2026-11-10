@@ -3806,6 +3806,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.soundEngine.ctx && window.soundEngine.ctx.state === 'suspended') {
         window.soundEngine.ctx.resume();
       }
+      if (window.soundEngine.setBGMVolume) {
+        window.soundEngine.setBGMVolume(0.20);
+      }
+      const slider = document.getElementById('bgm-volume-slider');
+      const label = document.getElementById('bgm-volume-label');
+      if (slider) slider.value = 20;
+      if (label) label.textContent = '20%';
+
       if (!window.soundEngine.bgmActive) {
         window.soundEngine.startBGM();
         const btn = document.getElementById('bgm-toggle-btn');
@@ -4027,6 +4035,122 @@ window.reportLiveSighting = function () {
   pushLiveFeedItem({ ...base, spot: `📸${who}`, mine: true });
   jitterLiveFeedStats();
   if (window.soundEngine) window.soundEngine.playPing();
+};
+
+// ---------------------------------------------------------------------------
+// PRACTICAL ANTI-SANBAO TACTICAL DISPATCH & ESCAPE SUITE (防衛避災實用戰術)
+// ---------------------------------------------------------------------------
+
+// 1. Broadcast Voice Road Hazard Warning (語音播報路況)
+window.broadcastVoiceHazardWarning = function () {
+  if (window.soundEngine) window.soundEngine.playSonicWave();
+  const near = document.getElementById('feed-stat-near')?.textContent || '18 輛';
+  const wiper = document.getElementById('feed-stat-wiper')?.textContent || '96.8%';
+  const feed = document.querySelector('#tactical-live-feed div');
+  const latestDesc = feed ? (feed.querySelector('span:nth-child(3)')?.textContent || '雨刷亂刷神車出沒') : '雨刷亂刷神車出沒';
+
+  const speechText = `前方路況警戒！方圓三寶逼近 ${near}，雨刷誤觸率高達 ${wiper}。最新即時路況回報：${latestDesc}！請減速慢行，保持安全車距！`;
+
+  if (window.soundEngine && typeof window.soundEngine.speak === 'function') {
+    window.soundEngine.speak(speechText);
+  }
+  showToast('📢 語音路況播報中', speechText, 'amber');
+};
+
+// 2. Plan Safe Detour / Evacuation Route (規劃避難路線)
+window.planSanbaoEvacuationRoute = function () {
+  if (window.soundEngine) window.soundEngine.playPing();
+  const target = getTrackedProfile();
+  const city = target.location ? target.location.split(' ')[0] : '目前位置';
+
+  // Highlight map and draw a brief safe green circle around map center if leaflet exists
+  if (leafletMap && typeof L !== 'undefined') {
+    const center = leafletMap.getCenter();
+    const safeZone = L.circle(center, {
+      color: '#34D399',
+      fillColor: '#10B981',
+      fillOpacity: 0.2,
+      radius: 650,
+      weight: 2,
+      dashArray: '6, 6'
+    }).addTo(leafletMap);
+    setTimeout(() => {
+      if (safeZone && leafletMap) leafletMap.removeLayer(safeZone);
+    }, 6000);
+  }
+
+  const surviveEl = document.getElementById('feed-stat-survive');
+  if (surviveEl) surviveEl.textContent = '99.2%';
+  const levelEl = document.getElementById('feed-threat-level');
+  if (levelEl) levelEl.textContent = 'SAFE';
+
+  const voiceMsg = `已為您規劃最佳安全避難路徑！已自動避開圓環與並排違停熱區，目前生還通行率提升至百分之九十九點二！`;
+  if (window.soundEngine && typeof window.soundEngine.speak === 'function') {
+    window.soundEngine.speak(voiceMsg);
+  }
+  showToast('🧭 避難路線規劃完成', `${city} 避災安全迴避綠色廊道已載入，預估生還率 99.2%！`, 'emerald');
+};
+
+// 3. Live Hazard Reporting Modal Handlers (即時路況回報)
+window.openLiveReportModal = function () {
+  if (window.soundEngine) window.soundEngine.playClick(720);
+  const modal = document.getElementById('modal-live-report');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeLiveReportModal = function () {
+  const modal = document.getElementById('modal-live-report');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.submitQuickHazardReport = function (tag, desc) {
+  if (window.soundEngine) window.soundEngine.playWinFanfare();
+  const target = getTrackedProfile();
+  const spot = target.location ? target.location.split(' ')[0] : '即時目擊';
+  const who = (appState.myUser && appState.myUser.loggedIn && appState.myUser.name) || '熱心用路人';
+
+  pushLiveFeedItem({
+    icon: tag.split(' ')[0] || '📸',
+    spot: `${spot}・${who}`,
+    text: desc,
+    color: 'text-amber-300',
+    mine: true
+  });
+  jitterLiveFeedStats();
+  window.closeLiveReportModal();
+  showToast('📸 即時路況已回報', `已發布【${tag}】至全台三寶監測雷達！`, 'teal');
+};
+
+window.submitCustomHazardReport = function () {
+  const input = document.getElementById('custom-hazard-note');
+  const val = input ? input.value.trim() : '';
+  if (!val) {
+    showToast('⚠️ 請輸入回報內容', '請填寫您目擊的三寶違規或路況說明', 'amber');
+    input?.focus();
+    return;
+  }
+  window.submitQuickHazardReport('🚨 民眾通報', val);
+  if (input) input.value = '';
+};
+
+// 4. Defensive Driving Tips Modal Handlers (防衛駕駛四大生還守則)
+window.openDefensiveTipsModal = function () {
+  if (window.soundEngine) window.soundEngine.playClick(680);
+  const modal = document.getElementById('modal-defensive-tips');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeDefensiveTipsModal = function () {
+  const modal = document.getElementById('modal-defensive-tips');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.readAloudDefensiveTips = function () {
+  const tips = `防衛駕駛四大生還守則：第一、晴天開雨刷神車，高達九成八是打錯方向燈，預判隨機轉向絕不超車！第二、停等紅燈時保持看見前車後輪完全著地！第三、多車道圓環禮讓不打燈神車先行！第四、下車採用反手荷蘭式開門，確認後方無機車！`;
+  if (window.soundEngine && typeof window.soundEngine.speak === 'function') {
+    window.soundEngine.speak(tips);
+  }
+  showToast('🔊 語音朗讀中', '正在為您朗讀專業防衛駕駛生還守則...', 'teal');
 };
 
 function startLiveFeedTicker() {
