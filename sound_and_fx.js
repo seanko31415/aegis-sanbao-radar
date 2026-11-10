@@ -10,6 +10,8 @@ class SoundEngine {
     this.bgmActive = false;
     this.bgmTimer = null;
     this.bgmStep = 0;
+    this.bgmVolume = 0.35;
+    this.masterBGMGain = null;
   }
 
   init() {
@@ -18,6 +20,21 @@ class SoundEngine {
       if (AudioCtx) this.ctx = new AudioCtx();
     }
     if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx && !this.masterBGMGain) {
+      this.masterBGMGain = this.ctx.createGain();
+      this.masterBGMGain.gain.setValueAtTime(this.bgmVolume * 0.15, this.ctx.currentTime);
+      this.masterBGMGain.connect(this.ctx.destination);
+    }
+  }
+
+  setBGMVolume(val) {
+    this.bgmVolume = Math.max(0, Math.min(1, parseFloat(val)));
+    if (this.masterBGMGain && this.ctx) {
+      const now = this.ctx.currentTime;
+      this.masterBGMGain.gain.cancelScheduledValues(now);
+      this.masterBGMGain.gain.linearRampToValueAtTime(this.bgmVolume * 0.15, now + 0.05);
+    }
+    return this.bgmVolume;
   }
 
   toggleMute() {
@@ -32,7 +49,7 @@ class SoundEngine {
     return this.muted;
   }
 
-  // Procedural Dreamy Cyber-Ambient BGM (Lo-fi gentle arpeggiator & warm pad)
+  // Relaxed, Bouncy & Playful Comic Anime BGM Engine with Real-Time Volume Control
   toggleBGM() {
     if (this.bgmActive) {
       this.stopBGM();
@@ -49,6 +66,9 @@ class SoundEngine {
       this.init();
       this.bgmActive = true;
       this.bgmStep = 0;
+      if (this.masterBGMGain && this.ctx) {
+        this.masterBGMGain.gain.setValueAtTime(this.bgmVolume * 0.15, this.ctx.currentTime);
+      }
       this._scheduleBGMNote();
       return true;
     } catch (e) {
@@ -65,44 +85,84 @@ class SoundEngine {
   }
 
   _scheduleBGMNote() {
-    if (!this.bgmActive || this.muted || !this.ctx) return;
+    if (!this.bgmActive || this.muted || !this.ctx || !this.masterBGMGain) return;
     try {
       const now = this.ctx.currentTime;
-      // Ambient pentatonic progression (Dm9 - Fmaj7 - Cmaj7 - Am9)
-      const chordSets = [
-        [146.83, 220.00, 261.63, 329.63, 440.00], // Dm9
-        [174.61, 261.63, 329.63, 392.00, 523.25], // Fmaj7
-        [130.81, 196.00, 246.94, 329.63, 392.00], // Cmaj7
-        [110.00, 164.81, 220.00, 261.63, 329.63]  // Am9
+
+      // Playful, comedic anime groove:
+      // Bouncy ragtime bass pattern (C3 -> E3 -> G3 -> A3 -> F3 -> G3 -> C3)
+      const bassMelody = [
+        130.81, 164.81, 196.00, 220.00,
+        174.61, 196.00, 246.94, 261.63,
+        130.81, 164.81, 196.00, 220.00,
+        146.83, 196.00, 246.94, 196.00
       ];
-      const chordIdx = Math.floor(this.bgmStep / 8) % chordSets.length;
-      const currentChord = chordSets[chordIdx];
-      const noteFreq = currentChord[this.bgmStep % currentChord.length];
 
-      // Gentle warm bell note
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      const filter = this.ctx.createBiquadFilter();
+      // Quirky staccato cartoon lead melody
+      const leadMelody = [
+        523.25, 0, 659.25, 523.25,
+        783.99, 659.25, 880.00, 0,
+        783.99, 0, 659.25, 587.33,
+        523.25, 659.25, 587.33, 0,
+        659.25, 783.99, 1046.50, 0,
+        880.00, 783.99, 659.25, 0,
+        587.33, 659.25, 783.99, 880.00,
+        783.99, 0, 523.25, 0
+      ];
 
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(820, now);
+      const step16 = this.bgmStep % 16;
+      const step32 = this.bgmStep % 32;
 
-      osc.type = (this.bgmStep % 2 === 0) ? 'sine' : 'triangle';
-      osc.frequency.setValueAtTime(noteFreq * (Math.random() > 0.6 ? 2 : 1), now);
+      // 1. Bouncy plucked bass note (Triangle wave with cheerful cartoon slide)
+      const bassFreq = bassMelody[step16];
+      const bassOsc = this.ctx.createOscillator();
+      const bassGain = this.ctx.createGain();
+      bassOsc.type = 'triangle';
+      bassOsc.frequency.setValueAtTime(bassFreq, now);
+      bassOsc.frequency.exponentialRampToValueAtTime(bassFreq * 0.94, now + 0.12);
 
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.024, now + 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.85);
+      bassGain.gain.setValueAtTime(0.001, now);
+      bassGain.gain.linearRampToValueAtTime(0.38, now + 0.015);
+      bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
 
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.ctx.destination);
+      bassOsc.connect(bassGain);
+      bassGain.connect(this.masterBGMGain);
+      bassOsc.start(now);
+      bassOsc.stop(now + 0.18);
 
-      osc.start(now);
-      osc.stop(now + 1.9);
+      // 2. Playful comedic marimba/kazoo lead note (Sine + light harmonic filter)
+      const leadFreq = leadMelody[step32];
+      if (leadFreq > 0) {
+        const leadOsc = this.ctx.createOscillator();
+        const leadGain = this.ctx.createGain();
+        const leadFilter = this.ctx.createBiquadFilter();
+
+        leadFilter.type = 'bandpass';
+        leadFilter.frequency.setValueAtTime(leadFreq * 1.5, now);
+        leadFilter.Q.setValueAtTime(3.5, now);
+
+        leadOsc.type = 'sine';
+        leadOsc.frequency.setValueAtTime(leadFreq, now);
+        if (step32 % 8 === 2) {
+          // Playful cartoon pitch slide up!
+          leadOsc.frequency.exponentialRampToValueAtTime(leadFreq * 1.15, now + 0.09);
+        }
+
+        leadGain.gain.setValueAtTime(0.001, now);
+        leadGain.gain.linearRampToValueAtTime(0.24, now + 0.02);
+        leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        leadOsc.connect(leadFilter);
+        leadFilter.connect(leadGain);
+        leadGain.connect(this.masterBGMGain);
+
+        leadOsc.start(now);
+        leadOsc.stop(now + 0.19);
+      }
 
       this.bgmStep++;
-      const nextDelay = 380 + (this.bgmStep % 4 === 0 ? 320 : 0);
+      // Cheerful, bouncy swing tempo (~175ms per step)
+      const nextDelay = 165 + (this.bgmStep % 2 === 0 ? 15 : -15);
       this.bgmTimer = setTimeout(() => this._scheduleBGMNote(), nextDelay);
     } catch (e) {
       this.stopBGM();
@@ -338,6 +398,121 @@ class SoundEngine {
       gain2.connect(this.ctx.destination);
       osc2.start(now + 0.1);
       osc2.stop(now + 0.25);
+    } catch (e) {}
+  }
+
+  // Mystical 3D Tarot Card Flip Shimmer (sparkling crystal arpeggio)
+  playTarotFlip() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      const notes = [587.33, 739.99, 880.00, 1174.66, 1479.98];
+      notes.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.045);
+        gain.gain.setValueAtTime(0.12, now + idx * 0.045);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.045 + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + idx * 0.045);
+        osc.stop(now + idx * 0.045 + 0.36);
+      });
+    } catch (e) {}
+  }
+
+  // Cartoon Bite / Crunch Sound (for chicken drumstick decoy hit)
+  playBiteCrunch() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      [0, 0.06].forEach((offset) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(440, now + offset);
+        osc.frequency.exponentialRampToValueAtTime(110, now + offset + 0.08);
+        gain.gain.setValueAtTime(0.18, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.085);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.09);
+      });
+    } catch (e) {}
+  }
+
+  // Deep Sonic Megaphone Blast (resonant shockwave)
+  playSonicWave() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.4);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(480, now);
+
+      gain.gain.setValueAtTime(0.28, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.43);
+    } catch (e) {}
+  }
+
+  // Bamboo Fortune Stick Shake & Clatter
+  playBambooShake() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      [0, 0.04, 0.09, 0.14].forEach((offset, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(480 + idx * 75, now + offset);
+        osc.frequency.exponentialRampToValueAtTime(260, now + offset + 0.035);
+        gain.gain.setValueAtTime(0.15, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.045);
+      });
+    } catch (e) {}
+  }
+
+  // Laser Tether / Tactical Hit Beam
+  playLaserHit() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(1450, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
     } catch (e) {}
   }
 

@@ -521,10 +521,25 @@ function scheduleBatchFriendUpdate(targetFriendId = null) {
 }
 
 function handleIncomingFriendPacket(packet) {
-  if (!packet || !packet.name || !packet.id) return;
+  if (!packet || !packet.id) return;
   if (packet.id === appState.myUser.id) return;
   // Ignore stale retained packets older than 6 hours
   if (packet.updatedAt && Date.now() - packet.updatedAt > 6 * 3600 * 1000) return;
+
+  if (packet.type === 'PRANK') {
+    const soundMap = {
+      chicken: () => window.soundEngine.playBiteCrunch(),
+      horn: () => window.soundEngine.playHorn(),
+      parking: () => window.soundEngine.playRadarBeep(),
+      wanted: () => window.soundEngine.playSiren()
+    };
+    if (soundMap[packet.action]) soundMap[packet.action]();
+    triggerAnimeCutIn(packet.title || '🎯 好友戰術整人！', `${packet.sender} 對你發射了戰術互動！`, '#FBBF24');
+    showToast(packet.title || '🎯 收到好友整人！', `${packet.sender}：${packet.desc}`, 'teal');
+    return;
+  }
+
+  if (!packet.name) return;
 
   // Multi-broker & multi-message deduplication (Drops duplicate packets immediately)
   const prev = receivedPacketsTracker.get(packet.id);
@@ -1690,6 +1705,87 @@ window.drawRandomTarotCard = function () {
   showToast(card.name, card.desc, 'amber');
 };
 
+// 3D Holographic Tarot Cards Flip & Random Re-Shuffle
+window.flipTarotCard = function (num) {
+  const cardInner = document.getElementById(`tarot-card-inner-${num}`);
+  if (!cardInner) return;
+  cardInner.classList.toggle('flipped');
+  if (window.soundEngine) window.soundEngine.playTarotFlip();
+  const isFlipped = cardInner.classList.contains('flipped');
+  if (isFlipped) {
+    const titleEl = document.getElementById(`tarot-card-title-${num}`);
+    const name = titleEl ? titleEl.textContent : '三寶塔羅';
+    showToast('🔮 翻開命運之牌！', `【${name}】揭曉你的交通宿命！`, 'amber');
+  }
+};
+
+const EXTRA_TAROT_POOL = [
+  { badge: '★ ★ ★ ★', icon: '🔄', title: '莫比烏斯圓環', desc: '進去繞滿8圈，導航已放棄治療宣佈就地落戶。' },
+  { badge: '★ ★ ★', icon: '🌧️', title: '晴天雨刷結界', desc: '大晴天打方向燈變刷雨刷，神威震懾後方十公尺！' },
+  { badge: 'SSR 稀有', icon: '🍗', title: '脆皮雞腿神牌', desc: '拿出雞腿駕照，全線無條件禮讓通行！' },
+  { badge: 'UR 傳奇', icon: '🅿️', title: '左右相反倒車神', desc: '方向盤打左車往右衝，三分鐘擦出新花樣！' },
+  { badge: '★ ★ ★ ★', icon: '💡', title: '常駐遠光聖徒', desc: '照亮前方十公里所有人的眼睛，神佛降世！' },
+  { badge: 'SSR 稀有', icon: '🛒', title: '好市多推車霸主', desc: '橫越走道雙黃線，試吃隊伍無情收割！' },
+  { badge: 'UR 傳奇', icon: '🏍️', title: '雙黃線大迴轉', desc: '車頭一扭隨心所欲，全世界都是我的迴轉道！' }
+];
+
+window.resetAndShuffleTarot = function () {
+  if (window.soundEngine) window.soundEngine.playTarotFlip();
+  [1, 2, 3].forEach((n) => {
+    const el = document.getElementById(`tarot-card-inner-${n}`);
+    if (el) el.classList.remove('flipped');
+  });
+
+  const pool = [...EXTRA_TAROT_POOL].sort(() => 0.5 - Math.random());
+  setTimeout(() => {
+    [1, 2, 3].forEach((n, idx) => {
+      const c = pool[idx] || pool[0];
+      const badge = document.getElementById(`tarot-card-badge-${n}`);
+      const icon = document.getElementById(`tarot-card-icon-${n}`);
+      const title = document.getElementById(`tarot-card-title-${n}`);
+      const desc = document.getElementById(`tarot-card-desc-${n}`);
+      if (badge) badge.textContent = c.badge;
+      if (icon) icon.textContent = c.icon;
+      if (title) title.textContent = c.title;
+      if (desc) desc.textContent = c.desc;
+    });
+    showToast('🃏 牌組已洗牌！', '請虔誠點擊卡牌翻開新的命運啟示！', 'teal');
+  }, 220);
+};
+
+// Interactive Bamboo Fortune Shake
+const BAMBOO_FORTUNES = [
+  '【上上籤・一路綠燈】今日出門三寶全被紅燈阻隔，暢行無阻！',
+  '【大吉・神柱避退】好市多地下室柱子主動遠離你車尾 10 公分！',
+  '【中吉・晴空萬里】方向燈撥桿手感極佳，絕不會誤刷雨刷！',
+  '【小吉・車位降臨】剛進停車場，正前方車輛立刻打雙黃燈讓出大車位！',
+  '【平籤・順其自然】圓環繞第 3 圈即可順利脫困，副駕情緒穩定。',
+  '【凶・遠光逼近】夜間後視鏡反射亮如白晝，建議戴墨鏡開車。',
+  '【大凶・推車封道】好市多牛排走道將遭遇雙推車並排大塞車！',
+  '【特上籤・雞腿換免死金牌】今日被按喇叭時請吃雞腿即可化險為夷！'
+];
+
+window.shakeBambooFortune = function () {
+  if (window.soundEngine) window.soundEngine.playBambooShake();
+  const textEl = document.getElementById('fortune-stick-result');
+  if (!textEl) return;
+  textEl.textContent = '🎋 叩叩叩... 正在搖筒求籤中...';
+  textEl.classList.add('animate-pulse');
+
+  let shakes = 0;
+  const interval = setInterval(() => {
+    shakes++;
+    const randomPick = BAMBOO_FORTUNES[Math.floor(Math.random() * BAMBOO_FORTUNES.length)];
+    textEl.textContent = randomPick;
+    if (shakes >= 6) {
+      clearInterval(interval);
+      textEl.classList.remove('animate-pulse');
+      if (window.soundEngine) window.soundEngine.playWinFanfare();
+      showToast('🎋 靈籤已顯現！', randomPick, 'amber');
+    }
+  }, 90);
+};
+
 // ============================================================================
 // UPGRADED 3D / 2.5D COSTCO B2 REVERSE PARKING SIMULATOR
 // ============================================================================
@@ -2447,6 +2543,63 @@ window.broadcastDriverSOS = function (sosType) {
   document.getElementById('modal-presidential-alert')?.classList.remove('hidden');
 };
 
+// Tactical Friendly Prank Actions
+window.prankFriendSquad = function (action) {
+  const actions = {
+    chicken: {
+      title: '🍗 空投超大支香脆雞腿！',
+      desc: '向線上全體好友送出金黃酥脆炸雞腿！駕照快拿去換！',
+      sound: () => window.soundEngine.playBiteCrunch(),
+      color: '#FBBF24'
+    },
+    horn: {
+      title: '📢 奪命連環連音喇叭！',
+      desc: '叭叭叭叭——前方綠燈睡著了嗎！整條路都被震醒了！',
+      sound: () => window.soundEngine.playHorn(),
+      color: '#FB7185'
+    },
+    parking: {
+      title: '🅿️ 幫找傳奇魔王車位！',
+      desc: '已為好友鎖定 3 公里外兩根大圓柱中間的狹窄機械車位！',
+      sound: () => window.soundEngine.playRadarBeep(),
+      color: '#FCD34D'
+    },
+    wanted: {
+      title: '🚨 發布全城三寶通緝令！',
+      desc: '特等神主牌正出沒中！請方圓 1.5km 內所有車輛靠右避難！',
+      sound: () => window.soundEngine.playSiren(),
+      color: '#2DD4BF'
+    }
+  };
+  const act = actions[action] || actions.chicken;
+  act.sound();
+  triggerAnimeCutIn(act.title, act.desc, act.color);
+  showToast(act.title, act.desc, 'teal');
+
+  // Broadcast through local & cloud MQTT channels
+  const room = appState.myUser.roomCode || '8888';
+  const packet = {
+    id: appState.myUser.id,
+    type: 'PRANK',
+    action: action,
+    sender: appState.myUser.name || '線上好友',
+    title: act.title,
+    desc: act.desc,
+    updatedAt: Date.now()
+  };
+  try {
+    if (localBroadcast) localBroadcast.postMessage(packet);
+  } catch (e) {}
+
+  mqttClients.forEach((client) => {
+    try {
+      if (client.connected) {
+        client.publish(`sanbao-radar-v12/room/${room}/user/${appState.myUser.id}`, JSON.stringify(packet), { qos: 0 });
+      }
+    } catch (e) {}
+  });
+};
+
 // ============================================================================
 // UI SYNC & RESPONSIVE TABS
 // ============================================================================
@@ -2634,7 +2787,10 @@ window.switchTab = function (tabId) {
     }
   });
 
-  if (tabId === 'radar' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100);
+  if (tabId === 'radar') {
+    if (leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100);
+    requestAnimationFrame(() => startDefenseRadarLoop());
+  }
   if (tabId === 'squad') renderSquadFriendsList();
   if (tabId === 'dossier') requestAnimationFrame(() => drawHexagonChart());
   if (tabId === 'route') {
@@ -2738,31 +2894,82 @@ window.copyShareText = function () {
 };
 
 // ---------------------------------------------------------------------------
-// 4. ANIMATED HIGH-TECH ANIME RADAR SCANNER & SIGHTINGS WALL
+// 4. ANIMATED SSS+ HIGH-TECH CYBERPUNK RADAR SCANNER & SIGHTINGS WALL
 // ---------------------------------------------------------------------------
 let hexagonAnimId = null;
 let hexagonAngle = 0;
+let hexagonCounterAngle = 0;
+
+const STAT_DOSSIERS = [
+  {
+    title: '🌧️ 雨刷誤觸指數：98 分 (特級神主牌)',
+    desc: '大晴天烈日下，只要想轉彎，雨刷必定以最快頻率瘋狂左右刷動，震懾前後方所有來車！',
+    rec: '戰術建議：建議在雨刷臂上綁一根防呆彩帶，或乾脆直接拆除雨刷馬達。'
+  },
+  {
+    title: '✨ 謎之自信指數：100 分 (封頂覺醒)',
+    desc: '「這條路我閉著眼睛都能開！」開口瞬間已駛入單行道逆向車道，但氣勢上完全不輸對面！',
+    rec: '戰術建議：請副駕隨時準備副駕駛煞車踏板，或在擋風玻璃貼上「我真的是新手」。'
+  },
+  {
+    title: '⏱️ 倒車耗時指數：96 分 (世紀長征)',
+    desc: '進好市多倒車入庫耗時 8 分 47 秒，方向盤打滿 18 次，車尾依然平行於兩車格線之間。',
+    rec: '戰術建議：下載本站「3D 好市多左右相反模擬器」苦練 100 次再出門。'
+  },
+  {
+    title: '🚦 方向燈誠信度：12 分 (薛丁格方向燈)',
+    desc: '閃左邊不代表要左轉，可能是剛才轉彎沒回正；閃右邊可能是想直行；不閃才是真的要迴轉！',
+    rec: '戰術建議：後方來車請保持至少 50 公尺安全車距，以玄學感知其動向。'
+  },
+  {
+    title: '🧭 絕對方向感：15 分 (圓環迷航王)',
+    desc: '進圓環必繞 6 圈以上，看著導航寫「前方第 3 個出口」卻始終從第 1 個出口被甩出。',
+    rec: '戰術建議：建議在後座放一隻會認路的鴿子，或開啟本站即時地圖好友呼叫救援。'
+  },
+  {
+    title: '😱 副駕驚嚇度：99 分 (靈魂出竅)',
+    desc: '副駕駛座的手把已經被捏出指印，右腳在空無一物的地板踩空氣煞車踩到小腿抽筋。',
+    rec: '戰術建議：上車前請先敲擊本站「避災木魚」累積功德，並自備降血壓茶。'
+  }
+];
+
+window.inspectStatDossier = function (idx) {
+  if (window.soundEngine) window.soundEngine.playClick(880);
+  const d = STAT_DOSSIERS[idx] || STAT_DOSSIERS[0];
+  const box = document.getElementById('stat-dossier-box');
+  if (box) {
+    box.innerHTML = `
+      <div class="text-left w-full space-y-1">
+        <div class="font-black text-amber-300 text-xs">${d.title}</div>
+        <div class="text-slate-200 text-[10px] leading-relaxed">${d.desc}</div>
+        <div class="text-teal-300 text-[10px] font-bold">${d.rec}</div>
+      </div>
+    `;
+  }
+  showToast(d.title.split('：')[0], d.desc.slice(0, 24) + '...', 'amber');
+};
 
 function drawHexagonChart() {
   const canvas = document.getElementById('hexagon-chart-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const size = 280;
+  const size = 320;
   canvas.width = size * dpr;
   canvas.height = size * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const cx = size / 2;
   const cy = size / 2;
-  const maxR = size * 0.35;
+  const maxR = size * 0.34;
+  const outerRingR = size * 0.44;
   const axes = [
-    { label: '晴天雨刷', val: 98, color: '#38BDF8' },
+    { label: '雨刷誤觸', val: 98, color: '#38BDF8' },
     { label: '謎之自信', val: 100, color: '#FBBF24' },
-    { label: '倒車時間', val: 96, color: '#FB7185' },
+    { label: '倒車耗時', val: 96, color: '#FB7185' },
     { label: '方向燈誠信', val: 12, color: '#34D399' },
-    { label: '絕對方向感', val: 15, color: '#818CF8' },
-    { label: '副駕驚嚇度', val: 99, color: '#F43F5E' }
+    { label: '方向感', val: 15, color: '#818CF8' },
+    { label: '副駕驚嚇', val: 99, color: '#F43F5E' }
   ];
 
   function renderRadarFrame() {
@@ -2772,7 +2979,41 @@ function drawHexagonChart() {
     }
     ctx.clearRect(0, 0, size, size);
 
-    // 1. Concentric Hexagonal Grids
+    // 1. Outer Azimuth Degree Dial (360° Military Compass Ring)
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerRingR, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(254, 240, 138, 0.25)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    for (let deg = 0; deg < 360; deg += 15) {
+      const rad = (deg * Math.PI) / 180 - Math.PI / 2;
+      const isMajor = deg % 30 === 0;
+      const tickLen = isMajor ? 6 : 3;
+      const x1 = cx + Math.cos(rad) * (outerRingR - tickLen);
+      const y1 = cy + Math.sin(rad) * (outerRingR - tickLen);
+      const x2 = cx + Math.cos(rad) * outerRingR;
+      const y2 = cy + Math.sin(rad) * outerRingR;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = isMajor ? 'rgba(254, 240, 138, 0.65)' : 'rgba(45, 212, 191, 0.25)';
+      ctx.lineWidth = isMajor ? 1.5 : 1;
+      ctx.stroke();
+
+      if (isMajor && deg % 60 === 0) {
+        const tx = cx + Math.cos(rad) * (outerRingR + 10);
+        const ty = cy + Math.sin(rad) * (outerRingR + 10);
+        ctx.font = '8px monospace';
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.7)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${deg.toString().padStart(3, '0')}°`, tx, ty);
+      }
+    }
+
+    // 2. Concentric Hexagonal Grids with Gradient Stroke
     [0.25, 0.5, 0.75, 1.0].forEach((step) => {
       ctx.beginPath();
       axes.forEach((_, i) => {
@@ -2783,58 +3024,74 @@ function drawHexagonChart() {
         else ctx.lineTo(x, y);
       });
       ctx.closePath();
-      ctx.strokeStyle = step === 1.0 ? 'rgba(254, 240, 138, 0.45)' : 'rgba(45, 212, 191, 0.12)';
-      ctx.lineWidth = step === 1.0 ? 1.5 : 1;
+      ctx.strokeStyle = step === 1.0 ? 'rgba(254, 240, 138, 0.55)' : 'rgba(45, 212, 191, 0.18)';
+      ctx.lineWidth = step === 1.0 ? 1.8 : 1;
       ctx.stroke();
     });
 
-    // 2. Radial Axis Spokes
+    // 3. Radial Axis Spokes
     axes.forEach((_, i) => {
       const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
       ctx.lineWidth = 1;
       ctx.stroke();
     });
 
-    // 3. Rotating Cyber Radar Scanner Sweep
-    hexagonAngle = (hexagonAngle + 0.026) % (Math.PI * 2);
+    // 4. Dual Rotating Cyber Radar Scanner Sweeps
+    hexagonAngle = (hexagonAngle + 0.024) % (Math.PI * 2);
+    hexagonCounterAngle = (hexagonCounterAngle - 0.016) % (Math.PI * 2);
+
+    // Primary Cyan Beam
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, maxR, hexagonAngle - 0.45, hexagonAngle);
     ctx.closePath();
-    const sweepGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
-    sweepGrad.addColorStop(0, 'rgba(45, 212, 191, 0.22)');
-    sweepGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = sweepGrad;
+    const sweepGrad1 = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+    sweepGrad1.addColorStop(0, 'rgba(45, 212, 191, 0.28)');
+    sweepGrad1.addColorStop(1, 'transparent');
+    ctx.fillStyle = sweepGrad1;
     ctx.fill();
     ctx.restore();
 
-    // 4. Glowing Data Polygon with Subtle Vertex Pulse
+    // Secondary Amber Sub-Beam
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, maxR, hexagonCounterAngle - 0.35, hexagonCounterAngle);
+    ctx.closePath();
+    const sweepGrad2 = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+    sweepGrad2.addColorStop(0, 'rgba(251, 191, 36, 0.18)');
+    sweepGrad2.addColorStop(1, 'transparent');
+    ctx.fillStyle = sweepGrad2;
+    ctx.fill();
+    ctx.restore();
+
+    // 5. Glowing Data Polygon with Vertex Pulse
     ctx.beginPath();
     axes.forEach((axis, i) => {
       const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
-      const pulse = Math.sin(Date.now() * 0.003 + i) * 1.5;
-      const r = Math.max(8, ((axis.val + pulse) / 100) * maxR);
+      const pulse = Math.sin(Date.now() * 0.0035 + i) * 1.8;
+      const r = Math.max(10, ((axis.val + pulse) / 100) * maxR);
       const x = cx + Math.cos(a) * r;
       const y = cy + Math.sin(a) * r;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.fillStyle = 'rgba(244, 63, 94, 0.32)';
+    ctx.fillStyle = 'rgba(244, 63, 94, 0.35)';
     ctx.fill();
     ctx.strokeStyle = '#FEF08A';
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 2.4;
     ctx.shadowColor = '#F59E0B';
-    ctx.shadowBlur = 9;
+    ctx.shadowBlur = 12;
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // 5. High-Contrast Text Labels & Glowing Nodes
+    // 6. High-Contrast Text Labels & Pulsing Vertex Sparkles
     axes.forEach((axis, i) => {
       const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
       const r = (axis.val / 100) * maxR;
@@ -2842,15 +3099,19 @@ function drawHexagonChart() {
       const vy = cy + Math.sin(a) * r;
 
       ctx.beginPath();
-      ctx.arc(vx, vy, 3.5, 0, Math.PI * 2);
+      ctx.arc(vx, vy, 4.5, 0, Math.PI * 2);
       ctx.fillStyle = '#FEF08A';
+      ctx.shadowColor = '#FEF08A';
+      ctx.shadowBlur = 8;
       ctx.fill();
+      ctx.shadowBlur = 0;
 
-      const lx = cx + Math.cos(a) * (maxR + 24);
+      const lx = cx + Math.cos(a) * (maxR + 26);
       const ly = cy + Math.sin(a) * (maxR + 14);
       ctx.font = 'bold 10px "Noto Sans TC", sans-serif';
       ctx.fillStyle = axis.color;
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(`${axis.label} ${axis.val}`, lx, ly);
     });
 
@@ -2926,8 +3187,17 @@ window.submitNewSighting = function (e) {
 };
 
 // ---------------------------------------------------------------------------
-// 5. BGM & TACTICAL DEFENSE SHIELD & DECOYS
+// 5. BGM VOLUME & INTERACTIVE DEFENSE RADAR TOWER COUNTERMEASURES
 // ---------------------------------------------------------------------------
+window.changeBGMVolume = function (val) {
+  const num = parseInt(val, 10) || 0;
+  const label = document.getElementById('bgm-volume-label');
+  if (label) label.textContent = `${num}%`;
+  if (window.soundEngine && typeof window.soundEngine.setBGMVolume === 'function') {
+    window.soundEngine.setBGMVolume(num / 100);
+  }
+};
+
 window.toggleMusicBGM = function () {
   const active = window.soundEngine.toggleBGM();
   const btn = document.getElementById('bgm-toggle-btn');
@@ -2936,7 +3206,229 @@ window.toggleMusicBGM = function () {
     btn.classList.toggle('border-teal-300', active);
     btn.classList.toggle('text-teal-300', active);
   }
-  showToast(active ? '🎵 背景音樂已開啟' : '🔇 背景音樂已關閉', 'Procedural Lo-fi Cyber Ambient 模式', 'teal');
+  showToast(active ? '🎵 背景音樂已開啟' : '🔇 背景音樂已關閉', '輕鬆搞笑動漫 Ragtime 旋律', 'teal');
+};
+
+// Real-Time Mini Defense Radar Canvas & Interactive Countermeasure System
+let defenseRadarAnimId = null;
+let defenseScore = 0;
+let defenseSweepAngle = 0;
+const DEFENSE_BLIPS = [
+  { id: 1, angle: 0.45, dist: 0.88, speed: 0.0032, emoji: '🛵', name: '盲鑽騎士' },
+  { id: 2, angle: 2.15, dist: 0.92, speed: 0.0024, emoji: '🚗', name: '遠光神車' },
+  { id: 3, angle: 3.75, dist: 0.80, speed: 0.0028, emoji: '🛺', name: '雙黃線迴轉' },
+  { id: 4, angle: 5.10, dist: 0.95, speed: 0.0022, emoji: '🛒', name: '好市多推車大媽' }
+];
+let defenseProjectiles = [];
+let defenseRipples = [];
+
+function startDefenseRadarLoop() {
+  const canvas = document.getElementById('defense-radar-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function renderRadarFrame() {
+    if (appState.activeTab !== 'radar') {
+      defenseRadarAnimId = null;
+      return;
+    }
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const maxRx = w * 0.45;
+    const maxRy = h * 0.42;
+
+    // 1. Radar Grid & Range Rings
+    [0.33, 0.66, 1.0].forEach((ratio, idx) => {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, maxRx * ratio, maxRy * ratio, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = idx === 2 ? 'rgba(45, 212, 191, 0.45)' : 'rgba(45, 212, 191, 0.18)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // Crosshairs
+    ctx.beginPath();
+    ctx.moveTo(cx - maxRx, cy);
+    ctx.lineTo(cx + maxRx, cy);
+    ctx.moveTo(cx, cy - maxRy);
+    ctx.lineTo(cx, cy + maxRy);
+    ctx.strokeStyle = 'rgba(45, 212, 191, 0.14)';
+    ctx.stroke();
+
+    // Center Shield Base
+    ctx.beginPath();
+    ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+    ctx.fillStyle = '#2DD4BF';
+    ctx.shadowColor = '#2DD4BF';
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 2. Rotating Radar Sweep Beam
+    defenseSweepAngle = (defenseSweepAngle + 0.035) % (Math.PI * 2);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.ellipse(cx, cy, maxRx, maxRy, 0, defenseSweepAngle - 0.45, defenseSweepAngle);
+    ctx.closePath();
+    const sweepGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, maxRx);
+    sweepGrad.addColorStop(0, 'rgba(45, 212, 191, 0.28)');
+    sweepGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = sweepGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // 3. Update & Draw Incoming Sanbao Blips
+    DEFENSE_BLIPS.forEach((blip) => {
+      blip.dist -= blip.speed;
+      if (blip.dist <= 0.20) {
+        blip.dist = 0.95;
+        blip.angle = (blip.angle + Math.PI * 0.8) % (Math.PI * 2);
+        defenseRipples.push({ x: cx, y: cy, r: 8, maxR: 35, alpha: 1, color: '#F43F5E' });
+        if (window.soundEngine) window.soundEngine.playShieldOn();
+      }
+
+      const bx = cx + Math.cos(blip.angle) * blip.dist * maxRx;
+      const by = cy + Math.sin(blip.angle) * blip.dist * maxRy;
+
+      ctx.beginPath();
+      ctx.arc(bx, by, 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.35)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(bx, by, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#F43F5E';
+      ctx.fill();
+
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(blip.emoji, bx, by - 8);
+
+      ctx.font = 'bold 9px "Noto Sans TC", sans-serif';
+      ctx.fillStyle = '#FEF08A';
+      ctx.fillText(blip.name, bx, by + 12);
+    });
+
+    // 4. Update & Draw In-Flight Projectiles
+    for (let i = defenseProjectiles.length - 1; i >= 0; i--) {
+      const p = defenseProjectiles[i];
+      p.t += p.speed;
+      const px = p.x + (p.tx - p.x) * p.t;
+      const py = p.y + (p.ty - p.y) * p.t;
+
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(px, py);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.emoji, px, py - 4);
+
+      if (p.t >= 1) {
+        defenseRipples.push({ x: p.tx, y: p.ty, r: 6, maxR: 42, alpha: 1, color: p.color });
+        if (p.target) {
+          p.target.dist = Math.min(0.98, p.target.dist + 0.45);
+          p.target.angle = (p.target.angle + 0.6) % (Math.PI * 2);
+        }
+        defenseProjectiles.splice(i, 1);
+      }
+    }
+
+    // 5. Update & Draw Impact Shockwave Ripples
+    for (let i = defenseRipples.length - 1; i >= 0; i--) {
+      const rip = defenseRipples[i];
+      rip.r += 2.2;
+      rip.alpha -= 0.045;
+      if (rip.alpha <= 0 || rip.r >= rip.maxR) {
+        defenseRipples.splice(i, 1);
+        continue;
+      }
+      ctx.beginPath();
+      ctx.arc(rip.x, rip.y, rip.r, 0, Math.PI * 2);
+      ctx.strokeStyle = rip.color;
+      ctx.globalAlpha = Math.max(0, rip.alpha);
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    defenseRadarAnimId = requestAnimationFrame(renderRadarFrame);
+  }
+
+  if (defenseRadarAnimId) cancelAnimationFrame(defenseRadarAnimId);
+  defenseRadarAnimId = requestAnimationFrame(renderRadarFrame);
+}
+
+window.launchInteractiveCountermeasure = function (type) {
+  defenseScore += 1;
+  const scoreEl = document.getElementById('shield-deflect-score');
+  if (scoreEl) scoreEl.textContent = defenseScore;
+
+  const canvas = document.getElementById('defense-radar-canvas');
+  const w = canvas ? canvas.width : 460;
+  const h = canvas ? canvas.height : 120;
+  const cx = w / 2;
+  const cy = h / 2;
+  const maxRx = w * 0.45;
+  const maxRy = h * 0.42;
+
+  // Find nearest blip
+  const target = DEFENSE_BLIPS.slice().sort((a, b) => a.dist - b.dist)[0] || DEFENSE_BLIPS[0];
+  const targetX = cx + Math.cos(target.angle) * target.dist * maxRx;
+  const targetY = cy + Math.sin(target.angle) * target.dist * maxRy;
+
+  const configs = {
+    chicken: {
+      emoji: '🍗',
+      color: '#FBBF24',
+      sound: () => window.soundEngine.playBiteCrunch(),
+      log: `🍗 投擲黃金脆皮雞腿！收買【${target.name}】，爭取 30 秒避難時間！`
+    },
+    wiper: {
+      emoji: '🌧️',
+      color: '#38BDF8',
+      sound: () => window.soundEngine.playWiperSlap(),
+      log: `🌧️ 暴雨雨刷彈齊射！【${target.name}】陷入手忙腳亂誤刷狀態！`
+    },
+    horn: {
+      emoji: '📢',
+      color: '#FB7185',
+      sound: () => window.soundEngine.playSonicWave(),
+      log: `📢 超音波大聲公震退！成功將【${target.name}】震撼逼退！`
+    },
+    parking: {
+      emoji: '🧲',
+      color: '#FCD34D',
+      sound: () => window.soundEngine.playLaserHit(),
+      log: `🧲 路邊雙格車位陷阱啟動！【${target.name}】被吸引自動倒車入庫！`
+    }
+  };
+
+  const cfg = configs[type] || configs.chicken;
+  cfg.sound();
+
+  defenseProjectiles.push({
+    x: cx,
+    y: cy,
+    tx: targetX,
+    ty: targetY,
+    t: 0,
+    speed: 0.12,
+    emoji: cfg.emoji,
+    color: cfg.color,
+    target: target
+  });
+
+  const logEl = document.getElementById('shield-combat-log');
+  if (logEl) logEl.textContent = cfg.log;
+  showToast(cfg.emoji + ' 反制攔截成功！', cfg.log, 'amber');
 };
 
 window.toggleDefenseShield = function () {
@@ -2966,15 +3458,7 @@ window.toggleDefenseShield = function () {
 };
 
 window.launchDecoy = function (type) {
-  window.soundEngine.playDecoyLaunch();
-  const decoys = {
-    chicken: { title: '🍗 投擲黃金脆皮雞腿！', desc: '成功吸引三寶目光，爭取 30 秒避難時間！' },
-    wiper: { title: '🌧️ 發射大晴天雨刷干擾彈！', desc: '三寶陷入手忙腳亂誤刷雨刷狀態！' },
-    horn: { title: '📢 發射超音波避難警報！', desc: '全體路人與副駕獲得聽覺結界加護！' },
-    parking: { title: '🧲 生成路邊雙格大車位！', desc: '吸引三寶自動緩慢入庫，道路恢復暢通！' }
-  };
-  const d = decoys[type] || decoys.chicken;
-  showToast(d.title, d.desc, 'amber');
+  window.launchInteractiveCountermeasure(type);
 };
 
 // ---------------------------------------------------------------------------
@@ -3030,6 +3514,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRealtimeCloudSync();
   renderParkingMiniGame();
   requestAnimationFrame(updateParkingGameLoop);
+  startDefenseRadarLoop();
   calculateRouteSafety(false);
   syncUI();
 
