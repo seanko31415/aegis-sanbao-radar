@@ -198,7 +198,7 @@ function getTrackedProfile() {
 
 // Universal Storage Helper (Robust fallback to SessionStorage + Cookie + In-Memory if localStorage quota/security blocks)
 const SafeStorage = {
-  memory: {},
+  memory: (window._safeStorageCache = window._safeStorageCache || {}),
   getItem(key) {
     try {
       const val = localStorage.getItem(key);
@@ -237,24 +237,49 @@ const SafeStorage = {
   }
 };
 
-// Auto-request browser persistent storage permission
-try {
-  if (navigator.storage && navigator.storage.persist) {
-    navigator.storage.persist().catch(() => {});
+function verifyStorageHealth() {
+  let ok = false;
+  try {
+    const k = '__storage_probe__';
+    localStorage.setItem(k, '1');
+    ok = localStorage.getItem(k) === '1';
+    localStorage.removeItem(k);
+  } catch (e) {
+    ok = false;
   }
-} catch (e) {}
+  const badge = document.getElementById('storage-status-badge');
+  if (badge) {
+    badge.textContent = ok ? '💾 本地儲存已就緒' : '💾 安全隔離模式';
+    badge.title = ok ? '瀏覽器本地儲存已就緒，登入狀態與資料關閉網頁後永久保存' : '已啟用多層備援快取模式';
+  }
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => {});
+    }
+  } catch (e) {}
+}
 
 function loadPersistedData() {
+  verifyStorageHealth();
+
   try {
     const savedMe = SafeStorage.getItem('aegis_sanbao_my_user_v14') ||
                     SafeStorage.getItem('aegis_sanbao_my_user_v13') ||
                     SafeStorage.getItem('aegis_sanbao_my_user');
     if (savedMe) {
       const parsed = JSON.parse(savedMe);
-      // Preserve saved name & settings, but ALWAYS start in visitor preview mode (loggedIn: false)
-      appState.myUser = { ...appState.myUser, ...parsed, loggedIn: false };
+      // If user had previously logged in with a name, RESTORE their loggedIn state!
+      // This ensures closing/refreshing the browser retains their login!
+      const wasLoggedIn = !!(parsed.name && parsed.loggedIn);
+      appState.myUser = { ...appState.myUser, ...parsed, loggedIn: wasLoggedIn };
+    } else {
+      // First-time stranger: starts in visitor preview mode
+      appState.myUser.loggedIn = false;
+      appState.myUser.name = '';
     }
-  } catch (e) {}
+  } catch (e) {
+    appState.myUser.loggedIn = false;
+  }
 
   try {
     const savedFriends = SafeStorage.getItem('aegis_sanbao_real_friends_v14') ||
@@ -308,22 +333,39 @@ function loadPersistedData() {
     }
   } catch (e) {}
 
-  // Ensure my driver identity is initialized so live broadcast/subscription works immediately
-  if (!appState.myUser.name) {
-    const randomSuffix = Math.floor(100 + Math.random() * 900);
-    appState.myUser.name = `三寶車神_${randomSuffix}`;
-    appState.myUser.plate = `SAN-${randomSuffix}`;
-    appState.myUser.loggedIn = true;
-    saveMyUserToStorage();
-  }
+  // Populate inputs and header status if user is known
+  if (appState.myUser.name) {
+    const nameIn = document.getElementById('my-driver-name');
+    const plateIn = document.getElementById('my-driver-plate');
+    const roomIn = document.getElementById('my-room-code');
+    const quickIn = document.getElementById('quick-login-name');
+    const modalNameIn = document.getElementById('modal-login-name');
+    const modalPlateIn = document.getElementById('modal-login-plate');
+    const modalRoomIn = document.getElementById('modal-login-room');
 
-  // Populate inputs if saved
-  const nameIn = document.getElementById('my-driver-name');
-  const plateIn = document.getElementById('my-driver-plate');
-  const roomIn = document.getElementById('my-room-code');
-  if (nameIn && appState.myUser.name) nameIn.value = appState.myUser.name;
-  if (plateIn && appState.myUser.plate) plateIn.value = appState.myUser.plate;
-  if (roomIn && appState.myUser.roomCode) roomIn.value = appState.myUser.roomCode;
+    if (nameIn) nameIn.value = appState.myUser.name;
+    if (plateIn && appState.myUser.plate) plateIn.value = appState.myUser.plate;
+    if (roomIn && appState.myUser.roomCode) roomIn.value = appState.myUser.roomCode;
+    if (quickIn && !appState.myUser.loggedIn) quickIn.value = appState.myUser.name;
+    if (modalNameIn) modalNameIn.value = appState.myUser.name;
+    if (modalPlateIn && appState.myUser.plate) modalPlateIn.value = appState.myUser.plate;
+    if (modalRoomIn && appState.myUser.roomCode) modalRoomIn.value = appState.myUser.roomCode;
+
+    if (appState.myUser.loggedIn) {
+      const headerBtn = document.getElementById('header-login-btn');
+      if (headerBtn) {
+        headerBtn.innerHTML = `🟢 <span class="hidden sm:inline">${appState.myUser.name}</span><span class="sm:hidden">${appState.myUser.name.slice(0, 4)}</span> (#${appState.myUser.roomCode})`;
+      }
+      const pill = document.getElementById('my-login-status-pill');
+      if (pill) {
+        pill.textContent = `🟢 已登入 #${appState.myUser.roomCode}`;
+        pill.className = 'px-2.5 py-0.5 rounded-full bg-teal-400 text-slate-950 font-mono text-[10px] font-black';
+      }
+      setTimeout(() => {
+        if (appState.myUser.loggedIn) window.useRealBrowserGPS({ silent: true });
+      }, 700);
+    }
+  }
 }
 
 function saveMyUserToStorage() {
@@ -445,11 +487,64 @@ function publishMyPresence() {
   });
 }
 
+// High-Efficiency Packet Deduplication & Throttling (Prevents Lag with Many Users)
+const receivedPacketsTracker = new Map();
+let friendBatchTimer = null;
+let saveFriendsDebounceTimer = null;
+
+function saveFriendsToStorageThrottled() {
+  if (saveFriendsDebounceTimer) return;
+  saveFriendsDebounceTimer = setTimeout(() => {
+    saveFriendsDebounceTimer = null;
+    saveFriendsToStorage();
+  }, 1800);
+}
+
+function scheduleBatchFriendUpdate(targetFriendId = null) {
+  if (friendBatchTimer) return;
+  friendBatchTimer = requestAnimationFrame(() => {
+    friendBatchTimer = null;
+    saveFriendsToStorageThrottled();
+    renderSquadFriendsList();
+    renderOnlineFriendPills();
+    renderFriendMapMarkers();
+    updateRealMapOverlays();
+    syncUI();
+
+    if (targetFriendId && appState.selectedFriendId === targetFriendId && leafletMap) {
+      const f = appState.friends.find((x) => x.id === targetFriendId);
+      if (f && !isNaN(f.lat) && !isNaN(f.lng)) {
+        leafletMap.panTo([f.lat, f.lng], { animate: true, duration: 0.35 });
+      }
+    }
+  });
+}
+
 function handleIncomingFriendPacket(packet) {
   if (!packet || !packet.name || !packet.id) return;
   if (packet.id === appState.myUser.id) return;
   // Ignore stale retained packets older than 6 hours
   if (packet.updatedAt && Date.now() - packet.updatedAt > 6 * 3600 * 1000) return;
+
+  // Multi-broker & multi-message deduplication (Drops duplicate packets immediately)
+  const prev = receivedPacketsTracker.get(packet.id);
+  const now = Date.now();
+  if (prev) {
+    if (packet.updatedAt && prev.updatedAt && packet.updatedAt <= prev.updatedAt) {
+      return; // Duplicate broker delivery dropped
+    }
+    if (now - prev.timestamp < 300 &&
+        Math.abs(packet.lat - prev.lat) < 0.00001 &&
+        Math.abs(packet.lng - prev.lng) < 0.00001) {
+      return; // Rapid micro-jitter dropped
+    }
+  }
+  receivedPacketsTracker.set(packet.id, {
+    updatedAt: packet.updatedAt || now,
+    timestamp: now,
+    lat: packet.lat,
+    lng: packet.lng
+  });
 
   // Check if friend already exists by id or by name
   let friend = appState.friends.find((f) => f.id === packet.id || (f.name === packet.name && f.plate === packet.plate));
@@ -489,17 +584,8 @@ function handleIncomingFriendPacket(packet) {
     }
   }
 
-  saveFriendsToStorage();
-  renderSquadFriendsList();
-  renderOnlineFriendPills();
-  renderFriendMapMarkers();
-  updateRealMapOverlays();
-  syncUI();
-
-  // If tracking this friend, pan smoothly with their movement
-  if (appState.selectedFriendId === friend.id && leafletMap) {
-    leafletMap.panTo([friend.lat, friend.lng], { animate: true, duration: 0.5 });
-  }
+  // Butter-smooth throttled batch update (Never lags even with 50+ simultaneous users)
+  scheduleBatchFriendUpdate(friend.id);
 }
 
 function promptIncomingFriendConfirmation(friend) {
@@ -1268,35 +1354,64 @@ function refreshMainMarkers() {
   renderFriendMapMarkers();
 }
 
+const _friendMarkersMap = new Map();
+
+function buildFriendIcon(f, isSelected) {
+  return L.divIcon({
+    className: 'custom-friend-map-marker',
+    html: `
+      <div class="relative flex flex-col items-center cursor-pointer group" style="width:70px;">
+        <div class="relative flex items-center justify-center">
+          ${isSelected ? '<div class="absolute inset-0 rounded-full bg-rose-500/60 marker-pulse"></div>' : ''}
+          <img src="${f.avatar || 'assets/sanbao_chicken_avatar.jpg'}" onerror="this.src='assets/sanbao_avatar.jpg'" class="w-12 h-12 rounded-full object-cover border-2 ${isSelected ? 'border-amber-300 shadow-[0_0_22px_#F59E0B]' : 'border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)]'} bg-slate-900 relative z-10 transition-transform group-hover:scale-110" />
+          <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border border-white text-[8px] flex items-center justify-center font-bold text-white z-20">🟢</span>
+        </div>
+        <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border ${isSelected ? 'border-amber-300 text-amber-200' : 'border-rose-400/80 text-rose-200'} text-[10px] font-bold shadow-lg mt-1 z-20">
+          ${f.name} (${f.plate || '好友'})
+        </div>
+      </div>`,
+    iconSize: [70, 75],
+    iconAnchor: [35, 38]
+  });
+}
+
 function renderFriendMapMarkers() {
   if (!leafletMap) return;
-  friendMarkers.forEach((m) => leafletMap.removeLayer(m));
-  friendMarkers = [];
+  const currentIds = new Set(appState.friends.map((f) => f.id));
 
+  // 1. Remove markers for friends who were deleted/cleared
+  for (const [id, marker] of _friendMarkersMap.entries()) {
+    if (!currentIds.has(id)) {
+      try { leafletMap.removeLayer(marker); } catch (e) {}
+      _friendMarkersMap.delete(id);
+    }
+  }
+
+  // 2. High-performance in-place position glide (No DOM teardown/rebuild, 60fps buttery smooth)
   appState.friends.forEach((f) => {
     if (isNaN(f.lat) || isNaN(f.lng)) return;
     const isSelected = appState.selectedFriendId === f.id;
-    const friendIcon = L.divIcon({
-      className: 'custom-friend-map-marker',
-      html: `
-        <div class="relative flex flex-col items-center cursor-pointer group" style="width:70px;">
-          <div class="relative flex items-center justify-center">
-            ${isSelected ? '<div class="absolute inset-0 rounded-full bg-rose-500/60 marker-pulse"></div>' : ''}
-            <img src="${f.avatar || 'assets/sanbao_chicken_avatar.jpg'}" onerror="this.src='assets/sanbao_avatar.jpg'" class="w-12 h-12 rounded-full object-cover border-2 ${isSelected ? 'border-amber-300 shadow-[0_0_22px_#F59E0B]' : 'border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.6)]'} bg-slate-900 relative z-10 transition-transform group-hover:scale-110" />
-            <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border border-white text-[8px] flex items-center justify-center font-bold text-white z-20">🟢</span>
-          </div>
-          <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border ${isSelected ? 'border-amber-300 text-amber-200' : 'border-rose-400/80 text-rose-200'} text-[10px] font-bold shadow-lg mt-1 z-20">
-            ${f.name} (${f.plate || '好友'})
-          </div>
-        </div>`,
-      iconSize: [70, 75],
-      iconAnchor: [35, 38]
-    });
+    const existing = _friendMarkersMap.get(f.id);
 
-    const m = L.marker([f.lat, f.lng], { icon: friendIcon, zIndexOffset: isSelected ? 1000 : 800 }).addTo(leafletMap);
-    m.bindTooltip(`<b>${f.name} (${f.plate})</b><br/>${f.sosMsg}<br/><i>點擊鎖定追蹤此好友</i>`, { direction: 'top' });
-    m.on('click', () => window.confirmAndLocateFriend(f.id));
-    friendMarkers.push(m);
+    if (existing) {
+      existing.setLatLng([f.lat, f.lng]);
+      existing.setZIndexOffset(isSelected ? 1000 : 800);
+      if (existing._isSelected !== isSelected || existing._lastAvatar !== f.avatar) {
+        existing._isSelected = isSelected;
+        existing._lastAvatar = f.avatar;
+        existing.setIcon(buildFriendIcon(f, isSelected));
+      }
+    } else {
+      const m = L.marker([f.lat, f.lng], {
+        icon: buildFriendIcon(f, isSelected),
+        zIndexOffset: isSelected ? 1000 : 800
+      }).addTo(leafletMap);
+      m._isSelected = isSelected;
+      m._lastAvatar = f.avatar;
+      m.bindTooltip(`<b>${f.name} (${f.plate || '好友'})</b><br/>${f.sosMsg || ''}<br/><i>點擊鎖定追蹤此好友</i>`, { direction: 'top' });
+      m.on('click', () => window.confirmAndLocateFriend(f.id));
+      _friendMarkersMap.set(f.id, m);
+    }
   });
 }
 
@@ -2114,7 +2229,9 @@ function updateParkingGameLoop() {
 function renderOnlineFriendPills() {
   const bar = document.getElementById('map-online-friends-pills');
   const countBadge = document.getElementById('nav-friend-count');
+  const countSmBadge = document.getElementById('nav-friend-count-sm');
   if (countBadge) countBadge.textContent = appState.friends.length;
+  if (countSmBadge) countSmBadge.textContent = appState.friends.length;
   if (!bar) return;
 
   if (appState.friends.length === 0) {
