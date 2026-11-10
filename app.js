@@ -182,14 +182,14 @@ function getTrackedProfile() {
     };
   }
   return {
-    id: 'none',
-    name: '尚未選擇好友',
-    plate: '請先登入或加好友',
-    avatar: appState.myUser.avatar,
+    id: 'preview',
+    name: '訪客即時預覽中',
+    plate: '未登入',
+    avatar: appState.myUser.avatar || 'assets/sanbao_chicken_avatar.jpg',
     lat: appState.myUser.lat,
     lng: appState.myUser.lng,
     mode: appState.scenario,
-    sosMsg: '💭 點右上「👤 登入我的定位」或邀朋友登入即可即時監測！'
+    sosMsg: '💭 歡迎檢視！可在下方輸入暱稱開啟即時定位，或自由預覽地圖與3D遊戲！'
   };
 }
 
@@ -248,7 +248,8 @@ function loadPersistedData() {
                     SafeStorage.getItem('aegis_sanbao_my_user');
     if (savedMe) {
       const parsed = JSON.parse(savedMe);
-      appState.myUser = { ...appState.myUser, ...parsed };
+      // Preserve saved name & settings, but ALWAYS start in visitor preview mode (loggedIn: false)
+      appState.myUser = { ...appState.myUser, ...parsed, loggedIn: false };
     }
   } catch (e) {}
 
@@ -750,6 +751,48 @@ window.loginAndStartRealGpsBroadcast = function () {
   window.useRealBrowserGPS({ silent: false });
 };
 
+window.loginFromQuickBar = function (e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const input = document.getElementById('quick-login-name');
+  const name = input?.value.trim();
+  if (!name) {
+    showToast('⚠️ 請輸入暱稱', '請手動輸入名字，即可啟動即時定位與連線！', 'amber');
+    input?.focus();
+    return;
+  }
+
+  appState.myUser.name = name;
+  appState.myUser.loggedIn = true;
+  saveMyUserToStorage();
+
+  const nameIn = document.getElementById('my-driver-name');
+  if (nameIn) nameIn.value = name;
+  const modalName = document.getElementById('modal-login-name');
+  if (modalName) modalName.value = name;
+
+  syncUI();
+  refreshMainMarkers();
+  publishMyPresence();
+  window.soundEngine.playWinFanfare();
+  showToast('✅ 登入成功！', `歡迎【${name}】，房號 #${appState.myUser.roomCode || '8888'} 已連線！正在抓取真實 GPS...`, 'emerald');
+
+  window.useRealBrowserGPS({ silent: false });
+};
+
+window.logoutToVisitorPreview = function () {
+  window.soundEngine.playClick(600);
+  appState.myUser.loggedIn = false;
+  if (appState.beaconWatchId) {
+    navigator.geolocation.clearWatch(appState.beaconWatchId);
+    appState.beaconWatchId = null;
+  }
+  saveMyUserToStorage();
+  syncUI();
+  refreshMainMarkers();
+  updateRealMapOverlays();
+  showToast('👀 已切換為訪客預覽模式', '您可以自由檢視各項功能，隨時輸入名字即可重新登入！', 'slate');
+};
+
 // ============================================================================
 // REAL 360° GOOGLE STREET VIEW PANORAMA (NOT 2D TILES!)
 // ============================================================================
@@ -1149,18 +1192,22 @@ function refreshMainMarkers() {
   if (!leafletMap) return;
   if (userMarker) leafletMap.removeLayer(userMarker);
 
-  // My Own Real Location Marker (Pure GPS Locked, not draggable!)
-  const myLabel = appState.myUser.name ? `🛡️ ${appState.myUser.name} (我)` : '🛡️ 我的位置';
+  const isLoggedIn = !!appState.myUser.loggedIn;
+  const myLabel = isLoggedIn ? `🛡️ ${appState.myUser.name} (我)` : '👀 訪客預覽點';
+  const badgeText = isLoggedIn ? '🔒 定位鎖定' : '👀 訪客預覽';
+  const badgeClass = isLoggedIn ? 'text-emerald-300 border-emerald-400/50' : 'text-amber-300 border-amber-400/50';
+  const iconEmoji = isLoggedIn ? '🛡️' : '👀';
+
   const userIcon = L.divIcon({
     className: 'custom-user-marker',
     html: `
       <div class="relative flex flex-col items-center cursor-pointer group" style="width:70px;">
         <div class="relative flex items-center justify-center">
-          <div class="absolute inset-0 rounded-full bg-teal-400/40 marker-pulse"></div>
-          <div class="w-11 h-11 rounded-full bg-teal-400 border-2 border-white flex items-center justify-center text-lg shadow-[0_0_20px_#2DD4BF] relative z-10">🛡️</div>
-          <span class="absolute -top-1 -right-1 px-1 rounded bg-black/85 text-[8px] font-mono text-emerald-300 font-bold z-20 border border-emerald-400/50">🔒 定位鎖定</span>
+          <div class="absolute inset-0 rounded-full ${isLoggedIn ? 'bg-teal-400/40 marker-pulse' : 'bg-amber-400/30'}"></div>
+          <div class="w-11 h-11 rounded-full ${isLoggedIn ? 'bg-teal-400 border-2 border-white' : 'bg-slate-900 border-2 border-amber-300'} flex items-center justify-center text-lg shadow-[0_0_20px_#2DD4BF] relative z-10">${iconEmoji}</div>
+          <span class="absolute -top-1 -right-1 px-1 rounded bg-black/85 text-[8px] font-mono ${badgeClass} font-bold z-20 border">${badgeText}</span>
         </div>
-        <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow mt-1 z-20">
+        <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border ${isLoggedIn ? 'border-teal-300 text-teal-200' : 'border-amber-300 text-amber-200'} text-[10px] font-bold shadow mt-1 z-20">
           ${myLabel}
         </div>
       </div>`,
@@ -1174,7 +1221,10 @@ function refreshMainMarkers() {
     draggable: false
   }).addTo(leafletMap);
 
-  userMarker.bindTooltip(`<b>${appState.myUser.name || '我的位置'}</b><br/>🛰️ 衛星 GPS 即時定位鎖定中<br/><i>座標隨真實定位自動更新</i>`, { direction: 'top' });
+  const tooltipHtml = isLoggedIn
+    ? `<b>${appState.myUser.name} (您)</b><br/>🛰️ 衛星 GPS 即時定位鎖定中<br/><i>座標隨真實定位自動更新</i>`
+    : `<b>👀 訪客檢視模式</b><br/>尚未手動登入<br/><i>輸入暱稱即可啟動真實定位廣播</i>`;
+  userMarker.bindTooltip(tooltipHtml, { direction: 'top' });
   userMarker.on('click', () => {
     if (leafletMap) leafletMap.flyTo([appState.myUser.lat, appState.myUser.lng], 17, { duration: 0.6 });
     if (window.soundEngine) window.soundEngine.playPing();
@@ -2225,7 +2275,27 @@ function syncUI() {
   const metrics = computeTacticalMetrics();
   const target = getTrackedProfile();
 
+  const isLoggedIn = !!appState.myUser.loggedIn;
   const isTrackingFriend = !!appState.selectedFriendId;
+
+  // Header login button state
+  const headerBtn = document.getElementById('header-login-btn');
+  if (headerBtn) {
+    if (isLoggedIn) {
+      headerBtn.textContent = `🟢 ${appState.myUser.name} (#${appState.myUser.roomCode || '8888'})`;
+      headerBtn.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-900 border border-teal-300/40 text-teal-300 text-xs font-bold';
+    } else {
+      headerBtn.textContent = '👤 手動輸入名字登入';
+      headerBtn.className = 'px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 text-slate-950 text-xs font-black shadow-[0_0_14px_rgba(45,212,191,0.5)] animate-pulse';
+    }
+  }
+
+  // Toggle quick visitor form vs logged in actions
+  const visitorQuickForm = document.getElementById('visitor-quick-form');
+  const loggedInActions = document.getElementById('logged-in-actions');
+  if (visitorQuickForm) visitorQuickForm.classList.toggle('hidden', isLoggedIn);
+  if (loggedInActions) loggedInActions.classList.toggle('hidden', !isLoggedIn);
+
   const switchSelfBtn = document.getElementById('vip-switch-self-btn');
   if (switchSelfBtn) {
     switchSelfBtn.classList.toggle('hidden', !isTrackingFriend);
@@ -2233,18 +2303,35 @@ function syncUI() {
 
   const nameEl = document.getElementById('vip-name');
   const plateEl = document.getElementById('vip-plate');
+  const avatarBadge = document.getElementById('vip-avatar-badge');
   if (nameEl && plateEl) {
     if (isTrackingFriend) {
       nameEl.textContent = target.name;
       nameEl.title = `正在追蹤好友 ${target.name}，點此可改自己的名字`;
       plateEl.textContent = `🚨 追蹤好友: ${target.plate}`;
-    } else {
+      if (avatarBadge) avatarBadge.textContent = '🚨 鎖定好友';
+    } else if (isLoggedIn) {
       nameEl.textContent = appState.myUser.name;
       nameEl.title = `點擊直接修改我的駕駛暱稱`;
       plateEl.textContent = `🛡️ 我的座駕: ${appState.myUser.plate || '未填寫'}`;
+      if (avatarBadge) avatarBadge.textContent = DRIVER_AVATARS[appState.avatarIndex % DRIVER_AVATARS.length].badge;
+    } else {
+      nameEl.textContent = '訪客即時預覽中';
+      nameEl.title = `點擊手動輸入名字登入`;
+      plateEl.textContent = '👀 訪客模式・尚未開啟定位';
+      if (avatarBadge) avatarBadge.textContent = '👀 訪客預覽';
     }
   }
-  document.getElementById('vip-os-bubble').textContent = target.sosMsg || sc.osList[appState.osIndex % sc.osList.length];
+
+  const bubbleEl = document.getElementById('vip-os-bubble');
+  if (bubbleEl) {
+    if (!isLoggedIn && !isTrackingFriend) {
+      bubbleEl.textContent = '💭 歡迎檢視！可在下方輸入暱稱開啟即時定位，或自由預覽地圖與3D遊戲！';
+    } else {
+      bubbleEl.textContent = target.sosMsg || sc.osList[appState.osIndex % sc.osList.length];
+    }
+  }
+
   const vipImg = document.getElementById('vip-avatar-img');
   if (vipImg && target.avatar) vipImg.src = target.avatar;
 
@@ -2594,15 +2681,24 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateRouteSafety(false);
   syncUI();
 
-  // Auto-fetch user's high-accuracy real GPS immediately on startup
-  if (navigator.geolocation) {
-    window.useRealBrowserGPS({ silent: true });
+  // Pre-fill input with last known name if available, for user's convenience
+  const quickInput = document.getElementById('quick-login-name');
+  if (quickInput && appState.myUser.name) {
+    quickInput.value = appState.myUser.name;
+  }
+  const modalName = document.getElementById('modal-login-name');
+  if (modalName && appState.myUser.name) {
+    modalName.value = appState.myUser.name;
   }
 
-  // If user was already logged in previously, resume their session automatically
-  if (appState.myUser.loggedIn && appState.myUser.name) {
-    window.loginAndStartRealGpsBroadcast();
-  }
+  // Tablet & Mobile Orientation / Resize auto-invalidation for Leaflet map tiles
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (leafletMap) leafletMap.invalidateSize();
+    }, 120);
+  });
 
   // Continuous Keyboard Arrow Support for 3D Costco Parking Simulator!
   window.addEventListener('keydown', (e) => {
