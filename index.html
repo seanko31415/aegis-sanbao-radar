@@ -577,6 +577,17 @@
             <!-- 2D Leaflet Map -->
             <div id="real-google-map" class="w-full h-full"></div>
 
+            <!-- Floating Visitor Preview Privacy HUD Pill (Visible only in visitor preview mode) -->
+            <div id="map-preview-floating-pill" class="absolute top-2 inset-x-2 sm:inset-x-auto sm:left-3 z-20 px-3 py-1.5 rounded-xl bg-[#060A17]/95 border border-teal-300/60 shadow-[0_0_20px_rgba(45,212,191,0.35)] backdrop-blur-md flex items-center justify-between gap-2 text-xs">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-teal-400 animate-pulse shrink-0"></span>
+                <span class="font-bold text-teal-200 truncate">👀 訪客預覽中：您的位置未被定位 (隱私安全)</span>
+              </div>
+              <button onclick="document.getElementById('quick-login-name')?.focus()" class="shrink-0 px-2 py-0.5 rounded-lg bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-[11px] shadow active:scale-95">
+                輸入名字加入 ➔
+              </button>
+            </div>
+
             <!-- Real 360° Google Street View Panorama Overlay (Hidden until user clicks "🏙️ 360° 真實街景") -->
             <div id="real-streetview-panel" class="hidden absolute inset-0 z-30 bg-[#060916] flex flex-col">
               <div class="flex items-center justify-between px-3 py-1.5 bg-[#060A17]/95 border-b border-amber-300/35 text-xs">
@@ -1063,7 +1074,7 @@
 
   <div id="toast-container" class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=14.6"></script>
-  <script src="app.js?v=14.6"></script>
+  <script src="sound_and_fx.js?v=14.7"></script>
+  <script src="app.js?v=14.7"></script>
 </body>
 </html>

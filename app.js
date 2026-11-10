@@ -1040,29 +1040,40 @@ function calcGpsDistanceKm(lat1, lng1, lat2, lng2) {
 function computeTacticalMetrics() {
   const sc = SCENARIOS[appState.scenario] || SCENARIOS.roundabout;
   const target = getTrackedProfile();
-  const distKm =
-    appState.selectedFriendId && target.id !== 'none'
-      ? Math.max(0.01, calcGpsDistanceKm(target.lat, target.lng, appState.myUser.lat, appState.myUser.lng))
-      : 0.0;
+  const isLoggedIn = !!appState.myUser.loggedIn;
+  const isTrackingFriend = !!appState.selectedFriendId;
+
+  let distKm = 0.0;
+  if (isTrackingFriend && target.id !== 'none' && target.id !== 'preview') {
+    distKm = Math.max(0.01, calcGpsDistanceKm(target.lat, target.lng, appState.myUser.lat, appState.myUser.lng));
+  }
 
   const chaosScale = 0.55 + (appState.chaosIndex / 100) * 0.9;
   const effectiveRadius = +(sc.radiusKm * chaosScale).toFixed(2);
 
   let survival = 99;
-  if (appState.selectedFriendId && appState.scenario !== 'home') {
+  if (isTrackingFriend && appState.scenario !== 'home') {
     const ratio = distKm / Math.max(0.2, effectiveRadius);
     survival = Math.min(99, Math.max(5, Math.round(ratio * 52 - appState.chaosIndex * 0.15 + (5 - sc.levelNum) * 8)));
   }
-  return { distKm: +distKm.toFixed(2), effectiveRadius, survival };
+  return { distKm: +distKm.toFixed(2), effectiveRadius, survival, isLoggedIn, isTrackingFriend };
 }
 
 let lastGeocodeTime = 0;
 async function fetchAndDisplayReverseAddress(lat, lng) {
   const coordDisplay = document.getElementById('live-coord-display');
+  const addrEl = document.getElementById('live-location-address');
+
+  // In visitor preview mode without a selected friend: protect privacy and do not locate stranger!
+  if (!appState.myUser.loggedIn && !appState.selectedFriendId) {
+    if (coordDisplay) coordDisplay.textContent = '🛰️ 個人定位未開啟 (無追蹤隱私保護中)';
+    if (addrEl) addrEl.textContent = '🗺️ 全台防空即時雷達（訪客預覽模式）';
+    return;
+  }
+
   if (coordDisplay) {
     coordDisplay.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)} (±${appState.myUser.accuracy || 5}m)`;
   }
-  const addrEl = document.getElementById('live-location-address');
   if (!addrEl) return;
 
   const now = Date.now();
@@ -1071,7 +1082,8 @@ async function fetchAndDisplayReverseAddress(lat, lng) {
 
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=zh-TW`
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&countrycodes=tw&accept-language=zh-TW`,
+      { headers: { 'User-Agent': 'SanbaoRadarApp/14.0' } }
     );
     const data = await res.json();
     if (data && data.display_name) {
@@ -1108,19 +1120,26 @@ function updatePinpointBtnUI() {
 
 window.fitMapToAllPeople = function () {
   if (!leafletMap) return;
-  const pts = [[appState.myUser.lat, appState.myUser.lng]];
+  const pts = [];
+  if (appState.myUser.loggedIn) {
+    pts.push([appState.myUser.lat, appState.myUser.lng]);
+  }
   appState.friends.forEach((f) => {
     if (!isNaN(f.lat) && !isNaN(f.lng)) {
       pts.push([f.lat, f.lng]);
     }
   });
-  if (pts.length === 1) {
-    leafletMap.setView(pts[0], 17, { animate: true });
-    showToast('📍 已置中您的位置', `${pts[0][0].toFixed(5)}, ${pts[0][1].toFixed(5)}`, 'cyan');
+
+  if (pts.length === 0) {
+    leafletMap.setView([23.9738, 120.9820], 8, { animate: true });
+    showToast('🗺️ 全台預覽視圖', '目前無在線人員，已縮放至台灣全島！', 'cyan');
+  } else if (pts.length === 1) {
+    leafletMap.setView(pts[0], 16, { animate: true });
+    showToast('📍 已置中目標位置', `${pts[0][0].toFixed(5)}, ${pts[0][1].toFixed(5)}`, 'cyan');
   } else {
     const bounds = L.latLngBounds(pts);
     leafletMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 18, animate: true });
-    showToast('🎯 已縮放至全體人員', `地圖已包含您與 ${pts.length - 1} 位在線好友！`, 'emerald');
+    showToast('🎯 已縮放至全體人員', `地圖已包含 ${pts.length} 位在線人員！`, 'emerald');
   }
 };
 
@@ -1128,37 +1147,46 @@ function initRealGoogleMap() {
   const mapEl = document.getElementById('real-google-map');
   if (!mapEl || typeof L === 'undefined') return;
 
+  // In preview mode: default overview of Taiwan! (Strangers are never tracked!)
+  const initialCenter = appState.myUser.loggedIn
+    ? [appState.myUser.lat, appState.myUser.lng]
+    : [23.9738, 120.9820];
+  const initialZoom = appState.myUser.loggedIn ? 16 : 8;
+
   leafletMap = L.map('real-google-map', {
-    center: [appState.myUser.lat, appState.myUser.lng],
-    zoom: 16,
+    center: initialCenter,
+    zoom: initialZoom,
     zoomControl: true
   });
 
   window.setMapStyle('tactical');
 
-  outerDeceptionCircle = L.circle([appState.myUser.lat, appState.myUser.lng], {
+  outerDeceptionCircle = L.circle(initialCenter, {
     radius: 600,
     color: '#FEF08A',
     weight: 2,
     dashArray: '8, 6',
     fillColor: '#F59E0B',
-    fillOpacity: 0.05
+    fillOpacity: 0,
+    opacity: 0
   }).addTo(leafletMap);
 
-  innerBlastCircle = L.circle([appState.myUser.lat, appState.myUser.lng], {
+  innerBlastCircle = L.circle(initialCenter, {
     radius: 320,
     color: '#F43F5E',
     weight: 2,
     fillColor: '#F43F5E',
-    fillOpacity: 0.15
+    fillOpacity: 0,
+    opacity: 0
   }).addTo(leafletMap);
 
-  userAccuracyCircle = L.circle([appState.myUser.lat, appState.myUser.lng], {
+  userAccuracyCircle = L.circle(initialCenter, {
     radius: 20,
     color: '#2DD4BF',
     weight: 1.5,
     fillColor: '#2DD4BF',
-    fillOpacity: 0.15
+    fillOpacity: 0,
+    opacity: 0
   }).addTo(leafletMap);
 
   tetherPolyline = L.polyline([], { color: '#2DD4BF', weight: 2.5, dashArray: '5, 6' }).addTo(leafletMap);
@@ -1169,6 +1197,10 @@ function initRealGoogleMap() {
       appState.myUser.lat = lat;
       appState.myUser.lng = lng;
       appState.myUser.hasRealGps = true;
+      if (!appState.myUser.loggedIn) {
+        appState.myUser.loggedIn = true;
+        if (!appState.myUser.name) appState.myUser.name = '路人車神';
+      }
       saveMyUserToStorage();
       publishMyPresence();
       refreshMainMarkers();
@@ -1190,25 +1222,28 @@ function initRealGoogleMap() {
 
 function refreshMainMarkers() {
   if (!leafletMap) return;
-  if (userMarker) leafletMap.removeLayer(userMarker);
+  if (userMarker) {
+    leafletMap.removeLayer(userMarker);
+    userMarker = null;
+  }
 
-  const isLoggedIn = !!appState.myUser.loggedIn;
-  const myLabel = isLoggedIn ? `🛡️ ${appState.myUser.name} (我)` : '👀 訪客預覽點';
-  const badgeText = isLoggedIn ? '🔒 定位鎖定' : '👀 訪客預覽';
-  const badgeClass = isLoggedIn ? 'text-emerald-300 border-emerald-400/50' : 'text-amber-300 border-amber-400/50';
-  const iconEmoji = isLoggedIn ? '🛡️' : '👀';
+  // PRIVACY GUARANTEE: If user has not logged in, DO NOT put any user marker on the map!
+  if (!appState.myUser.loggedIn) {
+    renderFriendMapMarkers();
+    return;
+  }
 
   const userIcon = L.divIcon({
     className: 'custom-user-marker',
     html: `
       <div class="relative flex flex-col items-center cursor-pointer group" style="width:70px;">
         <div class="relative flex items-center justify-center">
-          <div class="absolute inset-0 rounded-full ${isLoggedIn ? 'bg-teal-400/40 marker-pulse' : 'bg-amber-400/30'}"></div>
-          <div class="w-11 h-11 rounded-full ${isLoggedIn ? 'bg-teal-400 border-2 border-white' : 'bg-slate-900 border-2 border-amber-300'} flex items-center justify-center text-lg shadow-[0_0_20px_#2DD4BF] relative z-10">${iconEmoji}</div>
-          <span class="absolute -top-1 -right-1 px-1 rounded bg-black/85 text-[8px] font-mono ${badgeClass} font-bold z-20 border">${badgeText}</span>
+          <div class="absolute inset-0 rounded-full bg-teal-400/40 marker-pulse"></div>
+          <div class="w-11 h-11 rounded-full bg-teal-400 border-2 border-white flex items-center justify-center text-lg shadow-[0_0_20px_#2DD4BF] relative z-10">🛡️</div>
+          <span class="absolute -top-1 -right-1 px-1 rounded bg-black/85 text-[8px] font-mono text-emerald-300 font-bold z-20 border border-emerald-400/50">🔒 定位鎖定</span>
         </div>
-        <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border ${isLoggedIn ? 'border-teal-300 text-teal-200' : 'border-amber-300 text-amber-200'} text-[10px] font-bold shadow mt-1 z-20">
-          ${myLabel}
+        <div class="whitespace-nowrap px-2 py-0.5 rounded-full bg-[#070B19]/95 border border-teal-300 text-[10px] font-bold text-teal-200 shadow mt-1 z-20">
+          🛡️ ${appState.myUser.name} (我)
         </div>
       </div>`,
     iconSize: [70, 75],
@@ -1221,10 +1256,7 @@ function refreshMainMarkers() {
     draggable: false
   }).addTo(leafletMap);
 
-  const tooltipHtml = isLoggedIn
-    ? `<b>${appState.myUser.name} (您)</b><br/>🛰️ 衛星 GPS 即時定位鎖定中<br/><i>座標隨真實定位自動更新</i>`
-    : `<b>👀 訪客檢視模式</b><br/>尚未手動登入<br/><i>輸入暱稱即可啟動真實定位廣播</i>`;
-  userMarker.bindTooltip(tooltipHtml, { direction: 'top' });
+  userMarker.bindTooltip(`<b>${appState.myUser.name} (您)</b><br/>🛰️ 衛星 GPS 即時定位鎖定中<br/><i>座標隨真實定位自動更新</i>`, { direction: 'top' });
   userMarker.on('click', () => {
     if (leafletMap) leafletMap.flyTo([appState.myUser.lat, appState.myUser.lng], 17, { duration: 0.6 });
     if (window.soundEngine) window.soundEngine.playPing();
@@ -1266,33 +1298,61 @@ function renderFriendMapMarkers() {
 }
 
 function updateRealMapOverlays() {
-  if (!leafletMap || !userMarker) return;
+  if (!leafletMap) return;
   const sc = SCENARIOS[appState.scenario] || SCENARIOS.roundabout;
   const metrics = computeTacticalMetrics();
+  const isLoggedIn = !!appState.myUser.loggedIn;
+  const isTrackingFriend = !!appState.selectedFriendId;
+
+  // In Visitor Preview Mode without a selected friend:
+  // Hide all user-specific blast and accuracy circles (privacy & clean preview guarantee!)
+  if (!isLoggedIn && !isTrackingFriend) {
+    if (userAccuracyCircle) userAccuracyCircle.setStyle({ opacity: 0, fillOpacity: 0 });
+    if (innerBlastCircle) innerBlastCircle.setStyle({ opacity: 0, fillOpacity: 0 });
+    if (outerDeceptionCircle) outerDeceptionCircle.setStyle({ opacity: 0, fillOpacity: 0 });
+    if (tetherPolyline) tetherPolyline.setLatLngs([]);
+    return;
+  }
+
   const uPos = [appState.myUser.lat, appState.myUser.lng];
 
-  userMarker.setLatLng(uPos);
+  if (userMarker && isLoggedIn) {
+    userMarker.setLatLng(uPos);
+  }
+
   if (userAccuracyCircle) {
-    userAccuracyCircle.setLatLng(uPos);
-    userAccuracyCircle.setRadius(Math.max(12, appState.myUser.accuracy || 15));
+    if (isLoggedIn) {
+      userAccuracyCircle.setLatLng(uPos);
+      userAccuracyCircle.setRadius(Math.max(12, appState.myUser.accuracy || 15));
+      userAccuracyCircle.setStyle({ opacity: 1, fillOpacity: 0.15, color: '#2DD4BF', fillColor: '#2DD4BF' });
+    } else {
+      userAccuracyCircle.setStyle({ opacity: 0, fillOpacity: 0 });
+    }
   }
 
   const target = getTrackedProfile();
   const tPos = [target.lat || uPos[0], target.lng || uPos[1]];
 
-  if (targetMarker && appState.selectedFriendId) {
+  if (targetMarker && isTrackingFriend) {
     targetMarker.setLatLng(tPos);
   }
 
   const innerMeters = Math.max(60, metrics.effectiveRadius * 320);
-  innerBlastCircle.setLatLng(tPos);
-  innerBlastCircle.setRadius(innerMeters);
-  innerBlastCircle.setStyle({ color: sc.color, fillColor: sc.color });
+  if (innerBlastCircle) {
+    innerBlastCircle.setLatLng(tPos);
+    innerBlastCircle.setRadius(innerMeters);
+    innerBlastCircle.setStyle({ color: sc.color, fillColor: sc.color, opacity: 1, fillOpacity: 0.15 });
+  }
 
-  outerDeceptionCircle.setLatLng(tPos);
-  outerDeceptionCircle.setRadius(innerMeters * 1.45);
+  if (outerDeceptionCircle) {
+    outerDeceptionCircle.setLatLng(tPos);
+    outerDeceptionCircle.setRadius(innerMeters * 1.45);
+    outerDeceptionCircle.setStyle({ opacity: 1, fillOpacity: 0.05, color: '#FEF08A', fillColor: '#F59E0B' });
+  }
 
-  tetherPolyline.setLatLngs(appState.selectedFriendId ? [tPos, uPos] : []);
+  if (tetherPolyline) {
+    tetherPolyline.setLatLngs(isTrackingFriend && isLoggedIn ? [tPos, uPos] : []);
+  }
 }
 
 window.setMapStyle = function (style) {
@@ -2340,15 +2400,37 @@ function syncUI() {
 
   const coordEl = document.getElementById('gps-coord-readout');
   if (coordEl) {
-    coordEl.textContent = `🛰️ 座標: ${target.lat.toFixed(5)}°N, ${target.lng.toFixed(5)}°E`;
+    if (!isLoggedIn && !isTrackingFriend) {
+      coordEl.textContent = '🛰️ 個人定位未開啟 (隱私保護中)';
+    } else {
+      coordEl.textContent = `🛰️ 座標: ${target.lat.toFixed(5)}°N, ${target.lng.toFixed(5)}°E`;
+    }
   }
   const accEl = document.getElementById('gps-accuracy-badge');
   if (accEl) {
-    accEl.textContent = `房號 #${appState.myUser.roomCode} (±${appState.myUser.accuracy || 8}m)`;
+    if (!isLoggedIn && !isTrackingFriend) {
+      accEl.textContent = `房號 #${appState.myUser.roomCode || '8888'} (訪客預覽)`;
+    } else {
+      accEl.textContent = `房號 #${appState.myUser.roomCode} (±${appState.myUser.accuracy || 8}m)`;
+    }
   }
 
   document.getElementById('metric-blast-radius').textContent = `${metrics.effectiveRadius} km`;
-  document.getElementById('metric-user-dist').textContent = `${metrics.distKm} km`;
+  const userDistEl = document.getElementById('metric-user-dist');
+  if (userDistEl) {
+    if (!isLoggedIn && !isTrackingFriend) {
+      userDistEl.textContent = '未定位';
+      userDistEl.style.color = '#94A3B8';
+    } else {
+      userDistEl.textContent = `${metrics.distKm} km`;
+      userDistEl.style.color = '#2DD4BF';
+    }
+  }
+
+  const previewPill = document.getElementById('map-preview-floating-pill');
+  if (previewPill) {
+    previewPill.classList.toggle('hidden', isLoggedIn);
+  }
   const survEl = document.getElementById('metric-survival-rate');
   survEl.textContent = `${metrics.survival}%`;
   survEl.style.color = metrics.survival < 40 ? '#F43F5E' : metrics.survival < 75 ? '#FEF08A' : '#2DD4BF';
