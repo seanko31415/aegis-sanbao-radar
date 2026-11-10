@@ -50,32 +50,40 @@
 
     .royal-card {
       position: relative;
-      background: linear-gradient(160deg, rgba(14, 23, 50, 0.88) 0%, rgba(7, 11, 26, 0.96) 100%);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1.5px solid rgba(212, 175, 55, 0.5);
+      background: linear-gradient(160deg, rgba(14, 23, 50, 0.78) 0%, rgba(7, 11, 26, 0.90) 100%);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      border: 1.2px solid rgba(212, 175, 55, 0.38);
       border-radius: 20px;
       box-shadow:
-        0 20px 50px -12px rgba(0, 0, 0, 0.9),
-        0 0 26px rgba(37, 99, 235, 0.22),
-        inset 0 0 0 1px rgba(254, 240, 138, 0.16);
+        0 16px 40px -10px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(37, 99, 235, 0.16),
+        inset 0 1px 1px rgba(255, 255, 255, 0.08);
       transition: border-color 0.25s ease, box-shadow 0.25s ease;
+      overflow: hidden;
     }
     .royal-card:hover {
-      border-color: rgba(254, 240, 138, 0.75);
+      border-color: rgba(254, 240, 138, 0.65);
+      box-shadow:
+        0 20px 48px -8px rgba(0, 0, 0, 0.85),
+        0 0 24px rgba(212, 175, 55, 0.25),
+        inset 0 1px 2px rgba(255, 255, 255, 0.12);
     }
-
-    .royal-card::before,
-    .royal-card::after {
-      content: '✦';
+    /* Dynamic Specular Reflection on all cards following cursor (moderate, non-glaring) */
+    .royal-card::before {
+      content: '';
       position: absolute;
-      font-size: 11px;
-      color: #FEF08A;
+      inset: 0;
+      background: radial-gradient(
+        circle 140px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        rgba(254, 240, 138, 0.07),
+        transparent 70%
+      );
+      opacity: 0.85;
       pointer-events: none;
-      text-shadow: 0 0 10px #F59E0B;
+      transition: opacity 0.3s ease;
+      z-index: 0;
     }
-    .royal-card::before { top: 6px; left: 10px; }
-    .royal-card::after { bottom: 6px; right: 10px; }
 
     .tarot-btn {
       position: relative;
@@ -166,21 +174,21 @@
         0 12px 30px rgba(0, 0, 0, 0.8);
     }
 
-    /* MOUSE TRACKING TACTICAL RETICLE */
+    /* MOUSE TRACKING SLEEK CELESTIAL STARLET CURSOR */
     #mouse-reticle {
       position: fixed;
       top: 0;
       left: 0;
-      width: 28px;
-      height: 28px;
-      margin-top: -14px;
-      margin-left: -14px;
+      width: 10px;
+      height: 10px;
+      margin-top: -5px;
+      margin-left: -5px;
       border-radius: 50%;
-      border: 1.5px solid rgba(254, 240, 138, 0.45);
-      box-shadow: 0 0 14px rgba(45, 212, 191, 0.35);
+      background: #FEF08A;
+      box-shadow: 0 0 10px #2DD4BF, 0 0 16px rgba(254, 240, 138, 0.55);
       pointer-events: none;
       z-index: 9999;
-      transition: width 0.22s ease, height 0.22s ease, margin 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+      transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), height 0.2s cubic-bezier(0.16, 1, 0.3, 1), margin 0.2s cubic-bezier(0.16, 1, 0.3, 1), border 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
       display: none;
       transform: translate3d(-100px, -100px, 0);
     }
@@ -190,19 +198,28 @@
     #mouse-reticle::before {
       content: '';
       position: absolute;
-      inset: 8px;
+      inset: -5px;
       border-radius: 50%;
-      background: rgba(45, 212, 191, 0.7);
-      box-shadow: 0 0 6px #2DD4BF;
+      border: 1px solid rgba(45, 212, 191, 0.45);
+      animation: micro-spin 6s linear infinite;
+    }
+    @keyframes micro-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     #mouse-reticle.reticle-expand {
-      width: 44px;
-      height: 44px;
-      margin-top: -22px;
-      margin-left: -22px;
-      border-color: rgba(254, 240, 138, 0.75);
-      background: rgba(45, 212, 191, 0.08);
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.45);
+      width: 26px;
+      height: 26px;
+      margin-top: -13px;
+      margin-left: -13px;
+      background: rgba(45, 212, 191, 0.12);
+      border: 1.5px solid rgba(254, 240, 138, 0.85);
+      box-shadow: 0 0 18px rgba(212, 175, 55, 0.45), inset 0 0 6px rgba(45, 212, 191, 0.3);
+    }
+    #mouse-reticle.reticle-expand::before {
+      inset: -3px;
+      border-color: rgba(254, 240, 138, 0.65);
+      border-style: dashed;
     }
 
     .ribbon-slash {
@@ -315,6 +332,9 @@
         <button id="sound-toggle-btn" class="px-2 py-1.5 rounded-xl bg-slate-900/90 border border-amber-300/30 text-xs text-amber-200" title="音效開關">
           🔊
         </button>
+        <button id="bgm-toggle-btn" onclick="toggleMusicBGM()" class="px-2 py-1.5 rounded-xl bg-slate-900/90 border border-teal-300/40 text-[11px] sm:text-xs text-teal-300 font-bold active:scale-95" title="背景音樂開關 (BGM)">
+          🎵 BGM: 關
+        </button>
         <button onclick="openLoginModal()" id="header-login-btn" class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-400 to-emerald-500 text-slate-950 text-[11px] sm:text-xs font-black shadow-[0_0_14px_rgba(45,212,191,0.5)] animate-pulse">
           👤 手動輸入名字登入
         </button>
@@ -406,7 +426,7 @@
           <div class="min-w-0 flex-1 space-y-1">
             <div class="flex items-center justify-between gap-1">
               <span id="vip-plate" class="px-2 py-0.5 rounded-md bg-blue-950 border border-amber-300/40 text-amber-200 font-mono text-[10px] sm:text-xs font-black truncate">
-                👀 訪客預覽中・尚未登入
+                👀 訪客預覽
               </span>
               <span id="vip-bounty-badge" class="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 font-mono text-[9px] sm:text-[10px] font-black shrink-0">
                 懸賞 $88,000
@@ -432,7 +452,7 @@
               </div>
             </div>
             <div id="vip-os-bubble" class="px-2.5 py-1 rounded-xl bg-[#060916]/90 border border-amber-300/30 text-[10px] sm:text-xs text-amber-100 font-bold truncate">
-              💭 歡迎檢視！可在下方手動輸入暱稱啟動即時定位，或自由預覽功能！
+              💭 自由預覽中・輸入暱稱可加入雷達
             </div>
             <!-- Active Stamp Container with Real-Time Add & Delete -->
             <div id="vip-stamps-row" class="flex flex-wrap items-center gap-1.5 pt-0.5"></div>
@@ -443,7 +463,7 @@
         <form id="visitor-quick-form" onsubmit="loginFromQuickBar(event)" class="mt-2 p-2 rounded-xl bg-[#060916]/95 border border-teal-300/40 flex flex-col sm:flex-row gap-1.5 items-center">
           <div class="flex items-center gap-1.5 w-full sm:flex-1">
             <span class="text-xs shrink-0">👤</span>
-            <input id="quick-login-name" type="text" placeholder="手動輸入你的名字 (例: 阿豪、小明)..." class="w-full rounded-lg bg-slate-900 border border-white/20 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300 font-bold" />
+            <input id="quick-login-name" type="text" placeholder="輸入名字 (例: 阿豪)..." class="w-full rounded-lg bg-slate-900 border border-white/20 px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-300 font-bold" />
           </div>
           <button type="submit" class="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-xs shrink-0 shadow active:scale-95">
             🚀 登入並開始定位
@@ -483,13 +503,13 @@
           <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🏠</span>
           <span class="text-[11px] font-black text-teal-300">平安在家</span>
         </button>
-        <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：買鹹酥雞">
+        <button data-scenario-btn="snack" onclick="selectScenario('snack')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：買東西">
           <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-amber-300/80 mb-0.5">
             <span class="font-bold">#02</span>
             <span class="w-1.5 h-1.5 rounded-full bg-amber-400 group-hover:scale-125 transition-transform"></span>
           </div>
           <span class="text-xl my-0.5 group-hover:scale-110 transition-transform">🛵</span>
-          <span class="text-[11px] font-black text-amber-300">買鹹酥雞</span>
+          <span class="text-[11px] font-black text-amber-300">買東西</span>
         </button>
         <button data-scenario-btn="roundabout" onclick="selectScenario('roundabout')" class="glass-window p-2 flex flex-col items-center justify-between cursor-pointer group text-center" title="切換至情境：圓環迷航">
           <div class="w-full flex items-center justify-between px-0.5 text-[8px] font-mono text-orange-300/80 mb-0.5">
@@ -681,46 +701,55 @@
       <!-- Right 5 Cols: Interactive Cockpit Soundboard + 3D Costco Reverse Parking Game -->
       <div class="lg:col-span-5 flex flex-col justify-between gap-3.5">
 
-        <!-- 1. Cockpit Wiper Baton & 4 Prank Soundboard -->
+        <!-- 1. TACTICAL ANTI-SANBAO DEFENSE MATRIX & DECOY LAUNCHER -->
         <div class="royal-card p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-black gold-text">🎛️ 三寶座艙實況模擬器</span>
-            <span class="text-[10px] font-mono text-amber-200/75" id="car-heading-paradox">左燈 ➔ 右偏 28°</span>
+            <span class="text-xs font-black gold-text">🛡️ 三寶全境防禦力場戰情中心</span>
+            <span class="text-[10px] font-mono text-teal-300" id="shield-status-readout">⚡ 防護罩 100% 充能</span>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <div id="lamp-left-turn" class="py-1.5 rounded-xl border border-amber-300/30 bg-slate-900 font-mono text-xs font-black text-center signal-blink-active">
-              ⬅️ 左轉燈常駐
+          <!-- Holographic Energy Shield Canvas / Dome Visualizer -->
+          <div class="relative h-20 rounded-xl bg-gradient-to-b from-[#091533] to-[#060916] border border-amber-300/35 overflow-hidden flex flex-col items-center justify-between p-2">
+            <div class="w-full flex items-center justify-between text-[10px] font-mono">
+              <span id="defense-mode-badge" class="text-teal-300 font-bold">🟢 全境力場：就緒</span>
+              <span id="decoy-counter-badge" class="text-amber-300 font-bold">戰術誘餌 x 4</span>
             </div>
-            <div id="lamp-right-turn" class="py-1.5 rounded-xl border border-white/10 bg-slate-900 text-slate-500 font-mono text-xs font-black text-center">
-              右轉燈封印 ➡️
+            
+            <!-- Dynamic Energy Forcefield Ring -->
+            <div class="relative flex items-center justify-center my-1">
+              <div id="shield-energy-ring" class="w-28 h-8 rounded-full border-2 border-teal-400 shadow-[0_0_15px_#2DD4BF] flex items-center justify-center transition-all duration-300">
+                <span id="shield-energy-text" class="text-[11px] font-mono font-black text-amber-200 tracking-wider">AEGIS SHIELD</span>
+              </div>
+            </div>
+
+            <!-- Shield Activation Toggle Bar -->
+            <div class="w-full flex items-center justify-between gap-2">
+              <div class="flex-1 h-2 bg-slate-900 rounded-full overflow-hidden border border-teal-400/40">
+                <div id="shield-energy-bar" class="h-full w-full bg-gradient-to-r from-teal-400 to-amber-300 transition-all duration-300"></div>
+              </div>
+              <button id="shield-toggle-btn" onclick="toggleDefenseShield()" class="px-2.5 py-0.5 rounded-lg bg-teal-400 hover:bg-teal-300 text-slate-950 font-black text-[10px] shrink-0 active:scale-95 shadow">
+                🛡️ 展開力場
+              </button>
             </div>
           </div>
 
-          <div class="relative h-16 rounded-xl bg-gradient-to-b from-blue-950/80 to-[#060916] border border-amber-300/30 overflow-hidden flex flex-col items-center justify-end p-1.5">
-            <div class="absolute top-1.5 inset-x-3 flex justify-between text-[10px] font-mono font-bold">
-              <span class="text-amber-300" id="wiper-status-badge">☀️ 大晴天雨刷 MAX</span>
-              <span class="text-rose-300">🔊 真人語音吐槽</span>
-            </div>
-            <div class="flex items-end justify-around w-3/4 h-11">
-              <div id="wiper-arm-left" class="w-1 h-11 bg-gradient-to-t from-amber-500 to-yellow-200 rounded-full shadow-[0_0_12px_#FDE68A] wiper-rapid"></div>
-              <div id="wiper-arm-right" class="w-1 h-11 bg-gradient-to-t from-amber-500 to-yellow-200 rounded-full shadow-[0_0_12px_#FDE68A] wiper-rapid"></div>
-            </div>
-            <div class="w-full h-1 bg-amber-300/30 rounded-full"></div>
-          </div>
-
+          <!-- 4 Interactive Tactical Decoys -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-            <button onclick="triggerWiperParadox()" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-amber-200">
-              🪄 誤刷雨刷
+            <button onclick="launchDecoy('chicken')" class="glass-window tarot-btn py-2 px-1 text-[11px] font-black text-amber-200 flex flex-col items-center gap-0.5" title="投擲黃金脆皮雞腿吸引三寶注意力">
+              <span class="text-base">🍗</span>
+              <span>脆皮雞腿彈</span>
             </button>
-            <button onclick="triggerCockpitAction('horn')" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-rose-300">
-              📯 驚慌喇叭
+            <button onclick="launchDecoy('wiper')" class="glass-window tarot-btn py-2 px-1 text-[11px] font-black text-cyan-200 flex flex-col items-center gap-0.5" title="發射晴天雨刷干擾射線">
+              <span class="text-base">🌧️</span>
+              <span>晴天雨刷彈</span>
             </button>
-            <button onclick="triggerCockpitAction('rgear')" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-teal-300">
-              🔊 雷達破音
+            <button onclick="launchDecoy('horn')" class="glass-window tarot-btn py-2 px-1 text-[11px] font-black text-rose-300 flex flex-col items-center gap-0.5" title="發射高分貝避難聲波">
+              <span class="text-base">📢</span>
+              <span>防衛警報波</span>
             </button>
-            <button onclick="drawRandomTarotCard()" class="glass-window tarot-btn py-2 px-1.5 text-[11px] font-black text-yellow-300">
-              🃏 抽三寶牌
+            <button onclick="launchDecoy('parking')" class="glass-window tarot-btn py-2 px-1 text-[11px] font-black text-yellow-300 flex flex-col items-center gap-0.5" title="在路邊生成雙格大車位吸引三寶自動入庫">
+              <span class="text-base">🧲</span>
+              <span>雙格車位陷阱</span>
             </button>
           </div>
         </div>
@@ -1049,32 +1078,36 @@
   </div>
 
   <div id="modal-copilot-sos" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-    <div class="max-w-xs w-full max-h-[88vh] overflow-y-auto royal-card p-5 text-center space-y-3 border-2 border-amber-300">
+    <div class="max-w-xs w-full max-h-[88vh] overflow-y-auto royal-card p-5 text-center space-y-3.5 border-2 border-amber-300">
       <div class="flex items-center justify-between">
-        <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-mono text-[10px] font-black">SOS // 副駕保命</span>
+        <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-mono text-[10px] font-black">ZEN WOODFISH</span>
         <button onclick="closeCopilotModal()" class="text-slate-400 hover:text-white">✕</button>
       </div>
-      <h3 class="font-serif-title text-base font-black gold-text">📿 副駕星光祈禱木魚</h3>
-      <div class="grid grid-cols-2 gap-2">
-        <div class="p-2 rounded-xl bg-[#060916] border border-amber-300/30">
-          <div class="text-[10px] text-slate-400">心率</div>
-          <div id="copilot-heart-rate" class="text-base font-mono font-black text-rose-400">138 BPM</div>
-        </div>
-        <div class="p-2 rounded-xl bg-[#060916] border border-amber-300/30">
-          <div class="text-[10px] text-slate-400">功德</div>
-          <div id="copilot-merit-count" class="text-base font-mono font-black text-amber-300">108</div>
-        </div>
+      <h3 class="font-serif-title text-base font-black gold-text">📿 清心療癒・功德木魚</h3>
+      <p class="text-[11px] text-amber-100/80">心平氣和・積累功德・祈願行車一路平安</p>
+
+      <!-- Authentic Woodfish Tapping Visual -->
+      <div id="woodfish-btn" onclick="knockCopilotWoodfish()" class="cursor-pointer select-none py-5 px-4 rounded-2xl bg-gradient-to-b from-amber-950/50 to-[#070b19] border-2 border-amber-300/40 hover:border-amber-300 active:scale-90 transition-all flex flex-col items-center justify-center gap-1.5 shadow-[inset_0_0_20px_rgba(212,175,55,0.15)] group" title="點擊敲木魚">
+        <span id="woodfish-icon" class="text-5xl group-hover:scale-110 transition-transform">🪵</span>
+        <span class="text-[10px] font-bold text-amber-300/80">敲擊積累功德</span>
       </div>
-      <div id="woodfish-float-zone" class="h-5 flex items-center justify-center"></div>
-      <button onclick="knockCopilotWoodfish()" class="w-full py-4 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-sm shadow-[0_0_25px_rgba(251,191,36,0.5)] active:scale-95 transition-all">
-        ✨ 狂敲木魚 // 抓緊車門把手 (+1)
+
+      <div class="p-2 rounded-xl bg-[#060916] border border-amber-300/30 flex items-center justify-around">
+        <span class="text-xs text-slate-400 font-bold">今日累積功德</span>
+        <span id="copilot-merit-count" class="text-xl font-mono font-black text-amber-300">108</span>
+      </div>
+
+      <div id="woodfish-float-zone" class="h-6 flex items-center justify-center"></div>
+
+      <button onclick="knockCopilotWoodfish()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-xs shadow-[0_0_20px_rgba(251,191,36,0.4)] active:scale-95 transition-all">
+        📿 敲擊木魚 (功德 +1)
       </button>
     </div>
   </div>
 
   <div id="toast-container" class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=14.7"></script>
-  <script src="app.js?v=14.7"></script>
+  <script src="sound_and_fx.js?v=14.8"></script>
+  <script src="app.js?v=14.8"></script>
 </body>
 </html>

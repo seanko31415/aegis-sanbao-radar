@@ -7,6 +7,9 @@ class SoundEngine {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.bgmActive = false;
+    this.bgmTimer = null;
+    this.bgmStep = 0;
   }
 
   init() {
@@ -22,8 +25,88 @@ class SoundEngine {
     if (this.muted && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    if (this.muted && this.bgmActive) {
+      this.stopBGM();
+    }
     if (!this.muted) this.playClick(880);
     return this.muted;
+  }
+
+  // Procedural Dreamy Cyber-Ambient BGM (Lo-fi gentle arpeggiator & warm pad)
+  toggleBGM() {
+    if (this.bgmActive) {
+      this.stopBGM();
+      return false;
+    } else {
+      this.startBGM();
+      return true;
+    }
+  }
+
+  startBGM() {
+    if (this.muted) return false;
+    try {
+      this.init();
+      this.bgmActive = true;
+      this.bgmStep = 0;
+      this._scheduleBGMNote();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  stopBGM() {
+    this.bgmActive = false;
+    if (this.bgmTimer) {
+      clearTimeout(this.bgmTimer);
+      this.bgmTimer = null;
+    }
+  }
+
+  _scheduleBGMNote() {
+    if (!this.bgmActive || this.muted || !this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      // Ambient pentatonic progression (Dm9 - Fmaj7 - Cmaj7 - Am9)
+      const chordSets = [
+        [146.83, 220.00, 261.63, 329.63, 440.00], // Dm9
+        [174.61, 261.63, 329.63, 392.00, 523.25], // Fmaj7
+        [130.81, 196.00, 246.94, 329.63, 392.00], // Cmaj7
+        [110.00, 164.81, 220.00, 261.63, 329.63]  // Am9
+      ];
+      const chordIdx = Math.floor(this.bgmStep / 8) % chordSets.length;
+      const currentChord = chordSets[chordIdx];
+      const noteFreq = currentChord[this.bgmStep % currentChord.length];
+
+      // Gentle warm bell note
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(820, now);
+
+      osc.type = (this.bgmStep % 2 === 0) ? 'sine' : 'triangle';
+      osc.frequency.setValueAtTime(noteFreq * (Math.random() > 0.6 ? 2 : 1), now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.024, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.85);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 1.9);
+
+      this.bgmStep++;
+      const nextDelay = 380 + (this.bgmStep % 4 === 0 ? 320 : 0);
+      this.bgmTimer = setTimeout(() => this._scheduleBGMNote(), nextDelay);
+    } catch (e) {
+      this.stopBGM();
+    }
   }
 
   playClick(freq = 760) {
@@ -150,22 +233,111 @@ class SoundEngine {
     } catch (e) {}
   }
 
+  // Authentic Temple Woodfish Acoustic Synthesis (Authentic Tok sound with hollow body resonance)
   playWoodfish() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+
+      // 1. Transient click (wooden striker tap)
+      const clickOsc = this.ctx.createOscillator();
+      const clickGain = this.ctx.createGain();
+      clickOsc.type = 'triangle';
+      clickOsc.frequency.setValueAtTime(680, now);
+      clickOsc.frequency.exponentialRampToValueAtTime(320, now + 0.025);
+      clickGain.gain.setValueAtTime(0.26, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+      clickOsc.connect(clickGain);
+      clickGain.connect(this.ctx.destination);
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.04);
+
+      // 2. Hollow wood body resonance
+      const bodyOsc = this.ctx.createOscillator();
+      const bodyFilter = this.ctx.createBiquadFilter();
+      const bodyGain = this.ctx.createGain();
+
+      bodyOsc.type = 'sine';
+      bodyOsc.frequency.setValueAtTime(420, now);
+      bodyOsc.frequency.exponentialRampToValueAtTime(360, now + 0.14);
+
+      bodyFilter.type = 'bandpass';
+      bodyFilter.frequency.setValueAtTime(410, now);
+      bodyFilter.Q.setValueAtTime(8, now);
+
+      bodyGain.gain.setValueAtTime(0.38, now);
+      bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+      bodyOsc.connect(bodyFilter);
+      bodyFilter.connect(bodyGain);
+      bodyGain.connect(this.ctx.destination);
+
+      bodyOsc.start(now);
+      bodyOsc.stop(now + 0.17);
+    } catch (e) {}
+  }
+
+  // Futuristic Defense Forcefield Activation (hum + rising resonance)
+  playShieldOn() {
     if (this.muted) return;
     try {
       this.init();
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(520, now);
-      osc.frequency.exponentialRampToValueAtTime(340, now + 0.1);
-      gain.gain.setValueAtTime(0.24, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-      osc.connect(gain);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(660, now + 0.28);
+      osc.frequency.linearRampToValueAtTime(520, now + 0.45);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1400, now);
+
+      osc.connect(filter);
+      filter.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.15);
+      osc.stop(now + 0.52);
+    } catch (e) {}
+  }
+
+  // Tactical Decoy Launch sound (whoosh + chirp)
+  playDecoyLaunch() {
+    if (this.muted) return;
+    try {
+      this.init();
+      const now = this.ctx.currentTime;
+      // Air burst whoosh
+      const osc1 = this.ctx.createOscillator();
+      const gain1 = this.ctx.createGain();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(180, now);
+      osc1.frequency.exponentialRampToValueAtTime(820, now + 0.12);
+      gain1.gain.setValueAtTime(0.22, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+      osc1.connect(gain1);
+      gain1.connect(this.ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.15);
+
+      // Electronic lock chirp
+      const osc2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(1540, now + 0.1);
+      osc2.frequency.setValueAtTime(2080, now + 0.16);
+      gain2.gain.setValueAtTime(0.08, now + 0.1);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+      osc2.connect(gain2);
+      gain2.connect(this.ctx.destination);
+      osc2.start(now + 0.1);
+      osc2.stop(now + 0.25);
     } catch (e) {}
   }
 
@@ -303,20 +475,24 @@ document.addEventListener('DOMContentLoaded', () => {
       reticle.classList.toggle('reticle-expand', isInteractive);
     }
 
-    // Dynamic glass specular highlight tracking on grid windows
-    const hoveredGw = e.target.closest('.glass-window');
-    if (hoveredGw) {
-      const rect = hoveredGw.getBoundingClientRect();
-      hoveredGw.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
-      hoveredGw.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
-
-      if (hoveredGw !== lastHoveredGw) {
-        lastHoveredGw = hoveredGw;
-        if (window.soundEngine && !window.soundEngine.muted) {
-          window.soundEngine.playClick(920);
-        }
+    // Dynamic glass specular highlight tracking on ALL grid boxes & cards
+    const path = e.composedPath ? e.composedPath() : [e.target];
+    let topCard = null;
+    path.forEach((node) => {
+      if (node && node.nodeType === 1 && node.classList && (node.classList.contains('glass-window') || node.classList.contains('royal-card'))) {
+        const rect = node.getBoundingClientRect();
+        node.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        node.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        if (!topCard) topCard = node;
       }
-    } else {
+    });
+
+    if (topCard && topCard !== lastHoveredGw) {
+      lastHoveredGw = topCard;
+      if (window.soundEngine && !window.soundEngine.muted && topCard.classList.contains('glass-window')) {
+        window.soundEngine.playClick(920);
+      }
+    } else if (!topCard) {
       lastHoveredGw = null;
     }
 

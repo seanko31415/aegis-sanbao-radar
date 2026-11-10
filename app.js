@@ -33,7 +33,7 @@ const SCENARIOS = {
   snack: {
     id: 'snack',
     badge: 'LV.2',
-    level: '🛵 買鹹酥雞',
+    level: '🛵 買東西',
     levelNum: 2,
     radiusKm: 0.65,
     baseChaos: 48,
@@ -42,9 +42,9 @@ const SCENARIOS = {
     rightSignal: false,
     carTiltDeg: 14,
     color: '#F59E0B',
-    cutInTitle: '🛵 宵夜出車中',
-    cutInSub: '正在路上覓食買宵夜，請注意車距！',
-    osList: ['💭「出來買個鹹酥雞，看到我請閃遠一點！」', '💭「左轉燈亮著？我考慮一下要轉哪邊～」']
+    cutInTitle: '🛵 外出買東西',
+    cutInSub: '正在路上採買物品，請注意車距！',
+    osList: ['💭「出門買點東西，看到我請保持車距～」', '💭「左轉燈亮著？我考慮一下要轉哪邊～」']
   },
   roundabout: {
     id: 'roundabout',
@@ -89,8 +89,8 @@ const TAROT_CARDS = [
 ];
 
 const DEFAULT_SIGHTINGS = [
-  { id: 's1', location: '北屯好市多 B2', content: '雙格車位嚕了 19 分鐘，大晴天雨刷狂刷 40 下，最後乾脆停在車道中間！', likes: 168 },
-  { id: 's2', location: '台灣大道圓環', content: '左轉燈連閃 3.8 公里，結果突然右切進得來速買大薯！', likes: 112 }
+  { id: 's1', location: '北屯好市多 B2', content: '雙格車位嚕了 19 分鐘，晴天雨刷狂刷 40 下，最後停在車道中間！', likes: 168, funny: 88, chicken: 66, warn: 42 },
+  { id: 's2', location: '台灣大道圓環', content: '左轉燈連閃 3.8 公里，結果突然右切進得來速買大薯！', likes: 112, funny: 95, chicken: 45, warn: 38 }
 ];
 
 const appState = {
@@ -100,6 +100,9 @@ const appState = {
   avatarIndex: 0,
   bountyAmount: 88000,
   stamps: ['🍗 雞腿換駕照', '🌧️ 晴天刷雨刷'],
+  shieldActive: false,
+  shieldEnergy: 100,
+  radarAngle: 0,
   // My Own Real Identity & GPS
   myUser: {
     id: 'u_' + Math.random().toString(36).slice(2, 9),
@@ -2377,8 +2380,8 @@ function syncUI() {
       if (avatarBadge) avatarBadge.textContent = DRIVER_AVATARS[appState.avatarIndex % DRIVER_AVATARS.length].badge;
     } else {
       nameEl.textContent = '訪客即時預覽中';
-      nameEl.title = `點擊手動輸入名字登入`;
-      plateEl.textContent = '👀 訪客模式・尚未開啟定位';
+      nameEl.title = `點擊輸入暱稱登入`;
+      plateEl.textContent = '👀 訪客預覽';
       if (avatarBadge) avatarBadge.textContent = '👀 訪客預覽';
     }
   }
@@ -2386,7 +2389,7 @@ function syncUI() {
   const bubbleEl = document.getElementById('vip-os-bubble');
   if (bubbleEl) {
     if (!isLoggedIn && !isTrackingFriend) {
-      bubbleEl.textContent = '💭 歡迎檢視！可在下方輸入暱稱開啟即時定位，或自由預覽地圖與3D遊戲！';
+      bubbleEl.textContent = '💭 自由預覽中・輸入暱稱可加入雷達';
     } else {
       bubbleEl.textContent = target.sosMsg || sc.osList[appState.osIndex % sc.osList.length];
     }
@@ -2430,6 +2433,7 @@ function syncUI() {
   const previewPill = document.getElementById('map-preview-floating-pill');
   if (previewPill) {
     previewPill.classList.toggle('hidden', isLoggedIn);
+    previewPill.innerHTML = '<span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span><span>👀 訪客預覽・未定位</span>';
   }
   const survEl = document.getElementById('metric-survival-rate');
   survEl.textContent = `${metrics.survival}%`;
@@ -2616,69 +2620,128 @@ window.copyShareText = function () {
   });
 };
 
-// Hexagon & Sightings
+// ---------------------------------------------------------------------------
+// 4. ANIMATED HIGH-TECH ANIME RADAR SCANNER & SIGHTINGS WALL
+// ---------------------------------------------------------------------------
+let hexagonAnimId = null;
+let hexagonAngle = 0;
+
 function drawHexagonChart() {
   const canvas = document.getElementById('hexagon-chart-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const size = 260;
+  const size = 280;
   canvas.width = size * dpr;
   canvas.height = size * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   const cx = size / 2;
   const cy = size / 2;
-  const maxR = size * 0.34;
+  const maxR = size * 0.35;
   const axes = [
-    { label: '雨刷誤觸', val: 98 },
-    { label: '謎之自信', val: 100 },
-    { label: '停車耗時', val: 96 },
-    { label: '方向燈誠信', val: 10 },
-    { label: '方向感', val: 14 },
-    { label: '副駕驚嚇', val: 99 }
+    { label: '晴天雨刷', val: 98, color: '#38BDF8' },
+    { label: '謎之自信', val: 100, color: '#FBBF24' },
+    { label: '倒車時間', val: 96, color: '#FB7185' },
+    { label: '方向燈誠信', val: 12, color: '#34D399' },
+    { label: '絕對方向感', val: 15, color: '#818CF8' },
+    { label: '副駕驚嚇度', val: 99, color: '#F43F5E' }
   ];
 
-  ctx.clearRect(0, 0, size, size);
-  [0.33, 0.66, 1.0].forEach((step) => {
-    ctx.beginPath();
+  function renderRadarFrame() {
+    if (appState.activeTab !== 'dossier') {
+      hexagonAnimId = null;
+      return;
+    }
+    ctx.clearRect(0, 0, size, size);
+
+    // 1. Concentric Hexagonal Grids
+    [0.25, 0.5, 0.75, 1.0].forEach((step) => {
+      ctx.beginPath();
+      axes.forEach((_, i) => {
+        const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+        const x = cx + Math.cos(a) * maxR * step;
+        const y = cy + Math.sin(a) * maxR * step;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.strokeStyle = step === 1.0 ? 'rgba(254, 240, 138, 0.45)' : 'rgba(45, 212, 191, 0.12)';
+      ctx.lineWidth = step === 1.0 ? 1.5 : 1;
+      ctx.stroke();
+    });
+
+    // 2. Radial Axis Spokes
     axes.forEach((_, i) => {
       const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
-      const x = cx + Math.cos(a) * maxR * step;
-      const y = cy + Math.sin(a) * maxR * step;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+
+    // 3. Rotating Cyber Radar Scanner Sweep
+    hexagonAngle = (hexagonAngle + 0.026) % (Math.PI * 2);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, maxR, hexagonAngle - 0.45, hexagonAngle);
+    ctx.closePath();
+    const sweepGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+    sweepGrad.addColorStop(0, 'rgba(45, 212, 191, 0.22)');
+    sweepGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = sweepGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // 4. Glowing Data Polygon with Subtle Vertex Pulse
+    ctx.beginPath();
+    axes.forEach((axis, i) => {
+      const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+      const pulse = Math.sin(Date.now() * 0.003 + i) * 1.5;
+      const r = Math.max(8, ((axis.val + pulse) / 100) * maxR);
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
     ctx.closePath();
-    ctx.strokeStyle = step === 1 ? 'rgba(254, 240, 138, 0.5)' : 'rgba(255, 255, 255, 0.1)';
+    ctx.fillStyle = 'rgba(244, 63, 94, 0.32)';
+    ctx.fill();
+    ctx.strokeStyle = '#FEF08A';
+    ctx.lineWidth = 2.2;
+    ctx.shadowColor = '#F59E0B';
+    ctx.shadowBlur = 9;
     ctx.stroke();
-  });
+    ctx.shadowBlur = 0;
 
-  axes.forEach((axis, i) => {
-    const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
-    const lx = cx + Math.cos(a) * (maxR + 26);
-    const ly = cy + Math.sin(a) * (maxR + 18);
-    ctx.font = '700 11px "Noto Sans TC", sans-serif';
-    ctx.fillStyle = '#FEF08A';
-    ctx.textAlign = 'center';
-    ctx.fillText(axis.label, lx, ly);
-  });
+    // 5. High-Contrast Text Labels & Glowing Nodes
+    axes.forEach((axis, i) => {
+      const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+      const r = (axis.val / 100) * maxR;
+      const vx = cx + Math.cos(a) * r;
+      const vy = cy + Math.sin(a) * r;
 
-  ctx.beginPath();
-  axes.forEach((axis, i) => {
-    const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
-    const r = (axis.val / 100) * maxR;
-    const x = cx + Math.cos(a) * r;
-    const y = cy + Math.sin(a) * r;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(244, 63, 94, 0.35)';
-  ctx.fill();
-  ctx.strokeStyle = '#FEF08A';
-  ctx.lineWidth = 2.2;
-  ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(vx, vy, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FEF08A';
+      ctx.fill();
+
+      const lx = cx + Math.cos(a) * (maxR + 24);
+      const ly = cy + Math.sin(a) * (maxR + 14);
+      ctx.font = 'bold 10px "Noto Sans TC", sans-serif';
+      ctx.fillStyle = axis.color;
+      ctx.textAlign = 'center';
+      ctx.fillText(`${axis.label} ${axis.val}`, lx, ly);
+    });
+
+    hexagonAnimId = requestAnimationFrame(renderRadarFrame);
+  }
+
+  if (hexagonAnimId) cancelAnimationFrame(hexagonAnimId);
+  hexagonAnimId = requestAnimationFrame(renderRadarFrame);
 }
 
 function renderSightingsList() {
@@ -2687,27 +2750,48 @@ function renderSightingsList() {
   listEl.innerHTML = appState.sightings
     .map(
       (item) => `
-      <div class="p-3 rounded-xl bg-[#060916] border border-amber-300/25 flex items-center justify-between gap-2">
-        <div class="text-xs">
-          <span class="font-black text-amber-300">📍 ${item.location}：</span>
-          <span class="text-slate-200">${item.content}</span>
+      <div class="p-3 rounded-xl bg-[#060916]/95 border border-amber-300/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 transition-all hover:border-amber-300/50">
+        <div class="text-xs min-w-0">
+          <div class="flex items-center gap-1.5 mb-0.5">
+            <span class="font-black text-amber-300">📍 ${item.location}</span>
+            <span class="text-[9px] font-mono text-teal-400/80">#即時爆料</span>
+          </div>
+          <p class="text-slate-200 font-medium leading-relaxed">${item.content}</p>
         </div>
-        <button onclick="likeSighting('${item.id}')" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-amber-300/30 text-[11px] font-mono text-amber-200 shrink-0">
-          🙏 +${item.likes}
-        </button>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="reactSighting('${item.id}', 'funny')" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-[11px] font-mono text-amber-200 active:scale-90 transition-transform" title="笑死">
+            😂 ${item.funny || 0}
+          </button>
+          <button onclick="reactSighting('${item.id}', 'chicken')" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-amber-300/30 text-[11px] font-mono text-yellow-300 active:scale-90 transition-transform" title="賠雞腿">
+            🍗 ${item.chicken || 0}
+          </button>
+          <button onclick="reactSighting('${item.id}', 'warn')" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-rose-400/40 text-[11px] font-mono text-rose-300 active:scale-90 transition-transform" title="快逃">
+            ⚠️ ${item.warn || 0}
+          </button>
+        </div>
       </div>`
     )
     .join('');
 }
 
-window.likeSighting = function (id) {
-  window.soundEngine.playWoodfish();
+window.reactSighting = function (id, type) {
   const target = appState.sightings.find((s) => s.id === id);
-  if (target) {
-    target.likes += 1;
-    saveSightingsToStorage();
-    renderSightingsList();
-  }
+  if (!target) return;
+  if (!target[type]) target[type] = 0;
+  target[type] += 1;
+  saveSightingsToStorage();
+  renderSightingsList();
+
+  if (type === 'funny') window.soundEngine.playClick(920);
+  else if (type === 'chicken') window.soundEngine.playWoodfish();
+  else window.soundEngine.playHorn();
+
+  const labels = { funny: '😂 爆笑 +1', chicken: '🍗 賠雞腿 +1', warn: '⚠️ 避難 +1' };
+  showToast(labels[type] || '👍 互動已記錄', target.content.slice(0, 20) + '...', 'amber');
+};
+
+window.likeSighting = function (id) {
+  window.reactSighting(id, 'funny');
 };
 
 window.submitNewSighting = function (e) {
@@ -2716,14 +2800,69 @@ window.submitNewSighting = function (e) {
   const content = document.getElementById('new-sighting-content')?.value.trim();
   if (!location || !content) return;
   window.soundEngine.playPing();
-  appState.sightings.unshift({ id: 's_' + Date.now(), location, content, likes: 1 });
+  appState.sightings.unshift({ id: 's_' + Date.now(), location, content, funny: 1, chicken: 1, warn: 0 });
   saveSightingsToStorage();
   renderSightingsList();
   document.getElementById('new-sighting-location').value = '';
   document.getElementById('new-sighting-content').value = '';
+  showToast('📸 爆料已發布', '感謝提供真實三寶目擊情報！', 'teal');
 };
 
-// Modals
+// ---------------------------------------------------------------------------
+// 5. BGM & TACTICAL DEFENSE SHIELD & DECOYS
+// ---------------------------------------------------------------------------
+window.toggleMusicBGM = function () {
+  const active = window.soundEngine.toggleBGM();
+  const btn = document.getElementById('bgm-toggle-btn');
+  if (btn) {
+    btn.textContent = active ? '🎵 BGM: 開' : '🎵 BGM: 關';
+    btn.classList.toggle('border-teal-300', active);
+    btn.classList.toggle('text-teal-300', active);
+  }
+  showToast(active ? '🎵 背景音樂已開啟' : '🔇 背景音樂已關閉', 'Procedural Lo-fi Cyber Ambient 模式', 'teal');
+};
+
+window.toggleDefenseShield = function () {
+  appState.shieldActive = !appState.shieldActive;
+  const active = appState.shieldActive;
+  window.soundEngine.playShieldOn();
+
+  const btn = document.getElementById('shield-toggle-btn');
+  const readout = document.getElementById('shield-status-readout');
+  const badge = document.getElementById('defense-mode-badge');
+  const ring = document.getElementById('shield-energy-ring');
+
+  if (btn) btn.textContent = active ? '🛑 關閉力場' : '🛡️ 展開力場';
+  if (readout) readout.textContent = active ? '⚡ 全境力場運轉中' : '⚡ 防護罩 100% 充能';
+  if (badge) badge.textContent = active ? '🛡️ 全境力場：開啟中' : '🟢 全境力場：就緒';
+  if (ring) {
+    ring.classList.toggle('border-amber-300', active);
+    ring.classList.toggle('shadow-[0_0_25px_#FDE68A]', active);
+  }
+
+  if (active) {
+    showToast('🛡️ 三寶全境防護罩已啟動', '方圓 1.5km 內三寶半徑自動偏折！', 'teal');
+    window.soundEngine.speak('全境三寶防護罩啟動，三寶半徑自動偏折！');
+  } else {
+    showToast('🛑 防護罩已休眠', '轉為待命節能模式', 'slate');
+  }
+};
+
+window.launchDecoy = function (type) {
+  window.soundEngine.playDecoyLaunch();
+  const decoys = {
+    chicken: { title: '🍗 投擲黃金脆皮雞腿！', desc: '成功吸引三寶目光，爭取 30 秒避難時間！' },
+    wiper: { title: '🌧️ 發射大晴天雨刷干擾彈！', desc: '三寶陷入手忙腳亂誤刷雨刷狀態！' },
+    horn: { title: '📢 發射超音波避難警報！', desc: '全體路人與副駕獲得聽覺結界加護！' },
+    parking: { title: '🧲 生成路邊雙格大車位！', desc: '吸引三寶自動緩慢入庫，道路恢復暢通！' }
+  };
+  const d = decoys[type] || decoys.chicken;
+  showToast(d.title, d.desc, 'amber');
+};
+
+// ---------------------------------------------------------------------------
+// 6. MODALS & AUTHENTIC HEALING WOODFISH
+// ---------------------------------------------------------------------------
 window.openPresidentialAlert = function () {
   window.soundEngine.playSiren();
   document.getElementById('modal-presidential-alert')?.classList.remove('hidden');
@@ -2734,20 +2873,34 @@ window.closePresidentialAlert = function () {
 };
 
 window.openCopilotModal = function () {
-  window.soundEngine.playSiren();
+  window.soundEngine.playWoodfish();
   document.getElementById('modal-copilot-sos')?.classList.remove('hidden');
 };
 window.closeCopilotModal = function () {
   window.soundEngine.playClick(520);
   document.getElementById('modal-copilot-sos')?.classList.add('hidden');
 };
+
+// Authentic Healing Merit Woodfish
 window.knockCopilotWoodfish = function () {
   window.soundEngine.playWoodfish();
   appState.meritCount += 1;
-  appState.heartRate = Math.min(220, appState.heartRate + 3);
-  document.getElementById('copilot-merit-count').textContent = appState.meritCount;
-  document.getElementById('copilot-heart-rate').textContent = `${appState.heartRate} BPM`;
-  document.getElementById('woodfish-float-zone').innerHTML = `<span class="text-xs font-mono font-bold text-amber-300 animate-bounce">✨ 保命功德 +1</span>`;
+  const countEl = document.getElementById('copilot-merit-count');
+  if (countEl) countEl.textContent = appState.meritCount;
+
+  // Natural wooden bounce animation on icon
+  const icon = document.getElementById('woodfish-icon');
+  if (icon) {
+    icon.style.transform = 'scale(0.86) rotate(-8deg)';
+    setTimeout(() => { icon.style.transform = ''; }, 110);
+  }
+
+  const zone = document.getElementById('woodfish-float-zone');
+  if (zone) {
+    const blessings = ['✨ 功德 +1', '📿 行車平安 +1', '🕊️ 遠離三寶 +1', '🌸 心平氣和 +1', '🪷 福慧增長 +1'];
+    const blessing = blessings[appState.meritCount % blessings.length];
+    zone.innerHTML = `<span class="text-xs font-mono font-black text-amber-300 animate-bounce">${blessing}</span>`;
+  }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
