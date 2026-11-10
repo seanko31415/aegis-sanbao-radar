@@ -97,80 +97,135 @@ class SoundEngine {
     try {
       const now = this.ctx.currentTime;
 
-      // Playful, comedic anime groove:
-      // Bouncy ragtime bass pattern (C3 -> E3 -> G3 -> A3 -> F3 -> G3 -> C3)
+      // High-Fidelity Jazzy Anime City-Pop Chord Progression:
+      // (Cmaj7 -> Am7 -> Dm7 -> G7 -> Em7 -> A7 -> Dm7 -> G7)
+      const chordChimes = [
+        [523.25, 659.25, 783.99, 987.77], // Cmaj7 (C5, E5, G5, B5)
+        [440.00, 523.25, 659.25, 783.99], // Am7 (A4, C5, E5, G5)
+        [587.33, 698.46, 880.00, 1046.50],// Dm7 (D5, F5, A5, C6)
+        [392.00, 493.88, 587.33, 698.46], // G7 (G4, B4, D5, F5)
+        [659.25, 783.99, 987.77, 1174.66],// Em7 (E5, G5, B5, D6)
+        [440.00, 554.37, 659.25, 783.99], // A7 (A4, C#5, E5, G5)
+        [587.33, 698.46, 880.00, 1046.50],// Dm7 (D5, F5, A5, C6)
+        [392.00, 493.88, 587.33, 783.99]  // G9 (G4, B4, D5, G5)
+      ];
+
+      // Smooth Velvet Acoustic Bass (Warm, Deep, Round)
       const bassMelody = [
-        130.81, 164.81, 196.00, 220.00,
-        174.61, 196.00, 246.94, 261.63,
-        130.81, 164.81, 196.00, 220.00,
-        146.83, 196.00, 246.94, 196.00
+        130.81, 164.81, 196.00, 246.94, // C3
+        110.00, 146.83, 164.81, 220.00, // A2
+        146.83, 174.61, 220.00, 261.63, // D3
+        98.00,  146.83, 196.00, 246.94, // G2
+        164.81, 196.00, 246.94, 293.66, // E3
+        110.00, 138.59, 164.81, 220.00, // A2
+        146.83, 174.61, 220.00, 261.63, // D3
+        98.00,  130.81, 196.00, 293.66  // G2
       ];
 
-      // Quirky staccato cartoon lead melody
+      // Cheerful Playful Anime Melody (Lighthearted, Sweet, Melodic)
       const leadMelody = [
-        523.25, 0, 659.25, 523.25,
-        783.99, 659.25, 880.00, 0,
-        783.99, 0, 659.25, 587.33,
-        523.25, 659.25, 587.33, 0,
-        659.25, 783.99, 1046.50, 0,
-        880.00, 783.99, 659.25, 0,
-        587.33, 659.25, 783.99, 880.00,
-        783.99, 0, 523.25, 0
+        523.25, 0, 659.25, 783.99, 987.77, 783.99, 659.25, 523.25,
+        440.00, 523.25, 659.25, 0, 783.99, 659.25, 523.25, 440.00,
+        587.33, 0, 698.46, 880.00, 1046.5, 880.00, 698.46, 587.33,
+        783.99, 0, 698.46, 587.33, 493.88, 587.33, 698.46, 0
       ];
 
-      const step16 = this.bgmStep % 16;
       const step32 = this.bgmStep % 32;
+      const step16 = this.bgmStep % 16;
+      const chordIdx = Math.floor(step32 / 4) % 8;
 
-      // 1. Bouncy plucked bass note (Triangle wave with cheerful cartoon slide)
-      const bassFreq = bassMelody[step16];
-      const bassOsc = this.ctx.createOscillator();
-      const bassGain = this.ctx.createGain();
-      bassOsc.type = 'triangle';
-      bassOsc.frequency.setValueAtTime(bassFreq, now);
-      bassOsc.frequency.exponentialRampToValueAtTime(bassFreq * 0.94, now + 0.12);
+      // 1. Velvet Acoustic Upright Bass (Dual Warm Sine Layer)
+      const bFreq = bassMelody[step32];
+      if (bFreq > 0) {
+        const bOsc = this.ctx.createOscillator();
+        const bGain = this.ctx.createGain();
+        const bFilter = this.ctx.createBiquadFilter();
 
-      bassGain.gain.setValueAtTime(0.001, now);
-      bassGain.gain.linearRampToValueAtTime(0.38, now + 0.015);
-      bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+        bFilter.type = 'lowpass';
+        bFilter.frequency.setValueAtTime(360, now);
 
-      bassOsc.connect(bassGain);
-      bassGain.connect(this.masterBGMGain);
-      bassOsc.start(now);
-      bassOsc.stop(now + 0.18);
+        bOsc.type = 'sine';
+        bOsc.frequency.setValueAtTime(bFreq, now);
+        bOsc.frequency.exponentialRampToValueAtTime(bFreq * 0.985, now + 0.18);
 
-      // 2. Playful comedic marimba/kazoo lead note (Sine + light harmonic filter)
-      const leadFreq = leadMelody[step32];
-      if (leadFreq > 0) {
-        const leadOsc = this.ctx.createOscillator();
-        const leadGain = this.ctx.createGain();
-        const leadFilter = this.ctx.createBiquadFilter();
+        bGain.gain.setValueAtTime(0.001, now);
+        bGain.gain.linearRampToValueAtTime(0.42, now + 0.015);
+        bGain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
 
-        leadFilter.type = 'bandpass';
-        leadFilter.frequency.setValueAtTime(leadFreq * 1.5, now);
-        leadFilter.Q.setValueAtTime(3.5, now);
+        bOsc.connect(bFilter);
+        bFilter.connect(bGain);
+        bGain.connect(this.masterBGMGain);
 
-        leadOsc.type = 'sine';
-        leadOsc.frequency.setValueAtTime(leadFreq, now);
-        if (step32 % 8 === 2) {
-          // Playful cartoon pitch slide up!
-          leadOsc.frequency.exponentialRampToValueAtTime(leadFreq * 1.15, now + 0.09);
-        }
+        bOsc.start(now);
+        bOsc.stop(now + 0.28);
+      }
 
-        leadGain.gain.setValueAtTime(0.001, now);
-        leadGain.gain.linearRampToValueAtTime(0.24, now + 0.02);
-        leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      // 2. Warm Rhodes / Electric Piano Chords (Layered Detuned Warmth)
+      if (step32 % 4 === 0) {
+        const chordNotes = chordChimes[chordIdx];
+        chordNotes.forEach((cFreq, cIdx) => {
+          const cOsc = this.ctx.createOscillator();
+          const cGain = this.ctx.createGain();
+          const cFilter = this.ctx.createBiquadFilter();
 
-        leadOsc.connect(leadFilter);
-        leadFilter.connect(leadGain);
-        leadGain.connect(this.masterBGMGain);
+          cFilter.type = 'lowpass';
+          cFilter.frequency.setValueAtTime(1400, now);
 
-        leadOsc.start(now);
-        leadOsc.stop(now + 0.19);
+          cOsc.type = 'triangle';
+          cOsc.frequency.setValueAtTime(cFreq, now);
+
+          cGain.gain.setValueAtTime(0.001, now + cIdx * 0.012);
+          cGain.gain.linearRampToValueAtTime(0.12, now + cIdx * 0.012 + 0.02);
+          cGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+          cOsc.connect(cFilter);
+          cFilter.connect(cGain);
+          cGain.connect(this.masterBGMGain);
+
+          cOsc.start(now + cIdx * 0.012);
+          cOsc.stop(now + 0.48);
+        });
+      }
+
+      // 3. Sweet Playful Lead (Celesta / Vibraphone Bell Tone)
+      const lFreq = leadMelody[step32];
+      if (lFreq > 0) {
+        const lOsc1 = this.ctx.createOscillator();
+        const lOsc2 = this.ctx.createOscillator();
+        const lGain = this.ctx.createGain();
+        const lFilter = this.ctx.createBiquadFilter();
+
+        lFilter.type = 'lowpass';
+        lFilter.frequency.setValueAtTime(2200, now);
+
+        lOsc1.type = 'sine';
+        lOsc1.frequency.setValueAtTime(lFreq, now);
+
+        lOsc2.type = 'triangle';
+        lOsc2.frequency.setValueAtTime(lFreq * 2, now);
+
+        const lGainSub = this.ctx.createGain();
+        lGainSub.gain.setValueAtTime(0.08, now);
+        lOsc2.connect(lGainSub);
+        lGainSub.connect(lFilter);
+
+        lGain.gain.setValueAtTime(0.001, now);
+        lGain.gain.linearRampToValueAtTime(0.26, now + 0.015);
+        lGain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+
+        lOsc1.connect(lFilter);
+        lFilter.connect(lGain);
+        lGain.connect(this.masterBGMGain);
+
+        lOsc1.start(now);
+        lOsc2.start(now);
+        lOsc1.stop(now + 0.25);
+        lOsc2.stop(now + 0.25);
       }
 
       this.bgmStep++;
-      // Cheerful, bouncy swing tempo (~175ms per step)
-      const nextDelay = 165 + (this.bgmStep % 2 === 0 ? 15 : -15);
+      // Warm, bouncy swing rhythm (~180ms per 16th note step)
+      const nextDelay = 180 + (this.bgmStep % 2 === 0 ? 12 : -12);
       this.bgmTimer = setTimeout(() => this._scheduleBGMNote(), nextDelay);
     } catch (e) {
       this.stopBGM();

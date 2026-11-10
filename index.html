@@ -896,6 +896,51 @@
           </div>
         </div>
 
+        <!-- 3. TACTICAL CRISIS DISPATCH & INSTANT ESCAPE GUIDE (Fills bottom-right column) -->
+        <div class="royal-card p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-black gold-text">⚡ 全境三寶避災戰術速報</span>
+              <span class="px-2 py-0.5 rounded-full bg-teal-400/20 border border-teal-300/40 text-[9px] font-mono font-black text-teal-300">
+                🟢 戰情連線中
+              </span>
+            </div>
+            <span class="text-[10px] font-mono text-amber-200">
+              即時避難等級：<span class="font-black text-rose-400 text-xs">SSS 級特防</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-center">
+            <div class="glass-window p-1.5 rounded-lg">
+              <div class="text-[9px] text-slate-400">方圓三寶</div>
+              <div class="text-xs font-mono font-black text-rose-400">18 輛逼近</div>
+            </div>
+            <div class="glass-window p-1.5 rounded-lg">
+              <div class="text-[9px] text-slate-400">雨刷誤觸率</div>
+              <div class="text-xs font-mono font-black text-sky-400">96.8% 高發</div>
+            </div>
+            <div class="glass-window p-1.5 rounded-lg">
+              <div class="text-[9px] text-slate-400">生還通行率</div>
+              <div class="text-xs font-mono font-black text-emerald-400">88.5% 就緒</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5">
+            <button onclick="openPresidentialAlert()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-rose-300 flex items-center justify-center gap-1 active:scale-95" title="發送全境避難警報">
+              <span>🚨</span>
+              <span>全境廣播</span>
+            </button>
+            <button onclick="knockCopilotWoodfish()" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-amber-300 flex items-center justify-center gap-1 active:scale-95" title="快速敲擊木魚積累功德">
+              <span>📿</span>
+              <span>積累功德</span>
+            </button>
+            <button onclick="switchTab('squad')" class="tarot-btn py-1.5 px-1 text-[11px] font-black text-teal-300 flex items-center justify-center gap-1 active:scale-95" title="切換至好友連線名冊">
+              <span>👥</span>
+              <span>好友名冊</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -1115,9 +1160,12 @@
       </div>
 
       <!-- Right 6 Cols: Survival Gauge & LINE Alert Generator -->
-      <div class="lg:col-span-6 royal-card p-4 space-y-3 flex flex-col justify-between">
+      <div class="lg:col-span-6 royal-card p-4 space-y-3 flex flex-col">
         <div>
-          <h3 class="font-serif-title text-sm font-black gold-text mb-2">🚗 今日出門交通方式生還評估</h3>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-serif-title text-sm font-black gold-text">🚗 今日出門交通方式生還評估</h3>
+            <span class="text-[10px] font-mono text-amber-300/80 px-2 py-0.5 rounded bg-slate-900 border border-amber-300/30">即時演算中</span>
+          </div>
           <div class="grid grid-cols-4 gap-1.5 text-center">
             <button data-transport-btn="walk" onclick="selectTransportMode('walk')" class="tarot-btn py-2 text-xs font-bold text-slate-200">🚶 走騎樓</button>
             <button data-transport-btn="scooter" onclick="selectTransportMode('scooter')" class="tarot-btn py-2 text-xs font-black text-amber-300 border-amber-300">🛵 騎機車</button>
@@ -1134,6 +1182,34 @@
           <div class="text-right">
             <div class="text-[10px] text-slate-400">生還率</div>
             <div id="route-result-prob" class="text-xl font-mono font-black text-amber-300">94.5% 正面遭遇</div>
+          </div>
+        </div>
+
+        <!-- 🛡️ 今日即時行車生還防衛指南 -->
+        <div class="p-3 rounded-xl bg-slate-950/70 border border-teal-400/30 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-black text-teal-300 flex items-center gap-1.5">
+              <span>🛡️</span> 今日防衛駕駛黃金戰術
+            </span>
+            <span class="text-[9px] font-mono text-teal-400/70 px-1.5 py-0.5 rounded bg-teal-950/60 border border-teal-500/30">DEFENSE PROTOCOL</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-medium text-slate-300">
+            <div class="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-900/60 border border-white/5">
+              <span class="text-amber-400 font-bold shrink-0">①</span>
+              <span>晴天開雨刷時，預設對方即將向左/向右隨機鬼切</span>
+            </div>
+            <div class="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-900/60 border border-white/5">
+              <span class="text-amber-400 font-bold shrink-0">②</span>
+              <span>綠燈倒數 3 秒切勿緊跟前車，預留 2 個車身煞車安全距</span>
+            </div>
+            <div class="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-900/60 border border-white/5">
+              <span class="text-amber-400 font-bold shrink-0">③</span>
+              <span>進入圓環優先讓「不打方向燈」的神車直行，保險桿平安</span>
+            </div>
+            <div class="flex items-start gap-1.5 p-1.5 rounded-lg bg-slate-900/60 border border-white/5">
+              <span class="text-amber-400 font-bold shrink-0">④</span>
+              <span>遇路邊斜插臨停神車，提早慢速並輕鳴喇叭確認對方動靜</span>
+            </div>
           </div>
         </div>
 
@@ -1307,7 +1383,7 @@
 
   <div id="toast-container" class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0"></div>
 
-  <script src="sound_and_fx.js?v=15.2"></script>
-  <script src="app.js?v=15.2"></script>
+  <script src="sound_and_fx.js?v=15.3"></script>
+  <script src="app.js?v=15.3"></script>
 </body>
 </html>

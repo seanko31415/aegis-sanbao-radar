@@ -3004,7 +3004,7 @@ function drawHexagonChart() {
 
   const cx = size / 2;
   const cy = size / 2;
-  const maxR = size * 0.34;
+  const maxR = size * 0.29;
   const outerRingR = size * 0.44;
   const axes = [
     { label: '雨刷誤觸', val: 98, color: '#38BDF8' },
@@ -3045,7 +3045,8 @@ function drawHexagonChart() {
       ctx.lineWidth = isMajor ? 1.5 : 1;
       ctx.stroke();
 
-      if (isMajor && deg % 60 === 0) {
+      // Only show diagonal azimuth tags (45°, 135°, 225°, 315°) to avoid colliding with N/S/E/W and labels
+      if (deg === 45 || deg === 135 || deg === 225 || deg === 315) {
         const tx = cx + Math.cos(rad) * (outerRingR + 10);
         const ty = cy + Math.sin(rad) * (outerRingR + 10);
         ctx.font = '8px monospace';
@@ -3056,7 +3057,7 @@ function drawHexagonChart() {
       }
     }
 
-    // Cardinal Points (N, E, S, W)
+    // Cardinal Points (N, E, S, W) positioned cleanly inside the outer rim
     const cardinals = [
       { label: 'N', deg: 0, color: '#F43F5E' },
       { label: 'E', deg: 90, color: '#2DD4BF' },
@@ -3065,8 +3066,8 @@ function drawHexagonChart() {
     ];
     cardinals.forEach((c) => {
       const rad = (c.deg * Math.PI) / 180 - Math.PI / 2;
-      const tx = cx + Math.cos(rad) * (outerRingR - 12);
-      const ty = cy + Math.sin(rad) * (outerRingR - 12);
+      const tx = cx + Math.cos(rad) * (outerRingR - 10);
+      const ty = cy + Math.sin(rad) * (outerRingR - 10);
       ctx.font = 'bold 9px monospace';
       ctx.fillStyle = c.color;
       ctx.textAlign = 'center';
@@ -3152,7 +3153,7 @@ function drawHexagonChart() {
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // 6. High-Contrast Text Labels & Pulsing Vertex Sparkles
+    // 6. High-Contrast Typography & Translucent Protective Pill Badges (Collision-Free)
     axes.forEach((axis, i) => {
       const a = (Math.PI * 2 * i) / 6 - Math.PI / 2;
       const r = (axis.val / 100) * maxR;
@@ -3167,13 +3168,76 @@ function drawHexagonChart() {
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      const lx = cx + Math.cos(a) * (maxR + 26);
-      const ly = cy + Math.sin(a) * (maxR + 14);
+      let lx = cx;
+      let ly = cy;
+      let align = 'center';
+      let baseline = 'middle';
+
+      if (i === 0) { // Top (雨刷誤觸)
+        lx = cx;
+        ly = cy - maxR - 12;
+        align = 'center';
+        baseline = 'bottom';
+      } else if (i === 1) { // Top-Right (謎之自信)
+        lx = cx + Math.cos(a) * (maxR + 12);
+        ly = cy + Math.sin(a) * (maxR + 12);
+        align = 'left';
+        baseline = 'middle';
+      } else if (i === 2) { // Bottom-Right (倒車耗時)
+        lx = cx + Math.cos(a) * (maxR + 12);
+        ly = cy + Math.sin(a) * (maxR + 12);
+        align = 'left';
+        baseline = 'middle';
+      } else if (i === 3) { // Bottom (方向燈誠信)
+        lx = cx;
+        ly = cy + maxR + 12;
+        align = 'center';
+        baseline = 'top';
+      } else if (i === 4) { // Bottom-Left (方向感)
+        lx = cx + Math.cos(a) * (maxR + 12);
+        ly = cy + Math.sin(a) * (maxR + 12);
+        align = 'right';
+        baseline = 'middle';
+      } else if (i === 5) { // Top-Left (副駕驚嚇)
+        lx = cx + Math.cos(a) * (maxR + 12);
+        ly = cy + Math.sin(a) * (maxR + 12);
+        align = 'right';
+        baseline = 'middle';
+      }
+
       ctx.font = 'bold 10px "Noto Sans TC", sans-serif';
+      const text = `${axis.label} ${axis.val}`;
+      const tw = ctx.measureText(text).width;
+      const th = 14;
+
+      let bx = lx;
+      let by = ly;
+      if (align === 'center') bx = lx - tw / 2 - 5;
+      else if (align === 'left') bx = lx - 2;
+      else if (align === 'right') bx = lx - tw - 8;
+
+      if (baseline === 'bottom') by = ly - th - 1;
+      else if (baseline === 'top') by = ly + 1;
+      else by = ly - th / 2;
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(6, 10, 24, 0.90)';
+      ctx.strokeStyle = axis.color + '77';
+      ctx.lineWidth = 1;
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(bx, by, tw + 10, th + 2, 4);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillRect(bx, by, tw + 10, th + 2);
+      }
+      ctx.restore();
+
       ctx.fillStyle = axis.color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`${axis.label} ${axis.val}`, lx, ly);
+      ctx.textAlign = align;
+      ctx.textBaseline = baseline;
+      ctx.fillText(text, lx, ly);
     });
 
     // 7. Orbiting Cyber Star Particles
@@ -3601,7 +3665,7 @@ window.launchInteractiveCountermeasure = function (type) {
 
   const logEl = document.getElementById('shield-combat-log');
   if (logEl) logEl.textContent = cfg.log;
-  showToast(cfg.emoji + ' 反制攔截成功！', cfg.log, 'amber');
+  // NOTE: Toast suppressed here per user request to avoid obscuring countermeasure buttons
 };
 
 window.toggleDefenseShield = function () {
@@ -3691,20 +3755,45 @@ document.addEventListener('DOMContentLoaded', () => {
   calculateRouteSafety(false);
   syncUI();
 
-  // Instant confirmation toast that the new v15.0 build is loaded!
+  // Instant confirmation toast that the new v15.3 build is loaded!
   setTimeout(() => {
-    showToast('🚀 已載入最新 v15.0 旗艦版！', '搞笑動漫 BGM、三寶反制塔台、3D 好市多優化已生效', 'teal');
+    showToast('🚀 已載入最新 v15.3 旗艦版！', '高音質動漫 BGM 自動播放、反制塔台、星盤字體優化已生效', 'teal');
   }, 600);
 
-  // Global one-time touch / click listener to unlock Web Audio API on iOS / Android / Desktop
-  window.addEventListener('pointerdown', () => {
-    if (window.soundEngine) {
+  // High-Fidelity Anime Jazz BGM Autoplay Engine
+  const startAutoplayBGM = () => {
+    if (!window.soundEngine) return;
+    try {
       window.soundEngine.init();
       if (window.soundEngine.ctx && window.soundEngine.ctx.state === 'suspended') {
         window.soundEngine.ctx.resume();
       }
+      if (!window.soundEngine.bgmActive) {
+        window.soundEngine.startBGM();
+        const btn = document.getElementById('bgm-toggle-btn');
+        if (btn) {
+          btn.textContent = '🎵 BGM: 播放中';
+          btn.classList.add('border-teal-300', 'text-teal-300', 'bg-teal-400/30');
+        }
+      }
+    } catch (e) {
+      console.warn('BGM autoplay waiting for user gesture', e);
     }
-  }, { once: true });
+  };
+
+  // 1. Attempt immediate playback upon DOM load
+  setTimeout(startAutoplayBGM, 300);
+
+  // 2. Global one-time touch / click listener to unlock Web Audio API & guarantee BGM playback on first user touch anywhere
+  const triggerUserGestureAutoplay = () => {
+    startAutoplayBGM();
+    window.removeEventListener('pointerdown', triggerUserGestureAutoplay);
+    window.removeEventListener('click', triggerUserGestureAutoplay);
+    window.removeEventListener('touchstart', triggerUserGestureAutoplay);
+  };
+  window.addEventListener('pointerdown', triggerUserGestureAutoplay, { once: true });
+  window.addEventListener('click', triggerUserGestureAutoplay, { once: true });
+  window.addEventListener('touchstart', triggerUserGestureAutoplay, { once: true });
 
   // Pre-fill input with last known name if available, for user's convenience
   const quickInput = document.getElementById('quick-login-name');
