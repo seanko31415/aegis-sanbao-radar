@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>損友三寶監測局 // 真人即時連線防空雷達 v15.7 旗艦版</title>
+  <title>損友三寶監測局 // 真人即時連線防空雷達 v15.8 旗艦版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -439,19 +439,19 @@
       /* 100% SOLID OPAQUE LUXURY BACKGROUND: Absolutely ZERO bleed-through to underlying page */
       background-color: #03050e;
       background-image:
-        radial-gradient(circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(254, 240, 138, 0.16) 0%, rgba(45, 212, 191, 0.08) 28%, transparent 58%),
-        linear-gradient(to bottom, rgba(3, 6, 18, 0.94) 0%, rgba(10, 18, 44, 0.82) 48%, rgba(3, 6, 18, 0.96) 100%),
+        radial-gradient(circle at 50% 45%, rgba(254, 240, 138, 0.12) 0%, rgba(45, 212, 191, 0.06) 35%, transparent 65%),
+        linear-gradient(to bottom, rgba(3, 6, 18, 0.93) 0%, rgba(10, 18, 44, 0.82) 48%, rgba(3, 6, 18, 0.96) 100%),
         url('assets/fantasy_harbor_bg.jpg');
       background-size: 100% 100%, 100% 100%, cover;
       background-position: center;
       background-repeat: no-repeat;
-      transition: opacity 0.4s ease, transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
       will-change: opacity, transform;
     }
 
     #intro-splash.intro-exit {
       opacity: 0;
-      transform: scale(1.08);
+      transform: scale(1.06);
       pointer-events: none;
     }
 
@@ -460,16 +460,16 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 48px;
-      height: 48px;
-      margin: -24px 0 0 -24px;
+      width: 52px;
+      height: 52px;
+      margin: -26px 0 0 -26px;
       border-radius: 50%;
-      border: 1.5px solid rgba(254, 240, 138, 0.7);
-      box-shadow: 0 0 18px rgba(212, 175, 55, 0.45), inset 0 0 10px rgba(45, 212, 191, 0.3);
+      border: 1.5px solid rgba(254, 240, 138, 0.75);
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.5), inset 0 0 10px rgba(45, 212, 191, 0.35);
       pointer-events: none;
-      z-index: 30;
+      z-index: 40;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.25s ease;
       will-change: transform;
     }
 
@@ -521,49 +521,25 @@
     }
 
     .intro-stage {
-      --card-w: 114px;
-      --card-h: 168px;
-      --ring-r: 195px;
+      --card-w: clamp(100px, 14vw, 142px);
+      --card-h: clamp(144px, 20vh, 205px);
+      --ring-r: clamp(165px, 23vh, 250px);
       position: relative;
       width: var(--card-w);
       height: var(--card-h);
       perspective: 1200px;
       margin: auto 0;
       transform-style: preserve-3d;
-      transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
+      pointer-events: none;
       will-change: transform;
-    }
-
-    @media (min-width: 640px) {
-      .intro-stage {
-        --card-w: 145px;
-        --card-h: 215px;
-        --ring-r: 270px;
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .intro-stage {
-        --card-w: 175px;
-        --card-h: 255px;
-        --ring-r: 345px;
-      }
-    }
-
-    @media (max-height: 680px) {
-      .intro-stage {
-        --card-w: 96px;
-        --card-h: 142px;
-        --ring-r: 170px;
-      }
     }
 
     .intro-tilt {
       position: absolute;
       inset: 0;
       transform-style: preserve-3d;
-      transform: rotateX(-8deg);
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: rotateX(-6deg);
+      pointer-events: none;
       will-change: transform;
     }
 
@@ -919,12 +895,12 @@
     </div>
 
     <!-- BOTTOM ACTION DOCK -->
-    <div class="intro-dock w-full max-w-md mx-auto z-10 space-y-2 select-none pb-1 sm:pb-2">
+    <div class="intro-dock relative z-50 w-full max-w-md mx-auto space-y-2 select-none pb-1 sm:pb-2">
       <form onsubmit="introEnter(event, 'login')"
         class="flex gap-1.5 p-1.5 rounded-2xl bg-[#060916]/90 border border-amber-300/50 backdrop-blur-xl shadow-[0_0_35px_rgba(212,175,55,0.25)]">
         <input id="intro-name-input" type="text" maxlength="16" autocomplete="nickname" placeholder="👤 輸入你的名字 (例: 阿豪)..."
           class="flex-1 min-w-0 rounded-xl bg-slate-950/80 border border-white/10 px-3 py-2.5 text-xs sm:text-sm text-white font-bold focus:outline-none focus:border-amber-300" />
-        <button type="submit"
+        <button id="intro-login-btn" type="submit"
           class="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-300 via-amber-300 to-yellow-500 text-slate-950 font-black text-xs sm:text-sm shadow-[0_0_20px_rgba(251,191,36,0.5)] active:scale-95 transition-all cursor-pointer">
           🚀 登入並定位
         </button>
@@ -933,7 +909,7 @@
         class="hidden w-full py-2.5 rounded-2xl bg-gradient-to-r from-teal-300 via-emerald-400 to-teal-500 text-slate-950 font-black text-xs sm:text-sm shadow active:scale-95 transition-all cursor-pointer">
         ▶ 繼續進入
       </button>
-      <button type="button" onclick="introEnter(event, 'visitor')"
+      <button id="intro-visitor-btn" type="button" onclick="introEnter(event, 'visitor')"
         class="w-full py-2.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800/95 border-2 border-teal-400/60 text-teal-200 hover:text-white font-black text-xs sm:text-sm shadow-[0_0_20px_rgba(45,212,191,0.25)] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer">
         <span>👀</span> <span>先以訪客即時預覽進入</span> <span>➔</span>
       </button>
@@ -972,7 +948,7 @@
           </span>
           <span
             class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 shadow shrink-0">
-            v15.7 旗艦版
+            v15.8 旗艦版
           </span>
           <span id="storage-status-badge"
             class="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-slate-900 border border-teal-300/40 text-teal-300 shrink-0"
@@ -2430,9 +2406,9 @@
     class="fixed bottom-20 md:bottom-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none px-3 sm:px-0">
   </div>
 
-  <script src="intro.js?v=15.7"></script>
-  <script src="sound_and_fx.js?v=15.7"></script>
-  <script src="app.js?v=15.7"></script>
+  <script src="intro.js?v=15.8"></script>
+  <script src="sound_and_fx.js?v=15.8"></script>
+  <script src="app.js?v=15.8"></script>
 </body>
 
 </html>
