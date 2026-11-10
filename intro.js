@@ -1,6 +1,6 @@
 /* =============================================================================
    🎴 損友三寶監測局 — Cinematic 3D Tarot Carousel Intro / Login Splash
-   v15.7: Buttery Coherent Mouse Tracking & Unconditional Instant Visitor Preview
+   v15.9: Separated 3D Cards, Zero Hitch Transition, Mobile/Tablet Sliding Lock
    ============================================================================= */
 (function () {
   'use strict';
@@ -17,7 +17,7 @@
   let exiting = false;
 
   // ---------------------------------------------------------------------------
-  // 1. Guaranteed Visitor Mode Enforcer (Never Fails)
+  // 1. Guaranteed Visitor Mode Enforcer
   // ---------------------------------------------------------------------------
   function performVisitorEntry() {
     try {
@@ -65,7 +65,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // 3. Global introEnter Handler (Exposed Early & Bulletproof)
+  // 3. Global introEnter Handler (Hitch-Free 60FPS Transition)
   // ---------------------------------------------------------------------------
   window.introEnter = function (e, mode) {
     if (e && e.preventDefault) e.preventDefault();
@@ -84,7 +84,7 @@
             { transform: 'translateX(8px)' },
             { transform: 'translateX(0)' }
           ],
-          { duration: 240 }
+          { duration: 220 }
         );
         input.placeholder = '⚠️ 請先輸入名字才能登入定位';
       }
@@ -94,15 +94,11 @@
     exiting = true;
     startBGMFromGesture();
 
-    if (mode === 'visitor') {
-      performVisitorEntry();
-    }
-
-    warpFactor = 12;
-    splash.classList.add('intro-warp');
+    // Trigger visual fade-out immediately without blocking on heavy map calculations
+    warpFactor = 10;
     splash.classList.add('intro-exit');
 
-    // Immediate teardown in 240ms for snappy responsiveness
+    // Smooth teardown in 200ms
     setTimeout(() => {
       try {
         if (mainRAF) cancelAnimationFrame(mainRAF);
@@ -116,36 +112,32 @@
         document.body.classList.remove('intro-lock');
       } catch (err) {}
 
-      try {
-        document.querySelectorAll('body > header, body > main').forEach((el) => {
-          el.classList.remove('main-enter');
-          void el.offsetWidth;
-          el.classList.add('main-enter');
-        });
-      } catch (err) {}
-
-      try {
-        window.dispatchEvent(new Event('resize'));
-      } catch (err) {}
-
-      if (mode === 'login') {
-        const quick = document.getElementById('quick-login-name');
-        if (quick) quick.value = name;
-        if (typeof window.loginFromQuickBar === 'function') window.loginFromQuickBar();
-      } else if (mode === 'visitor') {
-        performVisitorEntry();
-        if (window.leafletMap && window.leafletMap.invalidateSize) {
-          window.leafletMap.invalidateSize();
+      // Defer heavy map marker and UI rendering to the next animation frame (Zero Hitch!)
+      requestAnimationFrame(() => {
+        try {
+          if (mode === 'login') {
+            const quick = document.getElementById('quick-login-name');
+            if (quick) quick.value = name;
+            if (typeof window.loginFromQuickBar === 'function') window.loginFromQuickBar();
+          } else if (mode === 'visitor') {
+            performVisitorEntry();
+            if (window.leafletMap && window.leafletMap.invalidateSize) {
+              window.leafletMap.invalidateSize();
+            }
+            if (typeof window.showToast === 'function') {
+              window.showToast('👀 訪客即時預覽模式', '已為您載入全境防空雷達與地圖，可隨時預覽體驗！', 'teal');
+            }
+          } else if (mode === 'continue') {
+            if (typeof window.showToast === 'function') {
+              window.showToast('🟢 歡迎回來！', '已恢復你的連線與定位', 'teal');
+            }
+          }
+          window.dispatchEvent(new Event('resize'));
+        } catch (err) {
+          console.warn(err);
         }
-        if (typeof window.showToast === 'function') {
-          window.showToast('👀 訪客即時預覽模式', '已為您載入全境防空雷達與地圖，可隨時預覽體驗！', 'teal');
-        }
-      } else if (mode === 'continue') {
-        if (typeof window.showToast === 'function') {
-          window.showToast('🟢 歡迎回來！', '已恢復你的連線與定位', 'teal');
-        }
-      }
-    }, reduceMotion ? 80 : 240);
+      });
+    }, reduceMotion ? 50 : 200);
   };
 
   // ---------------------------------------------------------------------------
@@ -199,6 +191,12 @@
   window.addEventListener('pointermove', onPointerMove, { passive: true });
   window.addEventListener('touchmove', onTouchMove, { passive: true });
 
+  // Prevent accidental mobile screen dragging/sliding on the splash screen
+  splash.addEventListener('touchmove', (e) => {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON')) return;
+    if (e.cancelable) e.preventDefault();
+  }, { passive: false });
+
   // ---------------------------------------------------------------------------
   // 5. High-Performance Canvas Stars & Cursor Stardust Engine
   // ---------------------------------------------------------------------------
@@ -215,7 +213,7 @@
     H = window.innerHeight;
     canvas.width = W;
     canvas.height = H;
-    const count = W < 640 ? 45 : 70;
+    const count = W < 640 ? 40 : 65;
     stars = Array.from({ length: count }, () => spawnStar(true));
   }
 
@@ -264,7 +262,7 @@
     if (ctx) {
       ctx.clearRect(0, 0, W, H);
 
-      // Soft dynamic cursor spotlight on canvas (Zero DOM style invalidation!)
+      // Soft dynamic cursor spotlight on canvas
       if (!reduceMotion && cursorX > 0 && cursorY > 0) {
         const glow = ctx.createRadialGradient(cursorX, cursorY, 0, cursorX, cursorY, 200);
         glow.addColorStop(0, 'rgba(254, 240, 138, 0.09)');
@@ -347,7 +345,7 @@
       cont.classList.remove('hidden');
     }
 
-    // Attach explicit click listener to visitor button as extra insurance
+    // Attach explicit click listener to visitor button
     const visitorBtn = document.getElementById('intro-visitor-btn');
     if (visitorBtn) {
       visitorBtn.addEventListener('click', (e) => window.introEnter(e, 'visitor'));
